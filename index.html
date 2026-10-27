@@ -116,6 +116,10 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
 .lower p{font-size:18px;line-height:1.7;max-width:64ch;margin:0 0 18px}
 .lower .pills{gap:10px;margin-top:26px}.lower .pills span{font-size:14px;padding:9px 15px;color:var(--secondary)}
 @media(max-width:760px){.lower p{font-size:16px}.lower .pills span{font-size:13px}}
+
+/* Illustration back in the hero: keep it inside the column */
+.hero-art{overflow:visible}
+@media(max-width:760px){.hero-art{height:320px}}
 </style>
 </head>
 <body>
@@ -133,13 +137,13 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
     <div class="actions"><a class="primary" href="#work">Explore my work <span>↗</span></a><a class="ghost" href="#about">About me</a></div>
     <div class="shaped"><span>Products I’ve shaped</span><a href="#work">Calendar</a><a href="#work">Workplace</a><a href="#work">TeamInbox</a><a href="#work">Ulaa</a><a href="#work">OM</a><a href="#work">ZUIS</a></div>
   </div>
-  <a class="hero-art" href="#work" aria-label="See my work: Zoho Workplace, Calendar and TeamInbox prototypes">
-    <span class="hero-glow"></span>
-    <figure class="hshot s1"><span class="hbar"><i></i><i></i><i></i></span><img src="assets/thumbs/workplace.jpg" alt=""></figure>
-    <figure class="hshot s3"><span class="hbar"><i></i><i></i><i></i></span><img src="assets/thumbs/teaminbox.jpg" alt=""></figure>
-    <figure class="hshot s2"><span class="hbar"><i></i><i></i><i></i></span><img src="assets/thumbs/calendar.jpg" alt=""></figure>
-    <span class="hchip"><b></b>6 interactive prototypes</span>
-  </a>
+  <div class="hero-art" aria-label="Abstract illustration of a calendar, analytics chart, and task list">
+    <div class="glow"></div><div class="scenic mountain"></div><div class="scenic building"></div>
+    <div class="calendar"><div class="rail"><b>▦</b><span>⌂</span><span>♧</span><span>▣</span><span>◉</span><span>◷</span></div><div class="calbody"><div class="calhead">January 2024 <span class="next">→</span></div><div class="week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="dates"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span></div><div class="events"><div class="event">Design sync<small>10:00 – 11:00 AM</small></div><div class="event">Product review<small>2:00 – 3:00 PM</small></div><div class="event">Team catchup<small>4:00 – 4:30 PM</small></div></div></div></div>
+    <div class="chart-card"><div class="chart-lines"><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i></div></div>
+    <div class="tasks-card"><div class="task"><span class="dot"></span><div class="tasklines"><i></i><i></i></div></div><div class="task"><span class="dot"></span><div class="tasklines"><i></i><i></i></div></div><div class="task"><span class="dot"></span><div class="tasklines"><i></i><i></i></div></div></div>
+    <div class="arrow-note">↙</div><div class="handnote">Simpler<br>More focused<br>Better experiences.</div>
+  </div>
 </section>
 <section class="wrap featured" id="work">
   <div class="section-top"><div><div class="kicker">Featured work</div><h2>Products I’ve designed</h2></div><a class="viewall" href="#work">View all projects　→</a></div>
