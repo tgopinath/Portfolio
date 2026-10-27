@@ -1,0 +1,4 @@
+.DS_Store
+tools/sync.log
+tools/.sync-state.json
+tools/.sync.lock

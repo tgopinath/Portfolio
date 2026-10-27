@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TeamInbox prototype</title>
+<style>
+  :root { --bg: #16181c; --bar: #1f2227; --line: rgba(255,255,255,.1); --text: #e8eaed; --muted: #9aa0a8; --accent: #2c8cf0; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  .bar { flex: none; padding-top: calc(8px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 12px; padding-inline: 12px; padding-bottom: 8px; background: var(--bar); border-bottom: 1px solid var(--line); }
+  .flows { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+  .flows button { padding: 6px 12px; border-radius: 6px; color: var(--muted); white-space: nowrap; }
+  .flows button:hover { color: var(--text); background: rgba(255,255,255,.06); }
+  .flows button[aria-current='true'] { color: var(--text); background: rgba(255,255,255,.12); }
+  .ctl { display: flex; align-items: center; gap: 4px; flex: none; }
+  .ctl button { height: 30px; min-width: 30px; padding: 0 8px; border-radius: 6px; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .ctl button:hover { color: var(--text); background: rgba(255,255,255,.06); }
+  .ctl button[aria-pressed='true'] { color: var(--text); background: rgba(44,140,240,.25); }
+  .count { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 64px; text-align: center; }
+
+  .stage { flex: 1; min-height: 0; display: grid; place-items: center; padding: 16px; }
+  .frame { position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.45); border-radius: 6px; overflow: hidden; background: #fff; user-select: none; }
+  .frame img { display: block; width: 100%; height: 100%; }
+  .hs { position: absolute; width: 4.2%; height: 6.4%; transform: translate(-30%, -25%); border-radius: 6px; cursor: pointer; }
+  .show-hs .hs, .hs.flash { background: rgba(44,140,240,.22); box-shadow: 0 0 0 2px rgba(44,140,240,.85); }
+  .hs.flash { animation: flash .6s ease-out 2; }
+  @keyframes flash { 50% { opacity: .2; } }
+  .anywhere { position: absolute; inset: 0; cursor: pointer; }
+  .zone { position: absolute; border-radius: 6px; cursor: pointer; }
+  .show-hs .zone, .zone.flash { background: rgba(44,140,240,.18); box-shadow: 0 0 0 2px rgba(44,140,240,.7); }
+  .zone--close { cursor: default; border-radius: 0; }
+  .show-hs .zone--close { background: rgba(0,0,0,.12); box-shadow: none; }
+
+  .grid-ov { position: fixed; inset: 0; z-index: 10; background: rgba(10,11,13,.92); overflow-y: auto; padding: 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; align-content: start; }
+  .grid-ov button { display: grid; gap: 6px; text-align: left; color: var(--muted); }
+  .grid-ov img { width: 100%; border-radius: 4px; border: 2px solid transparent; background: #222; aspect-ratio: 16 / 9.1; object-fit: cover; object-position: top; }
+  .grid-ov button:hover img, .grid-ov button[aria-current='true'] img { border-color: var(--accent); }
+  .grid-ov button[aria-current='true'] { color: var(--text); }
+  .grid-ov__close { position: fixed; top: 14px; right: 18px; z-index: 11; width: 34px; height: 34px; border-radius: 50%; background: #2a2d33; font-size: 18px; }
+  .hint { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); color: var(--muted); font-size: 12px; pointer-events: none; transition: opacity .4s; }
+  @media (max-width: 720px) { .count { display: none; } .ctl .lab { display: none; } }
+</style>
+</head>
+<body>
+  <header class="bar">
+    <nav class="flows" id="flows" aria-label="Flows"></nav>
+    <div class="ctl">
+      <button id="prev" aria-label="Previous screen">←</button>
+      <span class="count" id="count" aria-live="polite"></span>
+      <button id="next" aria-label="Next screen">→</button>
+      <button id="hsBtn" aria-pressed="false" title="Show hotspots (H)">◎ <span class="lab">Hotspots</span></button>
+      <button id="gridBtn" title="All screens (G)">▦ <span class="lab">Screens</span></button>
+    </div>
+  </header>
+  <main class="stage" id="stage">
+    <div class="frame" id="frame"><img id="img" alt="" draggable="false" /></div>
+  </main>
+  <p class="hint" id="hint">Click the highlighted spot, or use ← → keys. The gear icon in the app switches views.</p>
+
+<script src="screens.js"></script>
+<script>
+(() => {
+  const F = window.FLOWS;
+  const $ = (id) => document.getElementById(id);
+  const frame = $('frame'), img = $('img');
+  let fi = 0, si = 0, showHs = false;
+  let qs = null;          // Quick Settings open: remembers the screen it was opened from
+  let lastView = [0, 0];  // where to return when Settings is closed
+  const VIEW_FLOWS = ['vertical', 'sheet', 'kanban', 'grid'];
+  const flowIdx = (id) => F.findIndex((f) => f.id === id);
+  // In-app controls, measured from the designs (percent of the screen)
+  const GEAR = [88.2, 0.6, 2.2, 5.6];                       // settings gear in the top bar
+  const QS_SCREEN = F[flowIdx('sheet')].screens.find((x) => x.n === '12'); // Quick Settings design
+  const QS_ZONES = [
+    ['vertical', 77.4, 21.6, 5.7, 9.3], ['sheet', 84.0, 21.6, 5.7, 9.3], ['kanban', 90.7, 21.6, 5.7, 9.3],
+    ['grid', 77.4, 32.0, 5.7, 9.3],
+    ['settings', 91.2, 7.0, 8.4, 4.2],                     // More Settings
+  ];
+  const SETTINGS_CLOSE = [97.6, 0.6, 2.2, 4.4];
+
+  // Deep link: #kanban-12
+  const fromHash = () => {
+    const h = location.hash.slice(1); const k = h.indexOf('-'); const f = h.slice(0, k), n = h.slice(k + 1);
+    const i = F.findIndex((x) => x.id === f);
+    if (i >= 0) { fi = i; const j = F[i].screens.findIndex((s) => s.n === n); si = j >= 0 ? j : 0; }
+  };
+
+  $('flows').innerHTML = F.map((f, i) => `<button data-flow="${i}">${f.name}</button>`).join('');
+  $('flows').addEventListener('click', (e) => { const b = e.target.closest('[data-flow]'); if (b) go(Number(b.dataset.flow), 0); });
+
+  function fit() {
+    const f = F[fi], st = $('stage');
+    const aw = st.clientWidth - 32, ah = st.clientHeight - 32;
+    const s = Math.min(aw / f.w, ah / f.h, 1.25);
+    frame.style.width = Math.round(f.w * s) + 'px';
+    frame.style.height = Math.round(f.h * s) + 'px';
+  }
+
+  const zone = (box, label, onClick, cls = '') => {
+    const z = document.createElement('button');
+    z.className = 'zone ' + cls;
+    [z.style.left, z.style.top, z.style.width, z.style.height] = box.map((v) => v + '%');
+    z.setAttribute('aria-label', label);
+    z.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+    frame.appendChild(z);
+  };
+
+  function renderQS() {
+    img.src = QS_SCREEN.src;
+    img.alt = 'Quick Settings';
+    frame.querySelectorAll('.hs, .anywhere, .zone').forEach((el) => el.remove());
+    zone([0, 6.5, 75, 93.5], 'Close Quick Settings', closeQS, 'zone--close');
+    QS_ZONES.forEach(([id, ...box]) => zone(box, id === 'settings' ? 'More Settings' : `Switch to ${F[flowIdx(id)].name} view`, () => { qs = null; go(flowIdx(id), 0); }));
+  }
+  function openQS() { qs = [fi, si]; renderQS(); }
+  function closeQS() { const [a, b] = qs; qs = null; go(a, b); }
+
+  function render() {
+    if (qs) { renderQS(); return; }
+    const f = F[fi], s = f.screens[si];
+    if (VIEW_FLOWS.includes(f.id)) lastView = [fi, si];
+    img.src = s.src;
+    img.alt = `${f.name}, screen ${s.n}`;
+    frame.querySelectorAll('.hs, .anywhere, .zone').forEach((el) => el.remove());
+    if (VIEW_FLOWS.includes(f.id)) zone(GEAR, 'Open Quick Settings', openQS);
+    if (f.id === 'settings') zone(SETTINGS_CLOSE, 'Close Settings', () => go(lastView[0], lastView[1]));
+    const hit = document.createElement('button');
+    if (s.hs) {
+      hit.className = 'hs';
+      hit.style.left = s.hs[0] + '%';
+      hit.style.top = s.hs[1] + '%';
+      hit.setAttribute('aria-label', 'Continue');
+    } else {
+      hit.className = 'anywhere';
+      hit.setAttribute('aria-label', 'Continue');
+    }
+    hit.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+    frame.insertBefore(hit, frame.querySelector('.zone'));
+    $('count').textContent = `${si + 1} / ${f.screens.length}`;
+    document.querySelectorAll('[data-flow]').forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.flow) === fi)));
+    try { history.replaceState(null, '', `#${f.id}-${s.n}`); } catch (e) {}
+    fit();
+    // Preload neighbours
+    [f.screens[si + 1], f.screens[si + 2], F[fi + 1]?.screens[0]].forEach((x) => { if (x) new Image().src = x.src; });
+  }
+
+  function go(f, s) { qs = null; fi = f; si = s; render(); }
+  function next() {
+    if (qs) { closeQS(); return; }
+    if (si < F[fi].screens.length - 1) go(fi, si + 1);
+    else go((fi + 1) % F.length, 0);
+  }
+  function prev() {
+    if (qs) { closeQS(); return; }
+    if (si > 0) go(fi, si - 1);
+    else if (fi > 0) go(fi - 1, F[fi - 1].screens.length - 1);
+  }
+
+  // Missed click: flash the hotspot, like a Figma prototype
+  frame.addEventListener('click', () => {
+    const h = frame.querySelector('.hs');
+    if (!h) return;
+    h.classList.remove('flash'); void h.offsetWidth; h.classList.add('flash');
+  });
+
+  $('next').addEventListener('click', next);
+  $('prev').addEventListener('click', prev);
+  const toggleHs = () => { showHs = !showHs; document.body.classList.toggle('show-hs', showHs); $('hsBtn').setAttribute('aria-pressed', String(showHs)); };
+  $('hsBtn').addEventListener('click', toggleHs);
+
+  // All screens overlay
+  function openGrid() {
+    const f = F[fi];
+    const ov = document.createElement('div');
+    ov.className = 'grid-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', `${f.name} screens`);
+    ov.innerHTML = f.screens.map((s, i) => `<button data-i="${i}" aria-current="${i === si}"><img src="${s.src}" alt="" loading="lazy">${f.name} ${s.n}</button>`).join('');
+    const close = document.createElement('button');
+    close.className = 'grid-ov__close'; close.textContent = '×'; close.setAttribute('aria-label', 'Close');
+    const done = () => { ov.remove(); close.remove(); };
+    close.onclick = done;
+    ov.addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) { go(fi, Number(b.dataset.i)); done(); } });
+    ov.addEventListener('keydown', (e) => { if (e.key === 'Escape') done(); });
+    document.body.append(ov, close);
+    ov.querySelector('[aria-current="true"]')?.focus();
+  }
+  $('gridBtn').addEventListener('click', openGrid);
+
+  document.addEventListener('keydown', (e) => {
+    if (document.querySelector('.grid-ov')) { if (e.key === 'Escape') document.querySelector('.grid-ov__close').click(); return; }
+    if (e.key === 'Escape' && qs) { closeQS(); return; }
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') prev();
+    else if (e.key.toLowerCase() === 'h') toggleHs();
+    else if (e.key.toLowerCase() === 'g') openGrid();
+  });
+  addEventListener('resize', fit);
+  addEventListener('hashchange', () => { fromHash(); render(); });
+  setTimeout(() => { $('hint').style.opacity = 0; }, 5000);
+
+  fromHash();
+  render();
+})();
+</script>
+</body>
+</html>

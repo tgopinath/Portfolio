@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Large file uploads prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
+<style>
+  :root {
+    --page: #f7f6f2;
+    --app: #ffffff;
+    --pane: #f4f4f1;
+    --text: #1c1b19;
+    --muted: #6b6860;
+    --faint: #9a978f;
+    --line: rgba(28, 27, 25, 0.12);
+    --line-strong: rgba(28, 27, 25, 0.24);
+    --accent: #2f62d6;
+    --accent-bg: #eaf0fd;
+    --on-accent: #ffffff;
+    --warn: #8a5a00;
+    --warn-bg: #fdf3dc;
+    --warn-line: #e9c97a;
+    --danger: #b42318;
+    --danger-bg: #fdecea;
+    --danger-line: #f0a8a0;
+    --ok: #2e7d4f;
+    --radius: 10px;
+    --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    --page: #141412;
+    --app: #1e1d1b;
+    --pane: #252422;
+    --text: #ecebe6;
+    --muted: #a3a097;
+    --faint: #7c7972;
+    --line: rgba(236, 235, 230, 0.12);
+    --line-strong: rgba(236, 235, 230, 0.26);
+    --accent: #7ea2ff;
+    --accent-bg: #1f2a44;
+    --on-accent: #10131c;
+    --warn: #f2c66d;
+    --warn-bg: #33290f;
+    --warn-line: #6b5420;
+    --danger: #ff9b8f;
+    --danger-bg: #3a1d1a;
+    --danger-line: #6e2f28;
+    --ok: #86d1a3;
+    color-scheme: dark;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+  body { background: var(--page); color: var(--text); font: 14px/1.5 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; padding: 16px; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Demo controls */
+  .demo { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .demo__label { font-size: 12px; color: var(--muted); margin-right: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .pill { border: 1px solid var(--line-strong); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; transition: border-color .2s, background-color .2s; }
+  .pill:hover { border-color: var(--text); }
+  .pill--quiet { border-color: transparent; color: var(--muted); }
+  .pill--quiet:hover { color: var(--text); border-color: var(--line-strong); }
+
+  /* App frame */
+  .app { background: var(--app); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 600px; }
+  .side { background: var(--pane); border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 4px 8px 14px; }
+  .brand__mark { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: grid; place-items: center; color: var(--on-accent); font-size: 12px; }
+  .nav { display: flex; justify-content: space-between; padding: 7px 10px; border-radius: 8px; color: var(--muted); font-size: 13px; }
+  .nav--on { background: var(--app); color: var(--text); font-weight: 500; box-shadow: 0 0 0 1px var(--line); }
+  .nav small { color: var(--faint); }
+  .nav-head { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; padding: 16px 10px 6px; }
+
+  .main { display: flex; flex-direction: column; min-width: 0; }
+  .thread-head { padding: 16px 24px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  .thread-head h1 { font-size: 16px; font-weight: 600; }
+  .thread-head p { font-size: 12px; color: var(--muted); }
+  .assignee { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .avatar { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; background: var(--accent-bg); color: var(--accent); flex: none; }
+
+  .thread { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; overflow: auto; }
+  .msg { display: flex; gap: 12px; }
+  .msg__body { min-width: 0; }
+  .msg__meta { font-size: 12px; color: var(--muted); }
+  .msg__meta b { color: var(--text); font-weight: 500; }
+  .msg__text { margin-top: 2px; max-width: 60ch; }
+  .msg__files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .msg__file { font-size: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+  .msg--new { animation: rise .5s var(--ease); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+  /* Composer */
+  .composer { margin: 0 24px 20px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--app); position: relative; transition: border-color .2s, box-shadow .2s; }
+  .composer.is-drag { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-bg); }
+  .composer__to { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .composer__to b { color: var(--text); font-weight: 500; }
+  .composer textarea { display: block; width: 100%; border: 0; resize: none; background: transparent; color: var(--text); font: inherit; padding: 12px 14px 6px; min-height: 64px; outline: none; }
+  .drop-hint { position: absolute; inset: 0; border-radius: 12px; display: none; place-items: center; background: color-mix(in srgb, var(--app) 88%, transparent); color: var(--accent); font-weight: 500; pointer-events: none; }
+  .composer.is-drag .drop-hint { display: grid; }
+
+  .files { display: flex; flex-direction: column; gap: 6px; padding: 4px 14px 10px; }
+  .files:empty { display: none; }
+  .chip { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--app); animation: rise .35s var(--ease); }
+  .chip.is-hl { animation: nudge .5s var(--ease); }
+  @keyframes nudge { 30% { transform: translateX(-4px); } 60% { transform: translateX(4px); } }
+  .chip__icon { width: 28px; height: 28px; border-radius: 7px; background: var(--pane); display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--muted); flex: none; text-transform: uppercase; }
+  .chip__main { flex: 1; min-width: 0; }
+  .chip__name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip__sub { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .bar { height: 3px; border-radius: 2px; background: var(--pane); margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; width: 0; transition: width .2s linear; }
+  .chip__act { border: 0; background: transparent; color: var(--accent); font-weight: 500; font-size: 13px; padding: 6px 8px; border-radius: 6px; white-space: nowrap; }
+  .chip__act:hover { background: var(--accent-bg); }
+  .chip__x { border: 0; background: transparent; width: 28px; height: 28px; border-radius: 6px; color: var(--muted); display: grid; place-items: center; flex: none; }
+  .chip__x:hover { background: var(--pane); color: var(--text); }
+  .chip--over { background: var(--warn-bg); border-color: var(--warn-line); }
+  .chip--over .chip__sub, .chip--over .chip__name { color: var(--warn); }
+  .chip--over .chip__act { color: var(--warn); }
+  .chip--over .chip__act:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .chip--failed { border-color: var(--danger-line); }
+  .chip--failed .chip__sub { color: var(--danger); }
+  .chip--failed .bar i { background: var(--danger); }
+  .chip--link .chip__icon { background: var(--accent-bg); color: var(--accent); }
+
+  .composer__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 8px; border-top: 1px solid var(--line); }
+  .tools { display: flex; align-items: center; gap: 2px; }
+  .tool { border: 0; background: transparent; height: 32px; padding: 0 10px; border-radius: 8px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+  .tool:hover { background: var(--pane); color: var(--text); }
+  .status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .status button { border: 0; background: transparent; color: var(--accent); font-weight: 500; font-size: 12px; padding: 2px 4px; border-radius: 4px; }
+  .status--warn { color: var(--warn); }
+  .spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--accent); animation: spin 0.9s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .send { border: 0; background: var(--accent); color: var(--on-accent); font-weight: 500; height: 34px; padding: 0 16px; border-radius: 8px; transition: transform .15s var(--ease), opacity .2s; }
+  .send:active { transform: scale(0.97); }
+  .send[aria-pressed='true'] { background: var(--pane); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-strong); }
+
+  .toast { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -10px); background: var(--text); color: var(--app); font-size: 13px; padding: 8px 14px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s var(--ease); white-space: nowrap; }
+  .toast.is-on { opacity: 1; transform: translate(-50%, -16px); }
+
+  @media (max-width: 720px) {
+    body { padding: 8px; }
+    .app { grid-template-columns: 1fr; min-height: 0; }
+    .side { display: none; }
+    .thread-head, .thread { padding-inline: 16px; }
+    .composer { margin-inline: 12px; }
+    .assignee span { display: none; }
+    .tool span { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+  <div class="demo" role="group" aria-label="Prototype controls">
+    <span class="demo__label">Try</span>
+    <button class="pill" data-add="sheet">Add 8 MB sheet</button>
+    <button class="pill" data-add="zip">Add 18 MB zip</button>
+    <button class="pill" data-add="video">Add 1.2 GB video</button>
+    <button class="pill" id="drop">Drop connection</button>
+    <button class="pill pill--quiet" id="reset">Reset</button>
+  </div>
+
+  <div class="app">
+    <aside class="side" aria-label="Inboxes">
+      <div class="brand"><span class="brand__mark" aria-hidden="true">T</span>TeamInbox</div>
+      <div class="nav nav--on">Finance ops <small>12</small></div>
+      <div class="nav">Support <small>48</small></div>
+      <div class="nav">Partnerships <small>3</small></div>
+      <div class="nav-head">Views</div>
+      <div class="nav">Assigned to me <small>5</small></div>
+      <div class="nav">Unassigned <small>9</small></div>
+      <div class="nav">Shared drafts</div>
+    </aside>
+
+    <section class="main">
+      <header class="thread-head">
+        <div>
+          <h1>Q3 audit files</h1>
+          <p>auditors@kpmz.example · Finance ops</p>
+        </div>
+        <div class="assignee"><span>Assigned to you</span><span class="avatar" aria-hidden="true">GT</span></div>
+      </header>
+
+      <div class="thread" id="thread" aria-live="polite">
+        <article class="msg">
+          <span class="avatar" aria-hidden="true">RK</span>
+          <div class="msg__body">
+            <p class="msg__meta"><b>Rhea Kapoor</b> · auditors@kpmz.example · 10:42</p>
+            <p class="msg__text">Hi team, could you send over the raw ledger exports and the walkthrough recording from Tuesday? We need them before Friday's review.</p>
+          </div>
+        </article>
+      </div>
+
+      <form class="composer" id="composer" novalidate>
+        <div class="toast" id="toast" role="status"></div>
+        <p class="composer__to">To <b>Rhea Kapoor</b></p>
+        <label class="sr" for="body">Reply</label>
+        <textarea id="body" rows="2">Hi Rhea, attaching the exports and the recording.</textarea>
+        <div class="files" id="files"></div>
+        <div class="composer__foot">
+          <div class="tools">
+            <button type="button" class="tool" id="attach" aria-label="Attach files">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>
+              <span>Attach</span>
+            </button>
+            <input type="file" id="picker" multiple hidden />
+          </div>
+          <div class="right">
+            <p class="status" id="status" aria-live="polite"></p>
+            <button type="submit" class="send" id="send" aria-pressed="false">Send</button>
+          </div>
+        </div>
+        <div class="drop-hint">Drop files to attach</div>
+      </form>
+    </section>
+  </div>
+
+<script>
+(() => {
+  // ---- Theme: follow the portfolio page when embedded, else the OS ----
+  const root = document.documentElement;
+  function syncTheme() {
+    let t = null;
+    try { t = window.parent !== window ? window.parent.document.documentElement.dataset.theme : null; } catch (e) {}
+    if (!t) { try { t = localStorage.getItem('theme'); } catch (e) {} }
+    if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    root.dataset.theme = t;
+  }
+  syncTheme();
+  try {
+    if (window.parent !== window) new MutationObserver(syncTheme).observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  } catch (e) {}
+
+  // ---- Model ----
+  const LIMIT = 25 * 1024 * 1024;        // email attachment limit (prototype assumption)
+  const NOMINAL = 4 * 1024 * 1024;        // bytes/s used for "time left" copy
+  const MB = 1024 * 1024;
+  const PRESETS = {
+    sheet: { name: 'ledger-q3.xlsx', size: 8 * MB },
+    zip: { name: 'audit-export.zip', size: 18 * MB },
+    video: { name: 'walkthrough-recording.mp4', size: 1.2 * 1024 * MB },
+  };
+  let files = [];
+  let seq = 0;
+  let queued = false;
+
+  const $ = (id) => document.getElementById(id);
+  const list = $('files'), statusEl = $('status'), send = $('send'), toastEl = $('toast');
+
+  const fmt = (b) => b >= 1024 * MB ? (b / 1024 / MB).toFixed(1) + ' GB' : b >= MB ? Math.round(b / MB) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+  const ext = (n) => (n.split('.').pop() || 'file').slice(0, 4);
+  const left = (s) => s < 60 ? Math.max(1, Math.round(s)) + 's left' : Math.round(s / 60) + ' min left';
+  const used = (except) => files.filter((f) => f !== except && ['uploading', 'done', 'failed'].includes(f.status)).reduce((a, f) => a + f.size, 0);
+  // Demo time is compressed: ~3–9 s per upload regardless of real size.
+  const demoDuration = (size) => Math.min(9000, 3000 + (size / MB) * 300);
+
+  function add(name, size) {
+    const f = { id: ++seq, name, size, progress: 0, status: 'uploading' };
+    if (used() + size > LIMIT) f.status = 'over';
+    else f.duration = demoDuration(size);
+    files.push(f);
+    announce(f.status === 'over' ? `${name} is over the 25 MB limit. You can share it as a link.` : `Uploading ${name}.`);
+    render();
+  }
+
+  function act(id, action) {
+    const f = files.find((x) => x.id === id);
+    if (!f) return;
+    if (action === 'remove') {
+      files = files.filter((x) => x !== f);
+      announce(`${f.name} removed.`);
+    } else if (action === 'link') {
+      // Upload to cloud storage, attach as link: no size cap from the mail server.
+      f.status = 'linking'; f.progress = 0; f.duration = 6000;
+      announce(`Uploading ${f.name} to WorkDrive.`);
+    } else if (action === 'retry') {
+      // Resume from where it stopped, not from zero.
+      f.status = f.wasLink ? 'linking' : 'uploading';
+      announce(`Resuming ${f.name} from ${Math.round(f.progress * 100)}%.`);
+    }
+    render();
+  }
+
+  function dropConnection() {
+    const f = files.find((x) => x.status === 'uploading' || x.status === 'linking');
+    if (!f) { toast('Start an upload first'); return; }
+    f.wasLink = f.status === 'linking';
+    f.status = 'failed';
+    announce(`${f.name} failed at ${Math.round(f.progress * 100)}%. Retry to resume.`);
+    render();
+  }
+
+  // ---- Upload loop ----
+  let last = performance.now();
+  function tick(now) {
+    const dt = now - last; last = now;
+    let changed = false;
+    for (const f of files) {
+      if (f.status !== 'uploading' && f.status !== 'linking') continue;
+      f.progress = Math.min(1, f.progress + dt / f.duration);
+      changed = true;
+      if (f.progress >= 1) {
+        f.status = f.status === 'linking' ? 'link' : 'done';
+        announce(`${f.name} ${f.status === 'link' ? 'ready as a link' : 'attached'}.`);
+        render();
+      }
+    }
+    if (changed) updateProgress();
+    if (queued) maybeSend();
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ---- Send ----
+  const blocking = () => files.filter((f) => f.status === 'over' || f.status === 'failed');
+  const busy = () => files.some((f) => f.status === 'uploading' || f.status === 'linking');
+
+  $('composer').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (queued) { queued = false; announce('Send cancelled.'); render(); return; }
+    const b = blocking();
+    if (b.length) {
+      b.forEach((f) => { const el = list.querySelector(`[data-id="${f.id}"]`); if (el) { el.classList.remove('is-hl'); void el.offsetWidth; el.classList.add('is-hl'); } });
+      const first = list.querySelector(`[data-id="${b[0].id}"] .chip__act`);
+      if (first) first.focus();
+      toast(b.length === 1 ? 'Fix 1 file before sending' : `Fix ${b.length} files before sending`);
+      return;
+    }
+    if (busy()) { queued = true; announce('Will send when uploads finish.'); render(); return; }
+    doSend();
+  });
+
+  function maybeSend() {
+    if (blocking().length) { queued = false; toast('Send paused. A file needs attention'); render(); return; }
+    if (!busy()) doSend();
+  }
+
+  function doSend() {
+    queued = false;
+    const body = $('body').value.trim() || '(no message)';
+    const sent = files.filter((f) => f.status === 'done' || f.status === 'link');
+    const el = document.createElement('article');
+    el.className = 'msg msg--new';
+    el.innerHTML = `<span class="avatar" aria-hidden="true">GT</span><div class="msg__body"><p class="msg__meta"><b>You</b> · Finance ops · now</p><p class="msg__text"></p><div class="msg__files"></div></div>`;
+    el.querySelector('.msg__text').textContent = body;
+    const box = el.querySelector('.msg__files');
+    sent.forEach((f) => {
+      const s = document.createElement('span');
+      s.className = 'msg__file';
+      s.textContent = (f.status === 'link' ? '↗ ' : '') + f.name + ' · ' + fmt(f.size);
+      box.appendChild(s);
+    });
+    $('thread').appendChild(el);
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    files = []; $('body').value = '';
+    toast('Sent');
+    render();
+  }
+
+  // ---- Render ----
+  function chip(f) {
+    const pct = Math.round(f.progress * 100);
+    const done = f.size * f.progress;
+    const remaining = (f.size - done) / NOMINAL;
+    const x = `<button type="button" class="chip__x" data-act="remove" aria-label="${f.status === 'uploading' || f.status === 'linking' ? 'Cancel upload of' : 'Remove'} ${f.name}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`;
+    const icon = `<span class="chip__icon" aria-hidden="true">${f.status === 'link' || f.status === 'linking' ? '↗' : ext(f.name)}</span>`;
+    const name = `<div class="chip__name">${f.name}</div>`;
+    switch (f.status) {
+      case 'uploading':
+      case 'linking':
+        return `<div class="chip" data-id="${f.id}">${icon}<div class="chip__main">${name}<div class="chip__sub" data-sub>${f.status === 'linking' ? 'Uploading to WorkDrive · ' : ''}${fmt(done)} of ${fmt(f.size)} · ${left(remaining)}</div><div class="bar" role="progressbar" aria-label="${f.name}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div></div>${x}</div>`;
+      case 'done':
+        return `<div class="chip" data-id="${f.id}">${icon}<div class="chip__main">${name}<div class="chip__sub">${fmt(f.size)}</div></div>${x}</div>`;
+      case 'link':
+        return `<div class="chip chip--link" data-id="${f.id}">${icon}<div class="chip__main">${name}<div class="chip__sub">${fmt(f.size)} · Sent as a WorkDrive link, anyone in the email can view</div></div>${x}</div>`;
+      case 'over':
+        return `<div class="chip chip--over" data-id="${f.id}">${icon}<div class="chip__main">${name}<div class="chip__sub">${fmt(f.size)} · Over the 25 MB email limit. Send it as a link instead.</div></div><button type="button" class="chip__act" data-act="link">Share as link</button>${x}</div>`;
+      case 'failed':
+        return `<div class="chip chip--failed" data-id="${f.id}">${icon}<div class="chip__main">${name}<div class="chip__sub">Connection lost at ${pct}%. Your progress is saved.</div><div class="bar"><i style="width:${pct}%"></i></div></div><button type="button" class="chip__act" data-act="retry">Retry</button>${x}</div>`;
+    }
+  }
+
+  function render() {
+    list.innerHTML = files.map(chip).join('');
+    const n = files.filter((f) => f.status === 'uploading' || f.status === 'linking').length;
+    const b = blocking().length;
+    send.setAttribute('aria-pressed', String(queued));
+    send.textContent = queued ? 'Cancel send' : 'Send';
+    statusEl.className = 'status';
+    if (queued) {
+      statusEl.innerHTML = `<span class="spin" aria-hidden="true"></span>Sends when ${n === 1 ? 'upload finishes' : n + ' uploads finish'}`;
+    } else if (b) {
+      statusEl.className = 'status status--warn';
+      statusEl.textContent = b === 1 ? '1 file needs attention' : `${b} files need attention`;
+    } else if (n) {
+      statusEl.innerHTML = `<span class="spin" aria-hidden="true"></span>Uploading ${n} ${n === 1 ? 'file' : 'files'}. You can keep writing`;
+    } else if (files.length) {
+      const total = files.filter((f) => f.status === 'done').reduce((a, f) => a + f.size, 0);
+      statusEl.textContent = total ? `${fmt(total)} of 25 MB` : '';
+    } else {
+      statusEl.textContent = '';
+    }
+  }
+
+  function updateProgress() {
+    for (const f of files) {
+      if (f.status !== 'uploading' && f.status !== 'linking') continue;
+      const el = list.querySelector(`[data-id="${f.id}"]`);
+      if (!el) continue;
+      const pct = Math.round(f.progress * 100);
+      const done = f.size * f.progress;
+      el.querySelector('.bar i').style.width = pct + '%';
+      el.querySelector('.bar').setAttribute('aria-valuenow', pct);
+      el.querySelector('[data-sub]').textContent = `${f.status === 'linking' ? 'Uploading to WorkDrive · ' : ''}${fmt(done)} of ${fmt(f.size)} · ${left((f.size - done) / NOMINAL)}`;
+    }
+  }
+
+  // ---- Feedback ----
+  const live = document.createElement('div');
+  live.className = 'sr'; live.setAttribute('aria-live', 'polite');
+  document.body.appendChild(live);
+  function announce(msg) { live.textContent = msg; }
+  let toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg; toastEl.classList.add('is-on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('is-on'), 2200);
+  }
+
+  // ---- Inputs ----
+  list.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    act(Number(btn.closest('[data-id]').dataset.id), btn.dataset.act);
+  });
+  document.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', () => { const p = PRESETS[b.dataset.add]; add(p.name, p.size); }));
+  $('drop').addEventListener('click', dropConnection);
+  $('reset').addEventListener('click', () => {
+    files = []; queued = false;
+    $('body').value = 'Hi Rhea, attaching the exports and the recording.';
+    document.querySelectorAll('.msg--new').forEach((m) => m.remove());
+    render();
+  });
+  // Real files: nothing leaves the browser — only name and size are read.
+  $('attach').addEventListener('click', () => $('picker').click());
+  $('picker').addEventListener('change', (e) => { [...e.target.files].forEach((f) => add(f.name, f.size)); e.target.value = ''; });
+  const composer = $('composer');
+  let depth = 0;
+  composer.addEventListener('dragenter', (e) => { e.preventDefault(); depth++; composer.classList.add('is-drag'); });
+  composer.addEventListener('dragover', (e) => e.preventDefault());
+  composer.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; composer.classList.remove('is-drag'); } });
+  composer.addEventListener('drop', (e) => {
+    e.preventDefault(); depth = 0; composer.classList.remove('is-drag');
+    [...(e.dataTransfer?.files || [])].forEach((f) => add(f.name, f.size));
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

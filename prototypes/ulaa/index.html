@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ulaa Browser Modes</title>
+<style>
+:root{--bg:#0f1115;--panel:#1b1e24;--line:#2c3038;--text:#eef0f3;--muted:#9aa1ad;--accent:#f2735a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}
+.stage{position:relative;width:min(100%,calc((100vh - 110px) * 1.6));aspect-ratio:1400/875;border-radius:10px;overflow:hidden;box-shadow:0 20px 60px #0008,0 0 0 1px #ffffff14;--u:1px}
+.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .35s ease}
+.stage img.out{opacity:0}
+.hot{position:absolute;cursor:pointer;border-radius:999px;background:transparent;border:0;padding:0;transition:box-shadow .2s,background .2s}
+.hot:hover,.hot:focus-visible{background:#ffffff1f;box-shadow:0 0 0 calc(2*var(--u)) #ffffffaa;outline:none}
+.hints .hot{box-shadow:0 0 0 calc(2*var(--u)) #ffd54acc;background:#ffd54a22;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 calc(5*var(--u)) #ffd54a55}}
+/* mode menu */
+.menu{position:absolute;right:calc(40/1400*100%);top:calc(102/875*100%);width:calc(330*var(--u));background:#fff;color:#1d2330;border-radius:calc(12*var(--u));box-shadow:0 calc(18*var(--u)) calc(50*var(--u)) #0006,0 0 0 1px #0000000f;padding:calc(8*var(--u));transform-origin:top right;transform:scale(.96) translateY(calc(-6*var(--u)));opacity:0;pointer-events:none;transition:.16s ease;z-index:5}
+.menu.open{transform:none;opacity:1;pointer-events:auto}
+.menu h4{margin:calc(6*var(--u)) calc(10*var(--u)) calc(8*var(--u));font-size:calc(11*var(--u));letter-spacing:.08em;text-transform:uppercase;color:#7a8190;font-weight:600}
+.menu button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:calc(12*var(--u));width:100%;padding:calc(9*var(--u)) calc(10*var(--u));border-radius:calc(8*var(--u));cursor:pointer}
+.menu button:hover,.menu button:focus-visible{background:#f2f4f7}
+.menu button[aria-current=true]{background:#eef3ff}
+.ic{flex:none;width:calc(34*var(--u));height:calc(34*var(--u));border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--c)}
+.ic svg{width:56%;height:56%}
+.menu b{display:block;font-size:calc(14*var(--u));font-weight:600}
+.menu small{display:block;font-size:calc(11.5*var(--u));color:#6b7280;line-height:1.3}
+.menu .chk{margin-left:auto;color:#1a8cff;font-size:calc(15*var(--u));opacity:0}
+.menu button[aria-current=true] .chk{opacity:1}
+.menu .def{font-size:calc(9.5*var(--u));font-weight:700;color:#e65a3e;margin-left:calc(6*var(--u));letter-spacing:.05em}
+/* pin modal */
+.pin{position:absolute;inset:0;display:grid;place-items:center;background:#3a2a0080;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.2s;z-index:6}
+.pin.open{opacity:1;pointer-events:auto}
+.pin .card{background:#fff;color:#2a2110;border-radius:calc(16*var(--u));padding:calc(28*var(--u)) calc(32*var(--u));width:calc(380*var(--u));text-align:center;box-shadow:0 20px 60px #0005}
+.pin h3{margin:calc(10*var(--u)) 0 calc(4*var(--u));font-size:calc(20*var(--u))}
+.pin p{margin:0 0 calc(16*var(--u));font-size:calc(13*var(--u));color:#6b5a32}
+.dots{display:flex;justify-content:center;gap:calc(12*var(--u));margin-bottom:calc(16*var(--u))}
+.dots i{width:calc(14*var(--u));height:calc(14*var(--u));border-radius:50%;border:calc(2*var(--u)) solid #e8a917}
+.dots i.f{background:#e8a917}
+.dots.err{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(8*var(--u))}
+.keys button{all:unset;cursor:pointer;padding:calc(10*var(--u)) 0;border-radius:calc(10*var(--u));background:#fff6e0;font-size:calc(17*var(--u));font-weight:600;text-align:center}
+.keys button:hover{background:#ffeab8}
+.pin .cancel{all:unset;cursor:pointer;margin-top:calc(14*var(--u));font-size:calc(13*var(--u));color:#8a7440;display:inline-block}
+.pin .hint{font-size:calc(11*var(--u));color:#a08d5c;margin-top:calc(8*var(--u))}
+/* dock */
+.dock{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px;flex-wrap:wrap;justify-content:center;max-width:100%}
+.dock button{all:unset;display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;cursor:pointer;color:var(--muted);font-weight:500;font-size:13px;transition:.15s}
+.dock button .ic{width:24px;height:24px}
+.dock button:hover{color:var(--text);background:#ffffff0d}
+.dock button[aria-pressed=true]{background:#fff;color:#111}
+.dock button:focus-visible{outline:2px solid #6aa5ff}
+.dock .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.dock .tog{padding:6px 12px;font-size:12px}
+@media (max-width:760px){.dock button span{display:none}.dock button{padding:5px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <img id="imgA" alt="">
+    <img id="imgB" class="out" alt="" aria-hidden="true">
+    <div id="hots"></div>
+    <div class="menu" id="menu" role="menu" aria-label="Browsing modes"><h4>Switch browsing mode</h4><div id="menuList"></div></div>
+    <div class="pin" id="pin" role="dialog" aria-modal="true" aria-labelledby="pinT">
+      <div class="card">
+        <div class="ic" style="--c:#e8a917;margin:auto;width:calc(48*var(--u));height:calc(48*var(--u))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3 id="pinT">Child lock is on</h3>
+        <p>Enter the parent PIN to leave Kids mode.</p>
+        <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
+        <div class="keys" id="keys"></div>
+        <button class="cancel" id="pinCancel">Stay in Kids mode</button>
+        <div class="hint">Demo PIN: 1234</div>
+      </div>
+    </div>
+  </div>
+  <nav class="dock" id="dock" aria-label="Change mode"></nav>
+</div>
+<script>
+const I={
+ open:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="10" r="2.5"/><path d="M8 16.5c1-2 2.4-3 4-3s3 1 4 3M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+ incognito:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h18M6 11l2-6h8l2 6"/><circle cx="7.5" cy="16" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M10 16h4"/></svg>',
+ personal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5c1.3-2.3 3.2-3.5 5.5-3.5s4.2 1.2 5.5 3.5"/></svg>',
+ work:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="6" r="3"/><rect x="4" y="12" width="16" height="9" rx="2"/><path d="M4 15h16M12 17v1"/></svg>',
+ developer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 8l-5 5 5 5M16 8l5 5-5 5"/><circle cx="10" cy="5" r="2"/><path d="M11.5 6.5l3 3"/></svg>',
+ kids:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19c2 1 14 1 16 0M6 18l2-6h7l3-4 2 2-2 2v6M8 12V7l3 2"/></svg>'
+};
+const M={
+ open:{name:'Open Season',c:'#f2735a',d:'No restrictions, trackers visible'},
+ incognito:{name:'Incognito',c:'#2b4a7e',d:'Nothing is remembered'},
+ personal:{name:'Personal',c:'#1fa187',d:'Balanced privacy for everyday use'},
+ work:{name:'Work',c:'#1a8cff',d:'Focus, blocks distracting sites'},
+ developer:{name:'Developer',c:'#1d1d1f',d:'Dev tools front and centre'},
+ kids:{name:'Kids',c:'#e8a917',d:'Family-safe, with child lock'}
+};
+const ORDER=['open','incognito','personal','work','developer','kids'];
+const DEFAULT='open';
+// screen -> {mode, img, pill:[x1,x2], others:{y, xs:{mode:x}}, extra:[...]}
+const S={
+ open:{mode:'open',img:'s/open.jpg',pill:[1207,1356],others:{y:762,xs:{developer:175,incognito:243,personal:311,work:379,kids:447}}},
+ incognito:{mode:'incognito',img:'s/incognito.jpg',pill:[1248,1356],others:{y:583,xs:{developer:450,open:518,personal:586,work:654,kids:722}}},
+ personal:{mode:'personal',img:'s/personal.jpg',pill:[1237,1356],others:{y:760,xs:{developer:175,incognito:243,open:311,work:379,kids:447}},extra:[{x:290,y:30,w:30,h:28,go:'personal-tabs',label:'Open new tab'}]},
+ 'personal-tabs':{mode:'personal',img:'s/personal-tabs.jpg',pill:[1237,1356],others:{y:760,xs:{developer:175,incognito:243,open:311,work:379,kids:447}},extra:[{x:835,y:32,w:24,h:24,go:'personal',label:'Close tab'}]},
+ work:{mode:'work',img:'s/work.jpg',pill:[1260,1356]},
+ developer:{mode:'developer',img:'s/developer.jpg',pill:[1235,1356],others:{y:731,xs:{open:175,incognito:243,personal:311,work:379,kids:447}}},
+ kids:{mode:'kids',img:'s/kids.jpg',pill:[1275,1361]}
+};
+Object.values(S).forEach(s=>{const i=new Image();i.src=s.img});
+
+const stage=document.getElementById('stage'),A=document.getElementById('imgA'),B=document.getElementById('imgB'),hots=document.getElementById('hots'),menu=document.getElementById('menu'),menuList=document.getElementById('menuList'),dock=document.getElementById('dock'),pin=document.getElementById('pin');
+let cur=null,front=A,hintsOn=false,pending=null,pinVal='';
+const pct=(v,t)=>v/t*100+'%';
+function hot(x,y,w,h,label,fn,round){const b=document.createElement('button');b.className='hot';b.setAttribute('aria-label',label);Object.assign(b.style,{left:pct(x,1400),top:pct(y,875),width:pct(w,1400),height:pct(h,875)});if(!round)b.style.borderRadius='calc(8*var(--u))';b.onclick=e=>{e.stopPropagation();fn()};hots.appendChild(b);return b}
+
+function render(key){
+  const s=S[key];cur=key;
+  const back=front===A?B:A;back.src=s.img;back.alt=`Ulaa in ${M[s.mode].name} mode`;
+  const swap=()=>{back.classList.remove('out');back.removeAttribute('aria-hidden');front.classList.add('out');front.setAttribute('aria-hidden','true');front=back};
+  back.complete?swap():back.onload=swap;
+  hots.innerHTML='';
+  hot(s.pill[0],64,s.pill[1]-s.pill[0],34,`Current mode: ${M[s.mode].name}. Change mode`,toggleMenu,true);
+  if(s.others)for(const[m,x]of Object.entries(s.others.xs))hot(x-26,s.others.y-26,52,52,`Switch to ${M[m].name} mode`,()=>go(m),true);
+  (s.extra||[]).forEach(e=>hot(e.x,e.y,e.w,e.h,e.label,()=>render(e.go)));
+  menuList.innerHTML=ORDER.map(m=>`<button role="menuitemradio" data-m="${m}" aria-current="${m===s.mode}"><span class="ic" style="--c:${M[m].c}">${I[m]}</span><span><b>${M[m].name}${m===DEFAULT?'<span class="def">DEFAULT</span>':''}</b><small>${M[m].d}</small></span><span class="chk">✓</span></button>`).join('');
+  dock.querySelectorAll('[data-m]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===s.mode));
+  try{localStorage.setItem('ulaa-mode',key)}catch(e){}
+}
+function go(m){
+  closeMenu();
+  if(S[cur].mode===m)return;
+  if(S[cur].mode==='kids'){pending=m;openPin();return}
+  render(m);
+}
+function toggleMenu(){menu.classList.contains('open')?closeMenu():(menu.classList.add('open'),menu.querySelector('[aria-current=true]').focus())}
+function closeMenu(){menu.classList.remove('open')}
+menuList.onclick=e=>{const b=e.target.closest('[data-m]');if(b)go(b.dataset.m)};
+stage.addEventListener('click',e=>{if(!menu.contains(e.target))closeMenu()});
+
+// PIN
+const keys=document.getElementById('keys'),dots=document.getElementById('dots');
+keys.innerHTML=[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':`<button data-k="${k}">${k}</button>`).join('');
+function paint(){[...dots.children].forEach((d,i)=>d.classList.toggle('f',i<pinVal.length))}
+function press(k){if(k==='⌫'){pinVal=pinVal.slice(0,-1);paint();return}if(pinVal.length>=4)return;pinVal+=k;paint();if(pinVal.length===4)setTimeout(()=>{if(pinVal==='1234'){const m=pending;closePin();render(m)}else{dots.classList.remove('err');void dots.offsetWidth;dots.classList.add('err');pinVal='';paint()}},180)}
+keys.onclick=e=>{const b=e.target.closest('[data-k]');if(b)press(b.dataset.k)};
+function openPin(){pinVal='';paint();pin.classList.add('open');keys.querySelector('button').focus()}
+function closePin(){pin.classList.remove('open');pending=null}
+document.getElementById('pinCancel').onclick=closePin;
+
+// dock
+dock.innerHTML=ORDER.map((m,i)=>`<button data-m="${m}" title="${M[m].name} (${i+1})"><span class="ic" style="--c:${M[m].c}">${I[m]}</span><span>${M[m].name}</span></button>`).join('')+'<i class="sep"></i><button class="tog" id="hintBtn" aria-pressed="false">Show hotspots</button>';
+dock.onclick=e=>{const b=e.target.closest('[data-m]');if(b)go(b.dataset.m)};
+document.getElementById('hintBtn').onclick=e=>{hintsOn=!hintsOn;stage.classList.toggle('hints',hintsOn);e.currentTarget.setAttribute('aria-pressed',hintsOn);e.currentTarget.textContent=hintsOn?'Hide hotspots':'Show hotspots'};
+
+document.addEventListener('keydown',e=>{
+  if(pin.classList.contains('open')){if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==='Backspace')press('⌫');else if(e.key==='Escape')closePin();return}
+  if(e.key==='Escape')closeMenu();
+  const n=+e.key;if(n>=1&&n<=6)go(ORDER[n-1]);
+  if(e.key.toLowerCase()==='m')toggleMenu();
+});
+new ResizeObserver(()=>stage.style.setProperty('--u',stage.clientWidth/1400+'px')).observe(stage);
+let start=DEFAULT;try{const s=localStorage.getItem('ulaa-mode');if(S[s])start=s}catch(e){}
+render(start);
+</script>
+</body>
+</html>

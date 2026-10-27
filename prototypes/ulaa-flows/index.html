@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ulaa Mode Flows</title>
+<style>
+:root{--bg:#0f1115;--panel:#1b1e24;--line:#2c3038;--text:#eef0f3;--muted:#9aa1ad;--accent:#4d8dff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:14px 16px}
+.flows{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.flows button{all:unset;cursor:pointer;padding:7px 14px;border-radius:999px;color:var(--muted);border:1px solid var(--line);font-size:13px;font-weight:500;transition:.15s}
+.flows button:hover{color:var(--text)}
+.flows button[aria-selected=true]{background:#fff;color:#111;border-color:#fff}
+.flows button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stage{position:relative;width:min(100%,calc((100vh - 150px) * 1.6));aspect-ratio:1440/900;border-radius:10px;overflow:hidden;box-shadow:0 20px 60px #0008,0 0 0 1px #ffffff14;background:#fff;cursor:pointer}
+.stage.has-hot{cursor:default}
+.stage img{position:absolute;inset:0;width:100%;height:100%;transition:opacity .3s ease}
+.stage img.out{opacity:0}
+.hot{all:unset;position:absolute;border-radius:8px;cursor:pointer}
+.hot::after{content:"";position:absolute;inset:-3px;border-radius:inherit;box-shadow:0 0 0 2px #4d8dffcc;background:#4d8dff22;opacity:0;transition:opacity .2s}
+.hot:hover::after,.hot:focus-visible::after,.hint .hot::after{opacity:1}
+.hint .hot::after{animation:pulse 1.3s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px #4d8dff44}}
+.bar{display:flex;align-items:center;gap:14px;width:min(100%,calc((100vh - 150px) * 1.6))}
+.nav{all:unset;cursor:pointer;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);color:var(--text);flex:none}
+.nav:hover{background:#262a32}
+.nav:disabled{opacity:.35;cursor:default}
+.nav:focus-visible{outline:2px solid var(--accent)}
+.cap{flex:1;min-width:0}
+.cap b{display:block;font-size:14px;font-weight:600}
+.cap span{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dots{display:flex;gap:5px;flex:none}
+.dots button{all:unset;cursor:pointer;width:7px;height:7px;border-radius:50%;background:#3a3f49}
+.dots button[aria-current=true]{background:#fff;width:18px;border-radius:4px}
+.count{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;flex:none}
+@media (max-width:700px){.dots{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="flows" id="flows" role="tablist" aria-label="Flows"></div>
+  <div class="stage" id="stage"><img id="a" alt=""><img id="b" class="out" alt="" aria-hidden="true"><div id="hots"></div></div>
+  <div class="bar">
+    <button class="nav" id="prev" aria-label="Previous step">‹</button>
+    <div class="cap" aria-live="polite"><b id="capT"></b><span id="capD"></span></div>
+    <div class="dots" id="dots"></div>
+    <span class="count" id="count"></span>
+    <button class="nav" id="next" aria-label="Next step">›</button>
+  </div>
+</div>
+<script>
+// hotspot rects are [x, y, w, h] in 1440×900 screen pixels; steps without one advance on any click
+const SETS={
+ contents:[
+  {name:'Work: signed in',steps:[
+   {img:49,t:'Work mode, signed out',d:'Access Zoho apps shows product promos until you sign in.',hot:[314,578,62,28]},
+   {img:50,t:'Work mode, signed in',d:'The same space turns into your upcoming meetings and recent Workplace files.'}]},
+  {name:'Personal: appearance',steps:[
+   {img:51,t:'Appearance settings',d:'Each mode has its own new-tab layout, set from the gear icon.',hot:[1392,116,32,32]},
+   {img:52,t:'Pick what shows',d:'Turn sections and background options on or off for this mode.',hot:[1370,544,38,26]},
+   {img:53,t:'Set a background image',d:'Pick artwork from the Zoho art gallery.',hot:[1130,580,134,88]},
+   {img:54,t:'Background applied',d:'The new-tab page picks up the chosen artwork right away.',hot:[1128,762,112,20]},
+   {img:55,t:'Browse the full gallery',d:'View more opens the full collection inside the same panel.'},
+   {img:56,t:'Personalised new tab',d:'Close the panel to see the finished page.',hot:[632,852,176,40]},
+   {img:57,t:'Zoho updates',d:'Scroll down for Zoho blog stories, shown over the same background.'}]}
+ ],
+ switching:[
+  {name:'From the menu',steps:[
+   {img:58,t:'Start in Personal mode',d:'Open the browser menu to start a new window in another mode.',hot:[1402,66,32,32]},
+   {img:59,t:'Option A: modes in the menu',d:'All six modes are listed in the menu, each with a shortcut.',hot:[1083,214,357,32]},
+   {img:60,t:'Option B: New Mode submenu',d:'Modes sit under one New Mode entry, with Set as default on hover.',hot:[828,194,252,44]},
+   {img:61,t:'Private window opens',d:'The chrome, new-tab page and privacy report all change to the new mode.'}]},
+  {name:'Move a tab: Private → Personal',steps:[
+   {img:62,t:'Browsing in Private',d:'A page you opened in a Private window.'},
+   {img:63,t:'Drag the tab',d:'Drag the tab out and drop it onto the Personal window.',hot:[352,250,190,34]},
+   {img:64,t:'Drop into Personal',d:'The tab joins the Personal window’s tab strip.',hot:[890,34,206,34]},
+   {img:65,t:'Confirm the switch',d:'Ulaa explains what changes before the tab takes on the new mode’s rules.',hot:[704,652,130,40]},
+   {img:66,t:'Tab now in Personal',d:'The page keeps going, now with Personal-mode history and cookies.'}]},
+  {name:'Move a tab: Developer → Work',steps:[
+   {img:67,t:'Browsing in Developer',d:'A Stack Overflow tab open in Developer mode.'},
+   {img:68,t:'Drag into Work',d:'Drag the tab onto a Work window.',hot:[365,315,206,37]},
+   {img:69,t:'Tab lands in Work',d:'The dropped tab joins the Work tab strip.',hot:[293,34,198,38]},
+   {img:70,t:'Confirm the switch',d:'The same confirmation explains what changes between Developer and Work.',hot:[704,652,130,40]},
+   {img:71,t:'Tab now in Work',d:'Work-mode protections now apply to the moved tab.'}]},
+  {name:'Mode pill',steps:[
+   {img:72,t:'The mode pill',d:'The pill in the toolbar always shows which mode you’re in.',hot:[1265,66,128,32]},
+   {img:73,t:'Change mode',d:'A visual picker of every mode. The info icon explains each one.',hot:[1218,160,34,34]},
+   {img:74,t:'Mode info',d:'A hover card describes what the mode does before you switch.'}]},
+  {name:'Switch this tab',steps:[
+   {img:75,t:'From the tab menu',d:'Right-click a tab, then Switch This Tab to, to move just that tab into another mode.',hot:[944,286,220,54]},
+   {img:76,t:'Option A: compact list',d:'A short list of modes, with Set as default inline.',hot:[322,178,192,54]},
+   {img:77,t:'Option B: with descriptions',d:'Each mode shows a one-line summary to help you choose.',hot:[300,236,256,60]}]}
+ ]
+};
+const qs=new URLSearchParams(location.search),setKey=SETS[qs.get('set')]?qs.get('set'):'switching',FL=SETS[setKey];
+document.title=setKey==='contents'?'Ulaa Mode Contents':'Ulaa Mode Switching';
+FL.forEach(f=>f.steps.forEach(s=>{const i=new Image();i.src=`s/${s.img}.jpg`}));
+
+const $=id=>document.getElementById(id),stage=$('stage'),A=$('a'),B=$('b'),hots=$('hots');
+let fi=0,si=0,front=A,idle;
+$('flows').innerHTML=FL.map((f,i)=>`<button role="tab" data-i="${i}">${f.name}</button>`).join('');
+$('flows').onclick=e=>{const b=e.target.closest('[data-i]');if(b)show(+b.dataset.i,0)};
+if(FL.length<2)$('flows').style.display='none';
+
+function show(f,s){
+  fi=f;si=s;const fl=FL[f],st=fl.steps[s];
+  const back=front===A?B:A;back.src=`s/${st.img}.jpg`;back.alt=st.t;
+  const swap=()=>{back.classList.remove('out');back.removeAttribute('aria-hidden');front.classList.add('out');front.setAttribute('aria-hidden','true');front=back};
+  back.complete?swap():back.onload=swap;
+  hots.innerHTML='';stage.classList.remove('hint');stage.classList.toggle('has-hot',!!st.hot);
+  if(st.hot){const[x,y,w,h]=st.hot,b=document.createElement('button');b.className='hot';b.setAttribute('aria-label',st.t+' — next');Object.assign(b.style,{left:x/14.4+'%',top:y/9+'%',width:w/14.4+'%',height:h/9+'%'});b.onclick=e=>{e.stopPropagation();step(1)};hots.appendChild(b)}
+  clearTimeout(idle);if(st.hot)idle=setTimeout(()=>stage.classList.add('hint'),2200);
+  $('capT').textContent=st.t;$('capD').textContent=st.d;
+  $('dots').innerHTML=fl.steps.map((_,i)=>`<button data-s="${i}" aria-label="Step ${i+1}" aria-current="${i===s}"></button>`).join('');
+  $('count').textContent=`${s+1} / ${fl.steps.length}`;
+  $('prev').disabled=f===0&&s===0;$('next').disabled=f===FL.length-1&&s===fl.steps.length-1;
+  document.querySelectorAll('#flows button').forEach(b=>b.setAttribute('aria-selected',+b.dataset.i===f));
+}
+function step(d){
+  const fl=FL[fi];let f=fi,s=si+d;
+  if(s>=fl.steps.length){if(fi<FL.length-1){f++;s=0}else return}
+  if(s<0){if(fi>0){f--;s=FL[f].steps.length-1}else return}
+  show(f,s);
+}
+$('dots').onclick=e=>{const b=e.target.closest('[data-s]');if(b)show(fi,+b.dataset.s)};
+$('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);
+stage.onclick=()=>{if(FL[fi].steps[si].hot)stage.classList.add('hint');else step(1)};
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')step(1);if(e.key==='ArrowLeft')step(-1)});
+show(0,0);
+</script>
+</body>
+</html>
