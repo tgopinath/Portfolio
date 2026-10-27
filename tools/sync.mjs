@@ -141,8 +141,11 @@ async function captureThumbs(apps) {
     }
     ws.close();
   } finally {
+    // Chrome keeps writing its profile for a moment after it is told to quit.
+    const exited = new Promise((r) => chrome.once('exit', r));
     chrome.kill(); server.kill();
-    fs.rmSync(tmp, { recursive: true, force: true });
+    await Promise.race([exited, sleep(5000)]);
+    try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
   }
 }
 
