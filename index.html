@@ -120,6 +120,28 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
 /* Illustration back in the hero: keep it inside the column */
 .hero-art{overflow:visible}
 @media(max-width:760px){.hero-art{height:320px}}
+
+/* Side project: Wake Me There (wide card with real iPhone screens) */
+.featured.side{padding-top:0}
+.card.wide{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:36px;align-items:center;padding:8px 32px 8px 8px}
+.thumb.wmt{--base:#f2f1ff;--g1:#d9d5ff;--g2:#ffdbe7;aspect-ratio:16/9;overflow:hidden}
+.wmt .phones{position:absolute;inset:0;display:flex;justify-content:center;align-items:flex-start;gap:3.5%;padding-top:6%}
+.wmt .phones img{width:21%;height:auto;border:clamp(3px,.45cqi,5px) solid #0b0b10;border-radius:13%/6%;background:#0b0b10;box-shadow:0 18px 36px -16px #1e1a5a66;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.wmt .phones img:nth-child(1){transform:translateY(9%) rotate(-5deg)}
+.wmt .phones img:nth-child(2){transform:translateY(2%)}
+.wmt .phones img:nth-child(3){transform:translateY(9%) rotate(5deg)}
+.card.wide:hover .wmt .phones img:nth-child(1){transform:translate(-8%,4%) rotate(-8deg)}
+.card.wide:hover .wmt .phones img:nth-child(2){transform:translateY(-4%)}
+.card.wide:hover .wmt .phones img:nth-child(3){transform:translate(8%,4%) rotate(8deg)}
+.wide-body h3{font-size:26px;letter-spacing:-.04em;margin:0 0 10px}
+.wide-body p{font-size:15.5px;min-height:0;margin:0 0 22px;max-width:46ch}
+.wide-facts{list-style:none;padding:0;margin:0 0 24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;border-top:1px solid var(--line);padding-top:16px}
+.wide-facts li{font-size:13px;color:var(--secondary);line-height:1.4}
+.wide-facts b{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
+.wide-body .tags .tag{font-size:10px}
+@media(max-width:1100px){.card.wide{gap:24px;padding-right:20px}.wide-body h3{font-size:22px}}
+@media(max-width:760px){.card.wide{grid-template-columns:1fr;padding:5px 5px 12px;gap:14px}.wide-body{padding:0 6px}.wide-facts{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){.wmt .phones img{transition:none}}
 </style>
 </head>
 <body>
@@ -156,6 +178,26 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
     <article class="card" data-project="zuis"><div class="thumb zuis"><div class="mock has-shot"><div class="mock-top"><i></i><i></i><i></i></div><img class="shot" src="assets/thumbs/zuis.jpg" alt="ZUIS presentation library" decoding="async"></div></div><h3>ZUIS</h3><p>Building the ZUIS app using vibe coding, combining design thinking with development.</p><div class="tags"><span class="tag">Product Design</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="zuis" aria-label="Open ZUIS prototype">→</a></div></article>
   </div>
 </section>
+<section class="wrap featured side" id="side-projects">
+  <div class="section-top"><div><div class="kicker">Side project</div><h2>Designed, coded and running on my iPhone</h2></div></div>
+  <article class="card wide" data-project="wakemethere">
+    <div class="thumb wmt"><div class="phones">
+      <img src="prototypes/wakemethere/shots/home.jpg" alt="Wake Me There home screen with saved stops" width="600" height="1305" loading="lazy" decoding="async">
+      <img src="prototypes/wakemethere/shots/trip.jpg" alt="Trip screen showing 3.1 km to go and the alarm zone" width="600" height="1305" loading="lazy" decoding="async">
+      <img src="prototypes/wakemethere/shots/ring.jpg" alt="Full-screen wake up alarm with snooze" width="600" height="1305" loading="lazy" decoding="async">
+    </div></div>
+    <div class="wide-body">
+      <h3>Wake Me There</h3>
+      <p>A location-based travel alarm for iOS. Pick your stop, nap on the bus or metro, and it wakes you before you arrive, even on silent.</p>
+      <ul class="wide-facts">
+        <li><b>Role</b>Product design and SwiftUI build</li>
+        <li><b>Stack</b>SwiftUI, MapKit, Core Location</li>
+        <li><b>Status</b>Installed on my iPhone</li>
+      </ul>
+      <div class="tags"><span class="tag">iOS App</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="wakemethere" aria-label="Open Wake Me There prototype">→</a></div>
+    </div>
+  </article>
+</section>
 <section class="wrap lower" id="about"><div><div class="kicker">A little about me</div><h2>From visual craft to product thinking.</h2><figure class="portrait"><img src="assets/photo/gopinath.png" alt="Gopinath Thandapani" decoding="async"><figcaption><b>Gopinath Thandapani</b>Product Designer · Chennai</figcaption></figure></div><div><p>I started at Zoho as a Visual Designer and grew into Product Design over 10+ years. Working across multiple products has shaped how I approach design: understand the wider system, find the real user friction, and make the experience easier to understand.</p><p>My work spans product redesigns, dashboards, shared workflows, browser experiences, and design-system practice. I focus on design quality, collaboration, and developer handoff, while using AI tools and vibe coding to explore ideas and bring prototypes to life.</p><div class="pills"><span>Product design</span><span>Enterprise UX</span><span>Interaction design</span><span>Wireflows</span><span>Figma</span><span>Design systems</span><span>Developer handoff</span><span>AI-assisted prototyping</span></div></div></section>
 <section class="wrap lower" id="approach"><div><div class="kicker">My approach</div><h2>Thoughtful by design.</h2></div><div><p><b>01 · Understand</b><br>Review existing products, map workflows, and discuss problems and constraints with stakeholders.</p><p><b>02 · Explore</b><br>Use flows, wireframes, interface explorations, and Figma to make design decisions tangible.</p><p><b>03 · Deliver</b><br>Use design reviews and stakeholder feedback, then prepare clear designs and handoff details for development.</p></div></section>
 <section class="wrap" id="thoughts"><div class="contact" id="contact"><div><div class="kicker">Next conversation</div><h2>Let’s make useful things.</h2><p>Contact details will be added when you’re ready to publish them.</p></div><a class="primary" href="#work">Explore my work ↗</a></div></section>
@@ -169,7 +211,7 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
   <div class="vframe"><div class="vloading">Loading prototype…</div><iframe id="vFrame" title="Prototype" loading="lazy"></iframe></div>
 </div></div>
 <script>
-const data={calendar:["Zoho Calendar","A product redesign story focused on scheduling workflows and interface clarity. We’ll refine the story using your exported screens and only approved details."],workplace:["Zoho Workplace","A dashboard design story about bringing important destinations and information into a coherent starting point. Specific design decisions will be added from your project materials."],teaminbox:["Zoho TeamInbox","A shared-inbox design story focused on collaborative work and interface consistency. We’ll use approved assets to identify the most compelling problem and design decisions."],ulaa:["Zoho Ulaa Browser","A browser experience story covering modes and interface design. The final case study will reflect the exact features you designed and can disclose."],om:["OM","A UI improvement story grounded in product analysis, exploration, stakeholder feedback, and developer handoff. We’ll verify the scope and outcome together."],zuis:["ZUIS","A developing app initiative that can demonstrate product thinking and AI-assisted prototyping. We’ll clarify its current status and your contribution before presenting it as shipped work."]};
+const data={calendar:["Zoho Calendar","A product redesign story focused on scheduling workflows and interface clarity. We’ll refine the story using your exported screens and only approved details."],workplace:["Zoho Workplace","A dashboard design story about bringing important destinations and information into a coherent starting point. Specific design decisions will be added from your project materials."],teaminbox:["Zoho TeamInbox","A shared-inbox design story focused on collaborative work and interface consistency. We’ll use approved assets to identify the most compelling problem and design decisions."],ulaa:["Zoho Ulaa Browser","A browser experience story covering modes and interface design. The final case study will reflect the exact features you designed and can disclose."],om:["OM","A UI improvement story grounded in product analysis, exploration, stakeholder feedback, and developer handoff. We’ll verify the scope and outcome together."],wakemethere:["Wake Me There","A location-based travel alarm for iOS, designed and built in SwiftUI with AI-assisted coding."],zuis:["ZUIS","A developing app initiative that can demonstrate product thinking and AI-assisted prototyping. We’ll clarify its current status and your contribution before presenting it as shipped work."]};
 const modal=document.getElementById('modal');document.querySelectorAll('.case-open').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const d=data[a.dataset.project];document.getElementById('modalTitle').textContent=d[0];document.getElementById('modalText').textContent=d[1];modal.classList.add('open')}));function closeModal(){modal.classList.remove('open')}document.getElementById('close').addEventListener('click',closeModal);modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});document.getElementById('year').textContent=new Date().getFullYear();
 
 const protos={
@@ -178,6 +220,7 @@ workplace:{title:"Zoho Workplace",text:"A unified dashboard that brings Workplac
 teaminbox:{title:"Zoho TeamInbox",text:"Shared-inbox experiences for teams, explored as screen flows and interactive views.",views:[["Screen flows","prototypes/teaminbox/index.html"],["Views","prototypes/teaminbox-views/index.html"],["Large file uploads","prototypes/teaminbox-uploads/index.html"]]},
 ulaa:{title:"Zoho Ulaa Browser",text:"Purpose-built browsing modes, each with its own privacy rules, new-tab content and ways to switch between them.",views:[["Browser","prototypes/ulaa-browser/index.html"],["Mode contents","prototypes/ulaa-flows/index.html?set=contents"],["Mode switching","prototypes/ulaa-flows/index.html?set=switching"]]},
 om:{title:"OM UI Builder",text:"A UI builder for composing OM pages, with live preview and code export.",views:[["UI Builder","prototypes/om/index.html"]]},
+wakemethere:{title:"Wake Me There",text:"A location-based travel alarm for iOS. Try a simulated trip, swipe stops to edit or delete, and see the real screens from the SwiftUI app.",views:[["Prototype","prototypes/wakemethere/index.html"],["App screens","prototypes/wakemethere/screens.html"]]},
 zuis:{title:"ZUIS",text:"A presentation library for Zoho UI standards, designed and built with AI-assisted vibe coding.",views:[["Prototype","prototypes/zuis/index.html"]]}
 };
 const viewer=document.getElementById('viewer'),vFrame=document.getElementById('vFrame'),vTabs=document.getElementById('vTabs'),vOpen=document.getElementById('vOpen');let lastFocus=null;
