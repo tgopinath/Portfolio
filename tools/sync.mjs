@@ -33,6 +33,7 @@ const APPS = [
   { key: 'om', build: { dir: 'om-builder', cmd: ['python3', 'build.py'], inputs: ['app.js', 'styles.css', 'index.html', 'assets', 'build.py'], output: 'om-builder.html' },
     copy: [['om-builder/om-builder.html', 'prototypes/om/index.html']], page: 'prototypes/om/index.html' },
   { key: 'wakemethere', copy: [['WakeMeThere/prototype', 'prototypes/wakemethere']] }, // card uses the app's own screenshots, no captured thumb
+  { key: 'forge', copy: [['ForgeTrainer/prototype', 'prototypes/forge']] }, // screenshots come from the app's UI test (testPortfolioShots)
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
