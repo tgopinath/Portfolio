@@ -95,12 +95,12 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
 .brand{display:flex;align-items:center;gap:12px}
 .avatar{width:40px;height:40px;flex:none;border-radius:50%;overflow:hidden;background:radial-gradient(80% 80% at 20% 15%,#cfdcff,transparent 70%),radial-gradient(80% 80% at 90% 90%,#f6dcef,transparent 70%),#f3f4fa;box-shadow:0 0 0 1px #1112160f}
 .avatar img{width:100%;height:100%;object-fit:cover;object-position:50% 8%;display:block;transform:scale(1.25) translateY(6%)}
-.portrait{position:relative;margin:32px 0 0;max-width:380px;aspect-ratio:1/1.02;border-radius:24px;overflow:hidden;isolation:isolate;background:radial-gradient(60% 70% at 18% 18%,#cfdcff,transparent 70%),radial-gradient(60% 70% at 88% 82%,#f6dcef,transparent 70%),radial-gradient(50% 60% at 85% 12%,#d8f3ec,transparent 70%),#f6f7fb;box-shadow:0 0 0 1px #1112160a,0 24px 50px -28px #1e2d5040}
+.portrait{position:relative;margin:32px 0 0;max-width:260px;aspect-ratio:1/1.02;border-radius:24px;overflow:hidden;isolation:isolate;background:radial-gradient(60% 70% at 18% 18%,#cfdcff,transparent 70%),radial-gradient(60% 70% at 88% 82%,#f6dcef,transparent 70%),radial-gradient(50% 60% at 85% 12%,#d8f3ec,transparent 70%),#f6f7fb;box-shadow:0 0 0 1px #1112160a,0 24px 50px -28px #1e2d5040}
 .portrait:before{content:"";position:absolute;inset:0;z-index:-1;background-image:radial-gradient(#1b2a4a1c 1px,transparent 1.3px);background-size:16px 16px;-webkit-mask-image:linear-gradient(to bottom,#000,transparent 70%);mask-image:linear-gradient(to bottom,#000,transparent 70%)}
 .portrait img{position:absolute;left:0;right:0;bottom:0;width:100%;height:auto;display:block}
 .portrait figcaption{position:absolute;left:14px;bottom:14px;display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:14px;background:#ffffffe6;backdrop-filter:blur(8px);font-size:13px;color:var(--secondary);box-shadow:0 0 0 1px #1112160d,0 10px 24px -12px #1e2d5040}
 .portrait figcaption b{font-size:14px;color:var(--ink);font-weight:600}
-@media(max-width:760px){.portrait{max-width:none;margin-top:24px}.avatar{width:34px;height:34px}}
+@media(max-width:760px){.portrait{max-width:240px;margin-top:24px}.avatar{width:34px;height:34px}}
 
 /* Hover to look closer: the portrait zooms in on the face, the header avatar pops out */
 .portrait img{transform-origin:50% 34%;transition:transform .55s cubic-bezier(.2,.7,.2,1)}
@@ -146,6 +146,12 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
 @media(max-width:1100px){.card.wide{gap:24px;padding-right:20px}.wide-body h3{font-size:22px}}
 @media(max-width:760px){.card.wide{grid-template-columns:1fr;padding:5px 5px 12px;gap:14px}.wide-body{padding:0 6px}.wide-facts{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){.wmt .phones img{transition:none}}
+
+.portrait figcaption{left:10px;bottom:10px;padding:8px 12px;border-radius:12px}
+
+/* Secondary text: always 14px #333 (overrides the sizes above, all breakpoints) */
+.lower p,.lower p b,.wide-body p,.wide-facts li,.status,.portrait figcaption,.brand small,.hero-copy,.card p,.contact p,footer,.vtitle p,.panel p,.panel li{font-size:14px!important;color:var(--secondary)}
+.lower p{line-height:1.7}
 </style>
 </head>
 <body>
@@ -179,6 +185,7 @@ nav{display:flex;align-items:center;gap:42px;font-size:14px;color:#292b30}nav a:
     <article class="card" data-project="teaminbox"><div class="thumb inbox"><div class="mock has-shot"><div class="mock-top"><i></i><i></i><i></i></div><img class="shot" src="assets/thumbs/teaminbox.jpg" alt="Zoho TeamInbox vertical split view" decoding="async"></div></div><h3>Zoho TeamInbox</h3><p>Enhancing and maintaining the shared inbox experience for teams.</p><div class="tags"><span class="tag">Collaboration</span><span class="tag">Product UX</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="teaminbox" aria-label="Open TeamInbox prototype">→</a></div></article>
     <article class="card" data-project="ulaa"><div class="thumb ulaa"><div class="mock has-shot"><div class="mock-top"><i></i><i></i><i></i></div><img class="shot" src="assets/thumbs/ulaa.jpg" alt="Zoho Ulaa Browser in Open-season mode" decoding="async"></div></div><h3>Zoho Ulaa Browser</h3><p>Designing new modes and experiences for a modern browser.</p><div class="tags"><span class="tag">New Features</span><span class="tag">Interaction</span><a class="round-arrow case-open" href="#" data-project="ulaa" aria-label="Open Ulaa case study">→</a></div></article>
     <article class="card" data-project="om"><div class="thumb om"><div class="mock has-shot"><div class="mock-top"><i></i><i></i><i></i></div><img class="shot" src="assets/thumbs/om.jpg" alt="OM UI Builder home" decoding="async"></div></div><h3>OM</h3><p>Improving the user interface for a more seamless experience.</p><div class="tags"><span class="tag">UI Enhancement</span><span class="tag">Product Design</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="om" aria-label="Open OM prototype">→</a></div></article>
+    <article class="card" data-project="mailrules"><div class="thumb zuis"><div class="mock has-shot"><div class="mock-top"><i></i><i></i><i></i></div><img class="shot" src="assets/thumbs/mail-rules.jpg" alt="Zoho Mail Admin Rules page" decoding="async"></div></div><h3>Zoho Mail Admin: Rules</h3><p>AI-assisted rules for the Mail admin console. Describe a rule to Zia or build it yourself, pick from a 202-rule library, and approve risky changes.</p><div class="tags"><span class="tag">Product Design</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="mailrules" aria-label="Open Zoho Mail Admin Rules prototype">→</a></div></article>
     <article class="card" data-project="zuis"><div class="thumb zuis"><div class="mock has-shot"><div class="mock-top"><i></i><i></i><i></i></div><img class="shot" src="assets/thumbs/zuis.jpg" alt="ZUIS presentation library" decoding="async"></div></div><h3>ZUIS</h3><p>Building the ZUIS app using vibe coding, combining design thinking with development.</p><div class="tags"><span class="tag">Product Design</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="zuis" aria-label="Open ZUIS prototype">→</a></div></article>
   </div>
 </section>
@@ -279,6 +286,7 @@ wakemethere:{title:"Wake Me There",text:"A location-based travel alarm for iOS. 
 forge:{title:"Forge",text:"A personal trainer for iOS: goal-based plans, animated exercise figures, set logging with a rest timer, and progress charts. The case study, an interactive prototype, and real screens from the SwiftUI app.",views:[["Case study","prototypes/forge/case-study.html"],["Prototype","prototypes/forge/index.html"],["App screens","prototypes/forge/screens.html"]]},
 farm:{title:"Farm Manager",text:"A goat, cow and chicken farm app for iOS, Android and the web. Both prototypes run the real app with one sample farm, saved in your browser.",views:[["Mobile app","prototypes/farm/mobile.html"],["Web app","prototypes/farm/web.html"],["Case study","prototypes/farm/case-study.html"],["App screens","prototypes/farm/screens.html"]]},
 dryhouse:{title:"Solar Dry House",text:"Live weather turned into drying dates for 58 crops. The mobile app reads your location; the web app asks for your town.",views:[["Mobile app","prototypes/dryhouse/mobile.html"],["Web app","prototypes/dryhouse/web/"],["Case study","prototypes/dryhouse/case-study.html"]]},
+mailrules:{title:"Zoho Mail Admin: Rules",text:"AI-assisted rules for the Mail admin console: ask Zia in plain words or build a rule yourself, use ready-made rules from the library, and review risky changes in Approvals.",views:[["Rules","prototypes/mail-admin-rules/index.html"]]},
 zuis:{title:"ZUIS",text:"A presentation library for Zoho UI standards, designed and built with AI-assisted vibe coding.",views:[["Prototype","prototypes/zuis/index.html"]]}
 };
 const viewer=document.getElementById('viewer'),vFrame=document.getElementById('vFrame'),vTabs=document.getElementById('vTabs'),vOpen=document.getElementById('vOpen');let lastFocus=null;
