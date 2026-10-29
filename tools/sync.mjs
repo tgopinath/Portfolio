@@ -35,6 +35,8 @@ const APPS = [
   { key: 'wakemethere', copy: [['WakeMeThere/prototype', 'prototypes/wakemethere']] }, // card uses the app's own screenshots, no captured thumb
   { key: 'forge', copy: [['ForgeTrainer/prototype', 'prototypes/forge']] }, // screenshots come from the app's UI test (testPortfolioShots)
   { key: 'farm', copy: [['farm-manager/prototype', 'prototypes/farm']] }, // screenshots captured from the running Expo web build
+  { key: 'dryhouse', build: { dir: 'solar-dry-house', cmd: ['node', 'tools/build-prototype.mjs'], inputs: ['index.html', 'styles.css', 'app.js', 'materials.js', 'weather.js', 'location.js', 'images', 'icons', 'prototype-src'], output: 'prototype/web/index.html' },
+    copy: [['solar-dry-house/prototype', 'prototypes/dryhouse']] }, // web and mobile builds; screenshots from build-prototype.mjs --shots
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
