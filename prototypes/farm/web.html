@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Farm Manager Web</title>
+<style>
+:root{--bg:#E9ECF5;--chrome:#FFFFFF;--line:#DCE0EC;--ink:#151A33;--muted:#5D6483;--accent:#3046C5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#080A16;--chrome:#161A2E;--line:#272C47;--ink:#ECEEF8;--muted:#A3A9C6;--accent:#8C9BFF}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#080A16;--chrome:#161A2E;--line:#272C47;--ink:#ECEEF8;--muted:#A3A9C6;--accent:#8C9BFF}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(50% 45% at 90% 0%,#FFE3AD66,transparent 70%),radial-gradient(55% 55% at 0% 100%,#D6DCFB99,transparent 70%),var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px;gap:12px;overflow:hidden}
+/* The app is laid out at a real laptop size and scaled to fit, so the desktop
+   layout (sidebar, two columns) shows even in a small window. */
+#fit{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.window{width:1280px;height:840px;flex:none;border-radius:14px;overflow:hidden;background:var(--chrome);box-shadow:0 0 0 1px var(--line),0 40px 90px -40px rgba(21,26,51,.55);transform-origin:center center}
+.bar{height:40px;display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:1px solid var(--line)}
+.dots{display:flex;gap:7px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#FF5F57}
+.dots i:nth-child(2){background:#FEBC2E}
+.dots i:nth-child(3){background:#28C840}
+.url{flex:1;max-width:520px;margin:0 auto;height:26px;border-radius:8px;background:var(--bg);color:var(--muted);font-size:12.5px;display:flex;align-items:center;justify-content:center}
+.window iframe{width:1280px;height:800px;border:0;display:block;background:#F6F7FB}
+.note{color:var(--muted);font-size:13px;text-align:center}
+.note a{color:var(--accent);font-weight:600;text-decoration:none}
+.note a:hover{text-decoration:underline}
+.note a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+</style>
+</head>
+<body>
+<div id="fit">
+  <div class="window" id="win">
+    <div class="bar" aria-hidden="true"><div class="dots"><i></i><i></i><i></i></div><div class="url">Farm Manager</div><div style="width:50px"></div></div>
+    <iframe src="app/" title="Farm Manager web app"></iframe>
+  </div>
+</div>
+<p class="note">The web app at laptop size, with the same sample farm as the phone. <a href="app/" target="_blank" rel="noopener">Open full screen</a></p>
+<script>
+  const win = document.getElementById('win'), fit = document.getElementById('fit')
+  function scale() {
+    const s = Math.min(1, fit.clientWidth / 1280, fit.clientHeight / 840)
+    win.style.transform = `scale(${s})`
+    // A transformed box keeps its layout size; pull the margins in so it stays centred.
+    win.style.margin = `${(840 * (s - 1)) / 2}px ${(1280 * (s - 1)) / 2}px`
+  }
+  addEventListener('resize', scale)
+  scale()
+</script>
+</body>
+</html>
