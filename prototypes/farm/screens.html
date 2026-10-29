@@ -22,17 +22,23 @@ figure{margin:0;display:flex;flex-direction:column;gap:12px}
 .phone img{display:block;width:100%;height:auto;border-radius:28px}
 figcaption b{display:block;font-size:15px;letter-spacing:-.01em}
 figcaption span{display:block;color:var(--muted);font-size:13.5px;line-height:1.45}
+.web{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 24px;margin-top:56px}
+@media (max-width:900px){.web{grid-template-columns:1fr}}
+.desk{border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px var(--line),0 22px 40px -24px rgba(20,20,60,.4)}
+.desk img{display:block;width:100%;height:auto}
+h2{font-size:20px;letter-spacing:-.01em;margin:56px 0 18px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
+  <header style="margin-bottom:0">
     <div>
-      <h1>Screens from the app</h1>
-      <p>Captured from the running Expo build in a phone-sized browser window, against the real API with sample farm data. The same screens build for iOS and Android.</p>
+      <h1>Screens from the app, on a phone and on a laptop</h1>
+      <p>Captured from the running Expo build with the sample farm, at phone size and at laptop size. The same code builds the iPhone, Android and web apps.</p>
     </div>
     <span class="chip">Expo · React Native · Claude vision</span>
   </header>
+  <h2>On a phone</h2>
   <div class="grid">
     <figure>
       <div class="phone"><img src="shots/farm.jpg" alt="Dashboard with goat, cow and chicken counts and a ranked Needs attention list" width="600" height="1306" loading="lazy"></div>
@@ -57,6 +63,29 @@ figcaption span{display:block;color:var(--muted);font-size:13.5px;line-height:1.
     <figure>
       <div class="phone"><img src="shots/check.jpg" alt="AI health check screen with animal chips, a notes field and photo buttons" width="600" height="1306" loading="lazy"></div>
       <figcaption><b>AI health check</b><span>Pick the animal, describe what you noticed, then take or choose a photo for Claude to screen.</span></figcaption>
+    </figure>
+  </div>
+  <h2>On a laptop</h2>
+  <div class="web" style="margin-top:0">
+    <figure>
+      <div class="desk"><img src="shots/web-today.jpg" alt="Today in the web app at laptop size" width="1440" height="900" loading="lazy"></div>
+      <figcaption><b>Today</b><span>Tasks with their own buttons on the left; head counts, money and accounts on the right.</span></figcaption>
+    </figure>
+    <figure>
+      <div class="desk"><img src="shots/web-animals.jpg" alt="Animals in the web app at laptop size" width="1440" height="900" loading="lazy"></div>
+      <figcaption><b>Animals</b><span>Search, species filters with counts, and cards two across.</span></figcaption>
+    </figure>
+    <figure>
+      <div class="desk"><img src="shots/web-animal.jpg" alt="An animal's page in the web app at laptop size" width="1440" height="900" loading="lazy"></div>
+      <figcaption><b>An animal's page</b><span>The sidebar stays; vaccinations and the health log sit side by side.</span></figcaption>
+    </figure>
+    <figure>
+      <div class="desk"><img src="shots/web-money.jpg" alt="Money in the web app at laptop size" width="1440" height="900" loading="lazy"></div>
+      <figcaption><b>Money</b><span>The six-month chart filters the transactions; accounts and spending by category alongside.</span></figcaption>
+    </figure>
+    <figure>
+      <div class="desk"><img src="shots/web-stock.jpg" alt="Stock in the web app at laptop size" width="1440" height="900" loading="lazy"></div>
+      <figcaption><b>Stock</b><span>Feed and goods three across, each with days left and a one-tap log.</span></figcaption>
     </figure>
   </div>
 </div>

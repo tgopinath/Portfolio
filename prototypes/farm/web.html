@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Farm Manager Web</title>
+<script>
+  // Opened on its own, or with room for the desktop layout, the web app is
+  // simply the web page itself. The browser-window frame below is only for a
+  // narrow viewer, where it keeps the sidebar layout visible.
+  if (window.top === window.self || innerWidth >= 900) location.replace("app/");
+</script>
 <style>
 :root{--bg:#E9ECF5;--chrome:#FFFFFF;--line:#DCE0EC;--ink:#151A33;--muted:#5D6483;--accent:#3046C5}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#080A16;--chrome:#161A2E;--line:#272C47;--ink:#ECEEF8;--muted:#A3A9C6;--accent:#8C9BFF}}

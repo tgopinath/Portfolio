@@ -53,6 +53,13 @@ ul.plain{padding-left:20px;margin:0 0 14px}
 ul.plain li{margin-bottom:6px;max-width:64ch}
 .status{background:var(--warnSoft);border:1px solid transparent;border-radius:14px;padding:18px 20px}
 .status h3{color:var(--warn)}
+.pair{display:grid;grid-template-columns:minmax(0,2.6fr) minmax(0,1fr);gap:24px;align-items:center;margin:40px 0 0}
+.pair figcaption{grid-column:1/-1;margin-top:-6px}
+.pair figcaption b{display:block;font-size:16px;margin-bottom:2px}
+.pair figcaption span{color:var(--muted);font-size:14.5px}
+.pair .phone{border-radius:28px;padding:6px}
+.pair .phone img{border-radius:23px}
+@media (max-width:760px){.pair{grid-template-columns:1fr}.pair .phone{max-width:260px;margin:0 auto}}
 footer{margin-top:64px;border-top:1px solid var(--line);padding-top:18px;font-size:13px;color:var(--muted)}
 </style>
 </head>
@@ -70,7 +77,7 @@ footer{margin-top:64px;border-top:1px solid var(--line);padding-top:18px;font-si
     <li><b>Built with</b>AI-assisted coding (Claude Code)</li>
   </ul>
   <div class="hero-shots">
-    <div class="desk"><img src="shots/desktop.jpg" alt="Farm Manager web dashboard on a desktop browser: goat, cow and chicken head counts, and a Needs attention list of overdue vaccinations, low feed and maintenance" width="1440" height="900" loading="lazy"></div>
+    <div class="desk"><img src="shots/web-today.jpg" alt="Farm Manager web app on a laptop: sidebar navigation, a list of seven things to look at with a button on each, head counts by species, this month's money and account balances" width="1440" height="900" loading="lazy"></div>
     <div class="phone"><img src="shots/farm.jpg" alt="The same dashboard on a phone, with income, expenditure and account balances below the reminders" width="600" height="1306" loading="lazy"></div>
   </div>
 </header>
@@ -161,8 +168,38 @@ footer{margin-top:64px;border-top:1px solid var(--line);padding-top:18px;font-si
   <div class="kicker">Look and feel</div>
   <h2>Indigo and marigold, and two layouts</h2>
   <p>The first version used forest green on cream. It read as generic, and green was doing two jobs: brand colour and "all fine". The redesign takes its palette from two plants that grow at the edge of Indian farms. Indigo carries every action and the selected tab. Marigold is the one warm note, kept for things that need attention and for the photo check. Red and green now appear only on money and health status, so they always mean something. Each species keeps its own colour everywhere: goats marigold, cows sky blue, chickens teal.</p>
-  <p>On a phone the app keeps a bottom tab bar, large page titles and a floating add button. From 900 pixels wide it switches to a sidebar with <b>Add record</b> at the top, and the dashboard splits into two columns: today's tasks on the left, money, accounts and feed levels on the right.</p>
-  <div class="desk" style="margin-top:20px"><img src="shots/desktop-money.jpg" alt="Money screen on a desktop browser: sidebar navigation, a six-month income and spending chart with October selected, the month's transactions, account balances and spending by category" width="1440" height="900" loading="lazy"></div>
+  <p>On a phone the app keeps a bottom tab bar, large page titles and a floating add button. From 900 pixels wide it becomes an ordinary web app: a sidebar with <b>Add record</b> at the top stays on every page, including an animal's page and the forms, and the dashboard splits into two columns, today's tasks on the left, money, accounts and feed levels on the right.</p>
+</section>
+
+<section>
+  <div class="kicker">Mobile and web</div>
+  <h2>Every screen, on a laptop and on a phone</h2>
+  <p>One codebase draws both. These are captured from the same build at 1440 and 500 pixels wide, with the same sample farm.</p>
+  <figure class="pair">
+    <div class="desk"><img src="shots/web-today.jpg" alt="Today on a laptop: tasks on the left, head counts, money and accounts on the right" width="1440" height="900" loading="lazy"></div>
+    <div class="phone"><img src="shots/farm.jpg" alt="Today on a phone: head count tiles, then the tasks with their buttons underneath each one" width="600" height="1306" loading="lazy"></div>
+    <figcaption><b>Today</b><span>The same list of things to look at, each with its own button. On a laptop the money and head counts sit beside it; on a phone they follow below.</span></figcaption>
+  </figure>
+  <figure class="pair">
+    <div class="desk"><img src="shots/web-animals.jpg" alt="Animals on a laptop: search, species filters and animal cards in two columns" width="1440" height="900" loading="lazy"></div>
+    <div class="phone"><img src="shots/animals.jpg" alt="Animals on a phone: the same search, filters and cards in one column" width="600" height="1306" loading="lazy"></div>
+    <figcaption><b>Animals</b><span>Search and species filters with their counts. Cards sit two across on a laptop and one across on a phone.</span></figcaption>
+  </figure>
+  <figure class="pair">
+    <div class="desk"><img src="shots/web-animal.jpg" alt="Raja's page on a laptop with the sidebar, vaccinations and health log side by side" width="1440" height="900" loading="lazy"></div>
+    <div class="phone"><img src="shots/animal.jpg" alt="Raja's page on a phone with vaccinations above the health log" width="600" height="1306" loading="lazy"></div>
+    <figcaption><b>An animal's page</b><span>Status, vaccinations and the health log. On a laptop the sidebar stays and an All animals link replaces the back button.</span></figcaption>
+  </figure>
+  <figure class="pair">
+    <div class="desk"><img src="shots/web-money.jpg" alt="Money on a laptop: six-month chart, the month's transactions, accounts and spending by category" width="1440" height="900" loading="lazy"></div>
+    <div class="phone"><img src="shots/money.jpg" alt="Money on a phone: the chart, then transactions" width="600" height="1306" loading="lazy"></div>
+    <figcaption><b>Money</b><span>Six months of income against spending. Tap a month to filter its transactions; accounts and where the money went sit alongside on a laptop.</span></figcaption>
+  </figure>
+  <figure class="pair">
+    <div class="desk"><img src="shots/web-stock.jpg" alt="Stock on a laptop: feed and goods in a three-column grid with day counts and meters" width="1440" height="900" loading="lazy"></div>
+    <div class="phone"><img src="shots/stock.jpg" alt="Stock on a phone: the same cards in one column" width="600" height="1306" loading="lazy"></div>
+    <figcaption><b>Stock</b><span>Feed shown as days left, three across on a laptop. One tap logs today's use on either.</span></figcaption>
+  </figure>
 </section>
 
 <section>
