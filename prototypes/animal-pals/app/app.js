@@ -1,5 +1,6 @@
 import { BEINGS, CATEGORIES, KINGDOM, GLB_MODELS } from './data.js';
 import { VIDEOS } from './videos.js';
+import { TA } from './data-ta.js';
 
 const INAT = 'https://api.inaturalist.org/v1';
 const app = document.getElementById('app');
@@ -239,15 +240,46 @@ async function playBeing(taxonId, btn, noteEl, fallbackSay) {
     if (fallbackSay) speak(fallbackSay);
   }
 }
-function speak(text) {
+let warnedTamil = false;
+function speak(text, { rate = .92, lang = 'en' } = {}) {
   if (!('speechSynthesis' in window)) return;
   stopSound(); speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = .92;
+  u.rate = rate;
   const voices = speechSynthesis.getVoices();
-  const v = voices.find(v => /en[-_](IN|GB|US)/i.test(v.lang) && /samantha|veena|google|natural/i.test(v.name)) || voices.find(v => v.lang.startsWith('en'));
+  let v;
+  if (lang === 'ta') {
+    u.lang = 'ta-IN';
+    v = voices.find(v => /^ta/i.test(v.lang));
+    if (!v && voices.length && !warnedTamil) { warnedTamil = true; toast('This device has no Tamil voice yet — add one in its speech settings'); }
+  } else {
+    v = voices.find(v => /en[-_](IN|GB|US)/i.test(v.lang) && /samantha|veena|google|natural/i.test(v.name)) || voices.find(v => v.lang.startsWith('en'));
+  }
   if (v) u.voice = v;
   speechSynthesis.speak(u);
+}
+// Explanations can be shown and read in English or Tamil (remembered per device).
+let lang = store.get('ap.lang', 'en');
+const setLang = l => { lang = l; store.set('ap.lang', l); };
+const T = {
+  en: { about: 'About', home: 'Habitat', food: 'Diet', fun: 'Did you know', family: 'Family', group: 'Group', order: 'Order', seen: 'Observed', status: 'Status', name: 'Say its name', read: 'Read about it' },
+  ta: { about: 'விளக்கம்', home: 'வாழிடம்', food: 'உணவு', fun: 'தெரியுமா?', family: 'குடும்பம்', group: 'வகை', order: 'வரிசை', seen: 'பார்க்கப்பட்டது', status: 'நிலை', name: 'பெயரைச் சொல்', read: 'தமிழில் கேள்' },
+};
+const hasTamil = s => /[\u0B80-\u0BFF]/.test(s || '');
+// Tamil name and summary for species outside the library: iNaturalist's Tamil name, Tamil Wikipedia's summary.
+async function tamilFor(id, wikiUrl) {
+  const out = {};
+  try { const n = (await api(`/taxa/${id}?locale=ta`)).results[0]?.preferred_common_name; if (hasTamil(n)) out.n = n; } catch {}
+  const title = wikiUrl && decodeURIComponent(wikiUrl.split('/wiki/')[1] || '');
+  if (title) try {
+    const ll = await fetch('https://en.wikipedia.org/w/api.php?' + new URLSearchParams({ action: 'query', prop: 'langlinks', lllang: 'ta', titles: title, redirects: 1, format: 'json', origin: '*' })).then(r => r.json());
+    const ta = Object.values(ll.query?.pages || {})[0]?.langlinks?.[0]?.['*'];
+    if (ta) {
+      const sum = await fetch(`https://ta.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(ta.replace(/ /g, '_'))}`).then(r => r.json());
+      if (sum.extract) { out.bio = firstSentences(sum.extract, 3); out.url = sum.content_urls?.desktop?.page; if (!out.n) out.n = ta; }
+    }
+  } catch {}
+  return out;
 }
 const sayLine = b => b.quiet || b.says.startsWith('(') ? `${b.name}. ${b.fun}` : `${b.name}. The ${b.name.toLowerCase()} says ${b.says}`;
 const callOf = b => b.says.startsWith('(') ? 'Quiet species' : b.says;
@@ -268,25 +300,70 @@ function beingCard(b) {
     <div class="card-img" data-being="${b.key}">
       ${imgTag(photoOf(b), b.name)}
       ${b.m3d ? `<span class="tag3d">${icon('cube')}3D</span>` : ''}
-      ${hearBtn(b.id, b.name, sayLine(b))}
+      ${cardBtns(b.id, b.name, sayLine(b), false, b.key)}
     </div>
     <div class="card-meta"><div><h3 class="card-name">${esc(b.name)}</h3><div class="card-sub">${esc(callOf(b))}</div></div></div>
   </a>`;
 }
 const SILENT = ['Plantae', 'Fungi', 'Chromista', 'Protozoa'];
+const nameBtn = (name, key) => `<button class="name-mini" data-name="${esc(name)}"${TA[key] ? ` data-name-ta="${esc(TA[key].n)}"` : ''} aria-label="Say the name: ${esc(name)}">${icon('speak')}<span>Name</span></button>`;
 const hearBtn = (id, name, say) => `<button class="play-mini" data-play="${id}" data-say="${esc(say)}" aria-label="Hear the ${esc(name)}">${icon('play')}<span class="lbl">Hear</span></button>`;
+const cardBtns = (id, name, say, silent, key) => `<div class="card-btns">${nameBtn(name, key)}${silent ? '' : hearBtn(id, name, say)}</div>`;
 function taxonCard(t) {
   if (byId[t.id]) return beingCard(byId[t.id]);
   const name = cap(t.preferred_common_name || t.name);
   return `<a class="card" href="#/t/${t.id}">
-    <div class="card-img" data-sci="${esc(t.name)}">${imgTag(t.default_photo?.medium_url, name)}${SILENT.includes(t.iconic_taxon_name) ? '' : hearBtn(t.id, name, name)}</div>
+    <div class="card-img" data-sci="${esc(t.name)}">${imgTag(t.default_photo?.medium_url, name)}${cardBtns(t.id, name, name, SILENT.includes(t.iconic_taxon_name))}</div>
     <div class="card-meta"><div><h3 class="card-name">${esc(name)}</h3><div class="card-sub">${esc(t.name)}</div></div></div>
   </a>`;
 }
 const GROUP = { Mammalia: 'Mammal', Aves: 'Bird', Reptilia: 'Reptile', Amphibia: 'Amphibian', Actinopterygii: 'Fish', Insecta: 'Insect', Arachnida: 'Arachnid', Mollusca: 'Mollusk', Plantae: 'Plant', Fungi: 'Fungus', Chromista: 'Algae', Protozoa: 'Protozoan', Animalia: 'Animal' };
 const skeletonGrid = n => `<div class="grid">${Array.from({ length: n }, () => '<div class="card"><div class="card-img skeleton"></div><div class="card-meta"><div class="skeleton" style="height:14px;border-radius:6px;width:60%;margin-top:4px"></div></div></div>').join('')}</div>`;
 
+// The list a card was opened from, so a page can offer Previous / Next through it.
+let navList = (() => { try { return JSON.parse(sessionStorage.getItem('ap.nav') || '[]'); } catch { return []; } })();
+document.addEventListener('click', e => {
+  const a = e.target.closest('a.card');
+  if (!a || e.target.closest('button')) return;
+  const items = [...app.querySelectorAll('a.card')].map(c => ({ h: c.getAttribute('href'), n: c.querySelector('.card-name')?.textContent || '', img: c.querySelector('img')?.getAttribute('src') || '' }));
+  navList = items.filter((x, i) => items.findIndex(y => y.h === x.h) === i);
+  try { sessionStorage.setItem('ap.nav', JSON.stringify(navList)); } catch {}
+}, true);
+function neighbours(href, b) {
+  let list = navList;
+  if (!list.some(x => x.h === href) && b) list = BEINGS.map(x => ({ h: `#/b/${x.key}`, n: x.name, img: photoOf(x) || '' }));
+  const i = list.findIndex(x => x.h === href);
+  return i < 0 ? {} : { prev: list[i - 1], next: list[i + 1] };
+}
+function detailBar(href, b) {
+  const { prev, next } = neighbours(href, b);
+  const nav = (x, dir) => x
+    ? `<a class="pn ${dir}" href="${x.h}" data-pn="${dir}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'}: ${esc(x.n)}">${dir === 'prev' ? icon('back') : ''}${x.img ? `<img src="${esc(smallPhoto(x.img))}" alt="">` : ''}<span><small>${dir === 'prev' ? 'Previous' : 'Next'}</small>${esc(x.n)}</span>${dir === 'next' ? icon('arrow') : ''}</a>`
+    : `<span class="pn ${dir} off" aria-hidden="true"></span>`;
+  return `<div class="dbar">
+    <a class="back-big" href="${b ? '#/' : '#/explore'}" onclick="if(history.length>1){history.back();return false}">${icon('back')}<span>Back</span></a>
+    <div class="pn-wrap">${nav(prev, 'prev')}${nav(next, 'next')}</div>
+  </div>`;
+}
+// Arrow keys flip through the list too.
+document.addEventListener('keydown', e => {
+  if (!/^#\/(b|t)\//.test(location.hash) || e.target.closest('input, textarea') || !$('#viewer3d').hidden) return;
+  const a = e.key === 'ArrowRight' ? $('[data-pn=next]') : e.key === 'ArrowLeft' ? $('[data-pn=prev]') : null;
+  if (a) { e.preventDefault(); location.replace(a.getAttribute('href')); }
+});
+// Previous / Next replace the history entry, so one Back always returns to the list.
+document.addEventListener('click', e => { const a = e.target.closest('[data-pn]'); if (a && a.href) { e.preventDefault(); location.replace(a.getAttribute('href')); } });
+
+// Says just the name, slowly and clearly, for little ones learning to say it.
+function sayName(name, btn, nameTa) {
+  if (lang === 'ta' && nameTa) speak(`${nameTa}.`, { rate: .8, lang: 'ta' }); else speak(`${name}.`, { rate: .8 });
+  if (!btn) return;
+  btn.classList.add('speaking');
+  setTimeout(() => btn.classList.remove('speaking'), 1200);
+}
 app.addEventListener('click', e => {
+  const n = e.target.closest('[data-name]');
+  if (n) { e.preventDefault(); e.stopPropagation(); sayName(n.dataset.name, n, n.dataset.nameTa); return; }
   const b = e.target.closest('[data-play]');
   if (!b) return;
   e.preventDefault(); e.stopPropagation();
@@ -428,11 +505,10 @@ function firstSentences(html, n = 2) {
   const parts = text.match(/[^.!?]+[.!?]+/g) || [text];
   return parts.slice(0, n).join(' ').trim();
 }
-const bars = n => `<div class="bars" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<i style="height:${30 + Math.round(70 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * .45)))}%;animation-delay:${(i % 7) * .09}s"></i>`).join('')}</div>`;
 
 async function viewDetail({ being: b, taxonId }) {
   const id = b?.id ?? taxonId;
-  const back = `<a class="crumb" href="${b ? '#/' : '#/explore'}" onclick="if(history.length>1){history.back();return false}">${icon('back')} Back</a>`;
+  const back = detailBar(b ? `#/b/${b.key}` : `#/t/${id}`, b);
   app.innerHTML = `${back}<div class="detail"><div class="gallery"><div class="hero"><div class="slides skeleton"></div></div></div>
     <div>${b ? `<h1 class="h-display">${esc(b.name)}</h1>` : '<div class="skeleton" style="height:48px;border-radius:12px;width:70%"></div>'}</div></div>`;
   let t;
@@ -459,6 +535,12 @@ async function viewDetail({ being: b, taxonId }) {
     t?.conservation_status?.status_name && ['shield', 'Status', cap(t.conservation_status.status_name)],
   ];
   const say = b ? sayLine(b) : `${name}.`;
+  const ta = b ? TA[b.key] : null;
+  const L = T[lang];
+  const tamil = lang === 'ta';
+  const factsTa = ta ? [['home2', L.home, ta.home], ['food', L.food, ta.food], ['spark', L.fun, ta.fun]] : null;
+  const label = { Habitat: 'home', Diet: 'food', 'Did you know': 'fun', Family: 'family', Group: 'group', Order: 'order', Observed: 'seen', Status: 'status' };
+  const shownFacts = tamil && factsTa ? factsTa : facts.filter(Boolean).map(([i, l, v]) => [i, L[label[l]] || l, v]);
   const fav = { id, key: b?.key, name, photo: smallPhoto(pics[0]?.url) || photoOf(b) };
 
   app.innerHTML = `${back}
@@ -473,25 +555,29 @@ async function viewDetail({ being: b, taxonId }) {
       </div>
       <div>
         <div class="d-tax"><span class="pill">${esc(b ? catByKey[b.cat].label : GROUP[iconic] || 'Living being')}</span>${t?.conservation_status?.status_name && b ? `<span class="pill" style="background:var(--surface-2);color:var(--ink-2)">${esc(cap(t.conservation_status.status_name))}</span>` : ''}</div>
-        <h1 class="h-display" style="margin-top:12px">${esc(name)}</h1>
-        <p class="d-sci">${esc(t?.name || '')}</p>
+        <h1 class="h-display" style="margin-top:12px" id="dname">${esc(tamil && ta ? ta.n : name)}</h1>
+        <p class="d-sci" id="dsub">${tamil && ta ? `${esc(name)} · ` : ''}${esc(t?.name || '')}</p>
+        <div class="langs" role="group" aria-label="Language">
+          <button data-lang="en" aria-pressed="${!tamil}">English</button>
+          <button data-lang="ta" aria-pressed="${tamil}" lang="ta">தமிழ்</button>
+        </div>
 
         ${silentKind ? '' : `
         <section class="sound" data-wave>
           <button class="sound-play" id="playBtn" aria-label="Play sound">${icon('play')}</button>
           <div>
             <div class="sound-title"><span>${b && !b.says.startsWith('(') ? `Call · “${esc(b.says)}”` : 'Field recording'}</span><small></small></div>
-            ${bars(48)}
             <p class="sound-note" id="note">${b?.quiet ? `A quiet species — real recordings are rare.` : 'Real recordings from the wild. Tap again for another.'}</p>
           </div>
         </section>`}
         <div class="d-actions">
           ${b?.m3d ? `<button class="btn accent" id="btn3d">${icon('cube')} View in 3D</button>` : ''}
-          <button class="btn outline" id="sayBtn">${icon('speak')} Read aloud</button>
+          <button class="btn outline" id="nameBtn">${icon('speak')} <span>${L.name}</span></button>
+          <button class="btn outline" id="sayBtn">${icon('speak')} <span>${L.read}</span></button>
         </div>
 
-        <section class="about"><span class="eyebrow">About</span><p>${esc(bio)}</p></section>
-        <dl class="facts">${facts.filter(Boolean).map(([i, l, v]) => `<div class="fact">${icon(i)}<dt>${l}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+        <section class="about"><span class="eyebrow">${L.about}</span><p id="dbio"${tamil ? ' lang="ta"' : ''}>${esc(tamil && ta ? ta.bio : bio)}</p><p class="ta-note" id="tanote" hidden></p></section>
+        <dl class="facts">${shownFacts.map(([i, l, v]) => `<div class="fact">${icon(i)}<dt>${l}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
         <p class="source">Photos and sounds by contributors on <a href="https://www.inaturalist.org/taxa/${id}" target="_blank" rel="noopener">iNaturalist</a>${t?.wikipedia_url && !b ? ` · Summary from <a href="${esc(t.wikipedia_url)}" target="_blank" rel="noopener">Wikipedia</a>` : ''}.</p>
       </div>
     </article>`;
@@ -514,7 +600,21 @@ async function viewDetail({ being: b, taxonId }) {
     toast(on ? `${name} saved` : 'Removed from saved');
   };
   $('#playBtn')?.addEventListener('click', e => playBeing(id, e.currentTarget, $('#note'), say));
-  $('#sayBtn').onclick = () => speak(`${name}. ${bio}`);
+  let taInfo = ta ? { n: ta.n, bio: ta.bio } : null;
+  $('#sayBtn').onclick = () => (tamil && taInfo?.bio ? speak(`${taInfo.n || name}. ${taInfo.bio}`, { lang: 'ta' }) : speak(`${name}. ${bio}`));
+  $('#nameBtn').onclick = e => sayName(name, e.currentTarget, taInfo?.n);
+  app.querySelectorAll('[data-lang]').forEach(x => x.onclick = () => { if (x.dataset.lang !== lang) { setLang(x.dataset.lang); route({ keepScroll: true }); } });
+  if (tamil && !ta) {
+    // Species outside the library: look for a Tamil name and Tamil Wikipedia summary.
+    $('#tanote').hidden = false; $('#tanote').textContent = 'தமிழ் விளக்கத்தைத் தேடுகிறோம்…';
+    tamilFor(id, t?.wikipedia_url).then(r => {
+      if (!$('#tanote')) return;
+      taInfo = r;
+      if (r.n) { $('#dname').textContent = r.n; $('#dsub').textContent = `${name} · ${t?.name || ''}`; }
+      if (r.bio) { $('#dbio').textContent = r.bio; $('#dbio').lang = 'ta'; $('#tanote').innerHTML = `விளக்கம்: <a href="${esc(r.url || '#')}" target="_blank" rel="noopener">தமிழ் விக்கிப்பீடியா</a>`; }
+      else $('#tanote').textContent = 'இதற்குத் தமிழ் விளக்கம் இன்னும் இல்லை — ஆங்கிலத்தில் காட்டுகிறோம்.';
+    });
+  }
   $('#btn3d')?.addEventListener('click', () => open3d(name, b.m3d));
 
   // Lead with real footage when Commons has a suitable clip.
@@ -604,7 +704,7 @@ async function viewGame(mode = 'sound') {
     ${quizHead('sound')}
     <div class="quiz-player" data-wave>
       <button class="sound-play" id="gplay" aria-label="Play the mystery sound">${icon('play')}</button>
-      ${bars(64)}
+      <p>Tap to hear the sound again</p>
     </div>
     <div class="choices">${opts.map(o => `<button class="choice" data-k="${o.key}"><img src="${photoOf(o)}" alt=""><div>${esc(o.name)}</div></button>`).join('')}</div>
     <div class="feedback"><p id="cheer"></p><button class="btn" id="next" hidden>Next sound ${icon('arrow')}</button></div>
@@ -709,11 +809,11 @@ $('#stopListen').onclick = () => { rec?.abort(); $('#listening').hidden = true; 
 function setTab(tab) {
   document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
 }
-function route() {
+function route({ keepScroll = false } = {}) {
   close3d(); stopSound(); stopPreview();
   const h = decodeURIComponent(location.hash.slice(1) || '/');
   const [, a, b] = h.split('/');
-  window.scrollTo(0, 0);
+  if (!keepScroll) window.scrollTo(0, 0);
   if (a !== 'search' && input.value && document.activeElement !== input) input.value = '';
   if (!a) { setTab('home'); return viewHome(); }
   if (a === 'g' && groupByKey[b]) { setTab('home'); return viewHome(b); }
@@ -726,9 +826,12 @@ function route() {
   if (a === 'faves') { setTab('faves'); return viewFaves(); }
   location.hash = '#/';
 }
-window.addEventListener('hashchange', route);
+window.addEventListener('hashchange', () => route());
 window.addEventListener('popstate', () => { if (!$('#viewer3d').hidden) close3d(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#viewer3d').hidden) history.back(); });
+// Keeps the detail bar pinned just under the header, whatever its height.
+const setTopH = () => document.documentElement.style.setProperty('--top-h', `${$('.top').offsetHeight}px`);
+setTopH(); addEventListener('resize', setTopH);
 window.speechSynthesis?.getVoices();
 route();
 

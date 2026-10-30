@@ -1,6 +1,6 @@
 // App shell offline; photos cached as they are seen so favourites work without internet.
-const SHELL = 'ap-shell-v6', IMG = 'ap-img-v1';
-const FILES = ['./', 'index.html', 'styles.css', 'app.js', 'data.js', 'videos.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
+const SHELL = 'ap-shell-v7', IMG = 'ap-img-v1';
+const FILES = ['./', 'index.html', 'styles.css', 'app.js', 'data.js', 'videos.js', 'data-ta.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {
