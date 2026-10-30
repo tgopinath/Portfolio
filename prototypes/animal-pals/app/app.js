@@ -197,26 +197,84 @@ function setPlaying(btn, on) {
   const use = btn.querySelector('use'); if (use) use.setAttribute('href', on ? '#i-pause' : '#i-play');
   const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = on ? 'Stop' : 'Hear';
 }
+// On iPhones, play through the silent switch like a media app would.
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+
+// Field recordings vary hugely in loudness. They are fetched through the app's relay (iNaturalist
+// sends no CORS headers), measured, boosted to a steady level with a limiter, and started where the
+// animal is actually audible. If any of that fails, the plain <audio> element plays the file as is.
+const SOUND_RELAY = 'https://animal-pals-ivory.vercel.app/api/sound?u=';
+const bufCache = new Map();
+let boosted = null; // { src, gain } while a boosted recording plays
+async function loadBoosted(url) {
+  if (bufCache.has(url)) return bufCache.get(url);
+  const p = (async () => {
+    const r = await fetch(SOUND_RELAY + encodeURIComponent(url));
+    if (!r.ok) throw new Error(r.status);
+    const buf = await ac().decodeAudioData(await r.arrayBuffer());
+    // Measure the first 30 s: overall loudness (RMS) and where the sound first rises above the background.
+    const ch = buf.getChannelData(0), n = Math.min(ch.length, buf.sampleRate * 30);
+    let peak = 0, sum = 0;
+    for (let i = 0; i < n; i++) { const v = Math.abs(ch[i]); if (v > peak) peak = v; sum += v * v; }
+    const rms = Math.sqrt(sum / Math.max(1, n)) || 1e-4;
+    const win = Math.floor(buf.sampleRate * .05), floor = Math.max(rms * 1.6, peak * .12);
+    let start = 0;
+    for (let i = 0; i + win < n; i += win) {
+      let e = 0; for (let j = i; j < i + win; j++) e += ch[j] * ch[j];
+      if (Math.sqrt(e / win) > floor) { start = Math.max(0, i / buf.sampleRate - .15); break; }
+    }
+    // Aim for a strong, even level; the limiter catches peaks the boost pushes too high.
+    const gain = Math.min(14, Math.max(1, .3 / rms), 1.4 / Math.max(peak, 1e-3) * 2.5);
+    return { buf, gain, start: Math.min(start, Math.max(0, buf.duration - 3)) };
+  })();
+  bufCache.set(url, p);
+  p.catch(() => bufCache.delete(url));
+  if (bufCache.size > 24) bufCache.delete(bufCache.keys().next().value);
+  return p;
+}
 function stopSound() {
   audio.pause(); clearTimeout(stopTimer); audio.volume = 1;
+  if (boosted) { try { boosted.src.onended = null; boosted.src.stop(); } catch {} boosted = null; }
   setPlaying(playingBtn, false); playingBtn = null;
 }
+const isPlaying = () => !!boosted || !audio.paused;
+function muteVideos() {
+  document.querySelectorAll('video').forEach(v => { v.muted = true; });
+  document.querySelectorAll('.mute.on').forEach(m => { m.classList.remove('on'); m.querySelector('span').textContent = 'Unmute'; });
+}
 // Field recordings can run for minutes; play a short clip and fade it out.
-function playUrl(url, btn, maxSec = 14) {
-  stopSound(); window.speechSynthesis?.cancel();
-  document.querySelectorAll('video').forEach(v => { v.muted = true; }); document.querySelectorAll('.mute.on').forEach(m => { m.classList.remove('on'); m.querySelector('span').textContent = 'Unmute'; });
-  audio.src = url; audio.currentTime = 0;
+async function playUrl(url, btn, maxSec = 14) {
+  stopSound(); window.speechSynthesis?.cancel(); muteVideos();
   playingBtn = btn; setPlaying(btn, true);
-  const p = audio.play();
-  stopTimer = setTimeout(() => {
-    const fade = setInterval(() => { audio.volume = Math.max(0, audio.volume - .1); if (audio.volume <= 0) { clearInterval(fade); stopSound(); } }, 80);
-  }, maxSec * 1000);
-  return p;
+  const c = ac(); c.resume?.(); // inside the tap, so phones allow sound
+  try {
+    const { buf, gain, start } = await loadBoosted(url);
+    if (playingBtn !== btn) return; // tapped something else while loading
+    const src = c.createBufferSource(); src.buffer = buf;
+    const g = c.createGain(), lim = c.createDynamicsCompressor();
+    lim.threshold.value = -10; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = .003; lim.release.value = .2;
+    const t = c.currentTime, len = Math.min(maxSec, buf.duration - start);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + .05);
+    g.gain.setValueAtTime(gain, t + Math.max(.1, len - .8)); g.gain.linearRampToValueAtTime(0, t + len);
+    src.connect(g).connect(lim).connect(c.destination);
+    src.start(t, start, len);
+    boosted = { src, gain: g };
+    src.onended = () => { if (boosted?.src === src) { boosted = null; setPlaying(playingBtn, false); playingBtn = null; } };
+  } catch {
+    if (playingBtn !== btn) return;
+    audio.src = url; audio.currentTime = 0;
+    const p = audio.play();
+    stopTimer = setTimeout(() => {
+      const fade = setInterval(() => { audio.volume = Math.max(0, audio.volume - .1); if (audio.volume <= 0) { clearInterval(fade); stopSound(); } }, 80);
+    }, maxSec * 1000);
+    return p;
+  }
 }
 audio.addEventListener('ended', stopSound);
 const soundIdx = {};
 async function playBeing(taxonId, btn, noteEl, fallbackSay) {
-  if (playingBtn === btn && !audio.paused) { stopSound(); return; }
+  if (playingBtn === btn && isPlaying()) { stopSound(); return; }
+  ac().resume?.(); // unlock audio during the tap, before any waiting
   try {
     setPlaying(btn, true);
     const list = await getSounds(taxonId);
