@@ -427,12 +427,18 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-pn]'
 // even without a Tamil voice installed. Falls back to the device voice if a clip can't play.
 function playClip(url, btn, fallback) {
   stopSound(); window.speechSynthesis?.cancel();
-  audio.src = url; audio.currentTime = 0;
+  audio.src = url;
   btn?.classList.add('speaking');
+  let started = false, gaveUp = false;
   const done = () => btn?.classList.remove('speaking');
+  const giveUp = () => { if (started || gaveUp) return; gaveUp = true; audio.pause(); done(); fallback?.(); };
+  audio.addEventListener('playing', () => { started = true; }, { once: true });
   audio.addEventListener('ended', done, { once: true });
   audio.addEventListener('pause', done, { once: true });
-  audio.play().catch(() => { done(); fallback?.(); });
+  audio.addEventListener('error', giveUp, { once: true });
+  // If the clip hasn't started soon (slow network, a browser quirk), say it with the device voice instead.
+  setTimeout(giveUp, 1800);
+  audio.play().catch(giveUp);
 }
 const taClip = (key, kind) => TA[key] ? `audio/ta/${key}-${kind}.m4a` : null;
 const enClip = (key, kind) => byKey[key] ? `audio/en/${key}-${kind}.m4a` : null;
