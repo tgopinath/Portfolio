@@ -260,7 +260,13 @@ function speak(text, { rate = .92, lang = 'en' } = {}) {
 }
 // Explanations can be shown and read in English or Tamil (remembered per device).
 let lang = store.get('ap.lang', 'en');
-const setLang = l => { lang = l; store.set('ap.lang', l); };
+const setLang = l => { lang = l; store.set('ap.lang', l); syncLangBtn(); };
+function syncLangBtn() {
+  const btn = document.getElementById('langBtn'); if (!btn) return;
+  btn.querySelector('span').textContent = lang === 'ta' ? 'English' : 'தமிழ்';
+  btn.setAttribute('aria-label', lang === 'ta' ? 'Switch to English' : 'தமிழுக்கு மாற்று (Switch to Tamil)');
+  btn.setAttribute('aria-pressed', lang === 'ta');
+}
 const T = {
   en: { about: 'About', home: 'Habitat', food: 'Diet', fun: 'Did you know', family: 'Family', group: 'Group', order: 'Order', seen: 'Observed', status: 'Status', name: 'Say its name', read: 'Read about it' },
   ta: { about: 'விளக்கம்', home: 'வாழிடம்', food: 'உணவு', fun: 'தெரியுமா?', family: 'குடும்பம்', group: 'வகை', order: 'வரிசை', seen: 'பார்க்கப்பட்டது', status: 'நிலை', name: 'பெயரைச் சொல்', read: 'தமிழில் கேள்' },
@@ -306,7 +312,7 @@ function beingCard(b) {
   </a>`;
 }
 const SILENT = ['Plantae', 'Fungi', 'Chromista', 'Protozoa'];
-const nameBtn = (name, key) => `<button class="name-mini" data-name="${esc(name)}"${TA[key] ? ` data-name-ta="${esc(TA[key].n)}"` : ''} aria-label="Say the name: ${esc(name)}">${icon('speak')}<span>Name</span></button>`;
+const nameBtn = (name, key) => `<button class="name-mini" data-name="${esc(name)}"${TA[key] ? ` data-name-ta="${esc(TA[key].n)}" data-key="${key}"` : ''} aria-label="Say the name: ${esc(name)}">${icon('speak')}<span>Name</span></button>`;
 const hearBtn = (id, name, say) => `<button class="play-mini" data-play="${id}" data-say="${esc(say)}" aria-label="Hear the ${esc(name)}">${icon('play')}<span class="lbl">Hear</span></button>`;
 const cardBtns = (id, name, say, silent, key) => `<div class="card-btns">${nameBtn(name, key)}${silent ? '' : hearBtn(id, name, say)}</div>`;
 function taxonCard(t) {
@@ -355,15 +361,64 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => { const a = e.target.closest('[data-pn]'); if (a && a.href) { e.preventDefault(); location.replace(a.getAttribute('href')); } });
 
 // Says just the name, slowly and clearly, for little ones learning to say it.
-function sayName(name, btn, nameTa) {
-  if (lang === 'ta' && nameTa) speak(`${nameTa}.`, { rate: .8, lang: 'ta' }); else speak(`${name}.`, { rate: .8 });
-  if (!btn) return;
-  btn.classList.add('speaking');
-  setTimeout(() => btn.classList.remove('speaking'), 1200);
+// Pre-recorded Tamil voice (audio/ta, made by tools/tamil-audio.mjs) works on every phone,
+// even without a Tamil voice installed. Falls back to the device voice if a clip can't play.
+function playClip(url, btn, fallback) {
+  stopSound(); window.speechSynthesis?.cancel();
+  audio.src = url; audio.currentTime = 0;
+  btn?.classList.add('speaking');
+  const done = () => btn?.classList.remove('speaking');
+  audio.addEventListener('ended', done, { once: true });
+  audio.addEventListener('pause', done, { once: true });
+  audio.play().catch(() => { done(); fallback?.(); });
 }
+const taClip = (key, kind) => TA[key] ? `audio/ta/${key}-${kind}.m4a` : null;
+function sayName(name, btn, nameTa, key) {
+  const flash = () => { if (!btn) return; btn.classList.add('speaking'); setTimeout(() => btn.classList.remove('speaking'), 1200); };
+  if (lang === 'ta' && taClip(key, 'name')) return playClip(taClip(key, 'name'), btn, () => { speak(`${nameTa || TA[key].n}.`, { rate: .8, lang: 'ta' }); flash(); });
+  if (lang === 'ta' && nameTa) speak(`${nameTa}.`, { rate: .8, lang: 'ta' }); else speak(`${name}.`, { rate: .8 });
+  flash();
+}
+
+// Little game sounds, made on the fly (no files): a happy chime and a "flop".
+let actx;
+const ac = () => (actx ||= new (window.AudioContext || window.webkitAudioContext)());
+function tone(freqs, { type = 'triangle', dur = .14, gap = .09, vol = .22, slide } = {}) {
+  try {
+    const c = ac(); c.resume?.();
+    freqs.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + i * gap;
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .05);
+    });
+  } catch {}
+}
+const sfxWin = () => tone([523.3, 659.3, 784, 1046.5, 1318.5], { dur: .22, gap: .08 });
+const sfxFlop = () => { tone([311, 233], { type: 'sawtooth', dur: .32, gap: .3, vol: .12, slide: .72 }); };
+function confetti(from) {
+  const r = from.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const colors = ['#1F5A43', '#7CC6A3', '#F2B33D', '#E5487A', '#4D8DF7', '#FF7A45'];
+  const box = document.createElement('div'); box.className = 'confetti'; document.body.appendChild(box);
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement('i');
+    p.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i % colors.length]};${i % 3 ? '' : 'border-radius:50%;'}`;
+    box.appendChild(p);
+    const a = Math.random() * Math.PI * 2, d = 120 + Math.random() * 260;
+    p.animate([
+      { transform: 'translate(-50%,-50%) rotate(0)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d - 120}px)) rotate(${Math.random() * 720}deg)`, opacity: 1, offset: .6 },
+      { transform: `translate(calc(-50% + ${Math.cos(a) * d * 1.1}px), calc(-50% + ${Math.sin(a) * d + 220}px)) rotate(${Math.random() * 900}deg)`, opacity: 0 },
+    ], { duration: 1300 + Math.random() * 600, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
+  }
+  setTimeout(() => box.remove(), 2200);
+}
+function celebrate(el) { sfxWin(); confetti(el); }
+function flop(el) { sfxFlop(); el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(0)' }], { duration: 380 }); }
 app.addEventListener('click', e => {
   const n = e.target.closest('[data-name]');
-  if (n) { e.preventDefault(); e.stopPropagation(); sayName(n.dataset.name, n, n.dataset.nameTa); return; }
+  if (n) { e.preventDefault(); e.stopPropagation(); sayName(n.dataset.name, n, n.dataset.nameTa, n.dataset.key); return; }
   const b = e.target.closest('[data-play]');
   if (!b) return;
   e.preventDefault(); e.stopPropagation();
@@ -601,8 +656,13 @@ async function viewDetail({ being: b, taxonId }) {
   };
   $('#playBtn')?.addEventListener('click', e => playBeing(id, e.currentTarget, $('#note'), say));
   let taInfo = ta ? { n: ta.n, bio: ta.bio } : null;
-  $('#sayBtn').onclick = () => (tamil && taInfo?.bio ? speak(`${taInfo.n || name}. ${taInfo.bio}`, { lang: 'ta' }) : speak(`${name}. ${bio}`));
-  $('#nameBtn').onclick = e => sayName(name, e.currentTarget, taInfo?.n);
+  $('#sayBtn').onclick = e => {
+    const speakTa = () => speak(`${taInfo.n || name}. ${taInfo.bio}`, { lang: 'ta' });
+    if (tamil && b && taClip(b.key, 'about')) playClip(taClip(b.key, 'about'), e.currentTarget, speakTa);
+    else if (tamil && taInfo?.bio) speakTa();
+    else speak(`${name}. ${bio}`);
+  };
+  $('#nameBtn').onclick = e => sayName(name, e.currentTarget, taInfo?.n, b?.key);
   app.querySelectorAll('[data-lang]').forEach(x => x.onclick = () => { if (x.dataset.lang !== lang) { setLang(x.dataset.lang); route({ keepScroll: true }); } });
   if (tamil && !ta) {
     // Species outside the library: look for a Tamil name and Tamil Wikipedia summary.
@@ -717,11 +777,12 @@ async function viewGame(mode = 'sound') {
     if (done) return;
     if (c.dataset.k === answer.key) {
       done = true; c.classList.add('right'); scoreAnswer('sound', missed);
+      stopSound(); celebrate(c);
       $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span>`;
-      setTimeout(() => speak(sayLine(answer)), 300);
+      setTimeout(() => (lang === 'ta' ? sayName(answer.name, null, TA[answer.key]?.n, answer.key) : speak(sayLine(answer))), 900);
       $('#next').hidden = false;
     } else {
-      missed = true; c.classList.add('wrong'); $('#cheer').textContent = 'Not quite — listen again.';
+      missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — listen again.';
     }
   });
   $('#next').onclick = () => viewGame('sound');
@@ -737,7 +798,10 @@ async function viewNameGame() {
   app.innerHTML = `<section class="quiz">
     ${quizHead('name')}
     <figure class="name-photo"><img id="qimg" src="${bigPhoto(photoOf(answer))}" alt="A mystery animal"><figcaption id="qcredit"></figcaption></figure>
-    <div class="name-choices">${opts.map(o => `<button class="name-choice" data-k="${o.key}">${esc(o.name)}</button>`).join('')}</div>
+    <div class="name-choices">${opts.map(o => `<div class="name-opt">
+      <button class="name-choice" data-k="${o.key}"${lang === 'ta' ? ' lang="ta"' : ''}>${esc(lang === 'ta' && TA[o.key] ? TA[o.key].n : o.name)}</button>
+      <button class="say-opt" data-name="${esc(o.name)}"${TA[o.key] ? ` data-name-ta="${esc(TA[o.key].n)}" data-key="${o.key}"` : ''} aria-label="Hear this answer: ${esc(o.name)}">${icon('speak')}</button>
+    </div>`).join('')}</div>
     <div class="feedback">
       <p id="cheer"></p>
       <div class="row">
@@ -757,12 +821,13 @@ async function viewNameGame() {
     if (done) return;
     if (c.dataset.k === answer.key) {
       done = true; c.classList.add('right'); scoreAnswer('name', missed);
+      stopSound(); celebrate(c);
       app.querySelectorAll('.name-choice:not(.right)').forEach(x => x.classList.add('dim'));
       $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span> <a class="more-link" href="#/b/${answer.key}">Learn more</a>`;
-      setTimeout(() => speak(`${answer.name}! ${answer.fun}`), 250);
+      setTimeout(() => (lang === 'ta' ? sayName(answer.name, null, TA[answer.key]?.n, answer.key) : speak(`${answer.name}! ${answer.fun}`)), 900);
       $('#hint').hidden = true; $('#next').hidden = false;
     } else {
-      missed = true; c.classList.add('wrong'); $('#cheer').textContent = 'Not quite — look again, or hear a hint.';
+      missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — look again, or hear a hint.';
     }
   });
   $('#next').onclick = () => viewNameGame();
@@ -833,6 +898,16 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#viewe
 const setTopH = () => document.documentElement.style.setProperty('--top-h', `${$('.top').offsetHeight}px`);
 setTopH(); addEventListener('resize', setTopH);
 window.speechSynthesis?.getVoices();
+syncLangBtn();
+$('#langBtn').onclick = () => {
+  setLang(lang === 'ta' ? 'en' : 'ta');
+  toast(lang === 'ta' ? 'தமிழ் — பெயர்களும் விளக்கங்களும் தமிழில்' : 'English');
+  // Mid-quiz, relabel the answers instead of starting a new question.
+  const choices = app.querySelectorAll('.name-choice');
+  if (choices.length) return choices.forEach(c => { const b = byKey[c.dataset.k]; c.textContent = lang === 'ta' && TA[b.key] ? TA[b.key].n : b.name; c.lang = lang === 'ta' ? 'ta' : ''; });
+  if (location.hash.startsWith('#/game')) return;
+  route({ keepScroll: true });
+};
 route();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

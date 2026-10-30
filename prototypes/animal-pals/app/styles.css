@@ -234,6 +234,22 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
 .source { font-size: 12.5px; color: var(--ink-3); margin-top: 22px; }
 .source a { text-decoration: underline; text-underline-offset: 2px; }
 
+.langbtn { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 15px; font-weight: 600; flex-shrink: 0; font-family: 'Noto Sans Tamil', var(--sans); }
+.langbtn .ico { width: 18px; height: 18px; color: var(--accent); }
+.langbtn:hover { border-color: var(--ink-3); }
+@media (max-width: 760px) {
+  .brand { order: 0; } .langbtn { order: 1; margin-left: auto; height: 40px; } .search { order: 2; }
+}
+.name-opt { display: flex; gap: 8px; }
+.name-opt .name-choice { flex: 1; min-width: 0; }
+.say-opt { width: 60px; height: 60px; flex-shrink: 0; border-radius: 14px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; transition: transform .1s, background .15s; }
+.say-opt .ico { width: 26px; height: 26px; stroke-width: 2; }
+.say-opt:active { transform: scale(.94); }
+.say-opt.speaking { background: var(--accent); color: var(--accent-ink); }
+.name-choice[lang="ta"] { font-family: 'Noto Sans Tamil', var(--sans); font-size: 19px; }
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 90; overflow: hidden; }
+.confetti i { position: absolute; width: 10px; height: 14px; border-radius: 2px; }
+
 /* ---------- Detail bar: big Back + Previous / Next ---------- */
 .dbar { position: sticky; top: var(--top-h, 69px); z-index: 15; display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin: -24px -24px 20px; padding: 12px 24px; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
