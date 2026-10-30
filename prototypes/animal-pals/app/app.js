@@ -630,7 +630,8 @@ function fillTotals() {
 }
 
 async function viewExploreGroup(id) {
-  const k = KINGDOM.find(k => k.id === id) || { label: 'Living beings' };
+  const k = KINGDOM.find(k => k.id === id);
+  if (!k) return location.replace('#/explore'); // an unknown group link goes back to Explore
   app.innerHTML = `
     <a class="crumb" href="#/explore">${icon('back')} Tree of life</a>
     <div class="page-head"><span class="eyebrow">Most observed first</span><h1 class="h-display">${esc(k.label)}</h1></div>

@@ -1,10 +1,16 @@
-// Credits for the bundled calls in audio/calls (written by tools/pick-calls.mjs).
+// Credits for the bundled calls in audio/calls (written by tools/pick-calls.mjs; reviewed by hand).
 export const CALLS = {
  "lion": {
   "by": "(c) congonaturalist, some rights reserved (CC BY-NC)",
   "license": "CC-BY-NC",
   "page": "https://www.inaturalist.org/observations/79675247",
   "score": 0.98
+ },
+ "dog": {
+  "by": "User:Dr. Nono YesMaybe",
+  "license": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Dog_barking.webm",
+  "score": 0.97
  },
  "tiger": {
   "by": "(c) moth-_-man, some rights reserved (CC BY-NC)",
@@ -18,16 +24,160 @@ export const CALLS = {
   "page": "https://commons.wikimedia.org/wiki/File:11wolf.wav",
   "score": 0.93
  },
- "dog": {
-  "by": "User:Dr. Nono YesMaybe",
-  "license": "CC BY-SA 4.0",
-  "page": "https://commons.wikimedia.org/wiki/File:Dog_barking.webm",
-  "score": 0.97
+ "fox": {
+  "by": "(c) Mohammad Marafi, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/176866096",
+  "score": 0.5
+ },
+ "squirrel": {
+  "by": "(c) dogsarethecoolest, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/195639229",
+  "score": 1
  },
  "cat": {
   "by": "Tobias Puderer",
   "license": "CC BY-SA 3.0",
   "page": "https://commons.wikimedia.org/wiki/File:Felis_silvestris_catus_meows.ogg",
+  "score": 0.99
+ },
+ "cow": {
+  "by": "MichaeltheFox8621",
+  "license": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Single_Cow_Moo.ogg",
+  "score": 1
+ },
+ "horse": {
+  "by": "(c) Moses Michelsohn, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/293494863",
+  "score": 0.98
+ },
+ "sheep": {
+  "by": "(c) Braden J. Judson, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/160493492",
+  "score": 0.98
+ },
+ "goat": {
+  "by": "stephan",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Herd_of_goats_bleating.ogg",
+  "score": 0.97
+ },
+ "pig": {
+  "by": "stilgar",
+  "license": "Public domain",
+  "page": "https://commons.wikimedia.org/wiki/File:Man_grunts_like_pig.ogg",
+  "score": 0.79
+ },
+ "chicken": {
+  "by": "(c) eleggua, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/263268982",
+  "score": 1
+ },
+ "peacock": {
+  "by": "(c) Krishnakumar SD, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/301979731",
+  "score": 0.62
+ },
+ "parrot": {
+  "by": "(c) Maria Emília Martins, some rights reserved (CC BY-NC-SA)",
+  "license": "CC-BY-NC-SA",
+  "page": "https://www.inaturalist.org/observations/61595626",
+  "score": 0.94
+ },
+ "crow": {
+  "by": "Manoj Karingamadathil",
+  "license": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:House_Crow_(Corvus_splendens)_from_Payyanur_ML155337521.wav",
+  "score": 1
+ },
+ "owl": {
+  "by": "Vianney Bajart",
+  "license": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Strix_aluco_male.oga",
+  "score": 1
+ },
+ "eagle": {
+  "by": "(c) kairune, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/366165731",
+  "score": 0.93
+ },
+ "sparrow": {
+  "by": "(c) eeyipes, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/209182013",
+  "score": 0.85
+ },
+ "koel": {
+  "by": "(c) Ryan Ashton, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/193457489",
+  "score": 0.86
+ },
+ "pigeon": {
+  "by": "(c) Misha Zitser, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/393356385",
+  "score": 0.98
+ },
+ "duck": {
+  "by": "Jonathon Jongsma",
+  "license": "CC BY-SA 3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Anas_platyrhynchos_-_Mallard_-_XC112828.ogg",
+  "score": 0.99
+ },
+ "myna": {
+  "by": "(c) swmpg, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/215470615",
+  "score": 0.95
+ },
+ "kingfisher": {
+  "by": "Shino jacob koottanad",
+  "license": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:White_throated_kingfisher_(Halcyon_smyrnensis)_sound.wav",
+  "score": 0.9
+ },
+ "woodpecker": {
+  "by": "(c) Manoj Karingamadathil, some rights reserved (CC BY-SA)",
+  "license": "CC-BY-SA",
+  "page": "https://www.inaturalist.org/observations/95049474",
+  "score": 0.88
+ },
+ "flamingo": {
+  "by": "Olaf Oliviero Riemer",
+  "license": "CC BY-SA 3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Phoenicopterus_roseus_(Rosaflamingo_-_Greater_Flamingo)_%E2%80%94_Weltvogelpark_Walsrode_2013.ogg",
+  "score": 0.99
+ },
+ "whale": {
+  "by": "(c) Tuoichen, some rights reserved (CC BY)",
+  "license": "CC-BY",
+  "page": "https://www.inaturalist.org/observations/40897361",
+  "score": 0.99
+ },
+ "frog": {
+  "by": "(c) priyanshu_chowdhary, some rights reserved (CC BY-NC)",
+  "license": "CC-BY-NC",
+  "page": "https://www.inaturalist.org/observations/367295258",
+  "score": 0.97
+ },
+ "bee": {
+  "by": "Free Sounds Library User Spanac",
+  "license": "CC BY 3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Bee_buzzing_sound_(animal_noises).opus",
+  "score": 0.99
+ },
+ "cricket": {
+  "by": "Rickjpelleg",
+  "license": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Cricket_Gryllus_bimaculatus_Chirps.oga",
   "score": 0.99
  }
 };
