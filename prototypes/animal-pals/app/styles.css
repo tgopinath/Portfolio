@@ -200,7 +200,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
 .crumb { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-weight: 500; font-size: 15px; margin: 0 0 18px -4px; padding: 4px; }
 .crumb:hover { color: var(--ink); }
 .detail { display: grid; gap: 40px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; }
-.gallery { position: sticky; top: 88px; }
+.gallery { position: sticky; top: calc(var(--top-h, 69px) + 92px); min-width: 0; }
 .hero { position: relative; z-index: 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-2); }
 .slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; aspect-ratio: 4 / 3.4; }
 .slides::-webkit-scrollbar { display: none; }
@@ -369,7 +369,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .tile { padding: 12px; } .tile b { font-size: 17px; }
   .section-head { margin-top: 36px; }
-  .detail { grid-template-columns: 1fr; gap: 20px; }
+  .detail { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .gallery { position: static; margin: 0 -16px; }
   .gallery .hero { border-radius: 0; }
   .gallery .thumbs, .gallery .credit { padding: 0 16px; }

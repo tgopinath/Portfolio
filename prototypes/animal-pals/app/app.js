@@ -1,6 +1,7 @@
 import { BEINGS, CATEGORIES, KINGDOM, GLB_MODELS } from './data.js';
 import { VIDEOS } from './videos.js';
 import { TA } from './data-ta.js';
+import { CALLS } from './calls.js';
 
 const INAT = 'https://api.inaturalist.org/v1';
 const app = document.getElementById('app');
@@ -196,6 +197,7 @@ function setPlaying(btn, on) {
   btn.closest('[data-wave]')?.classList.toggle('playing-wrap', on);
   const use = btn.querySelector('use'); if (use) use.setAttribute('href', on ? '#i-pause' : '#i-play');
   const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = on ? 'Stop' : 'Hear';
+  btn.setAttribute('aria-pressed', on);
 }
 // On iPhones, play through the silent switch like a media app would.
 try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
@@ -232,7 +234,11 @@ async function loadBoosted(url) {
   if (bufCache.size > 24) bufCache.delete(bufCache.keys().next().value);
   return p;
 }
+// Every play or stop bumps soundGen; async work (loading, timers, fallbacks) checks it before acting,
+// so a sound that finishes loading after the child tapped something else never takes over.
+let soundGen = 0;
 function stopSound() {
+  soundGen++;
   audio.pause(); clearTimeout(stopTimer); audio.volume = 1;
   if (boosted) { try { boosted.src.onended = null; boosted.src.stop(); } catch {} boosted = null; }
   setPlaying(playingBtn, false); playingBtn = null;
@@ -243,13 +249,15 @@ function muteVideos() {
   document.querySelectorAll('.mute.on').forEach(m => { m.classList.remove('on'); m.querySelector('span').textContent = 'Unmute'; });
 }
 // Field recordings can run for minutes; play a short clip and fade it out.
-async function playUrl(url, btn, maxSec = 14) {
+async function playUrl(url, btn, maxSec = 14, { direct = false } = {}) {
   stopSound(); window.speechSynthesis?.cancel(); muteVideos();
+  const my = soundGen;
   playingBtn = btn; setPlaying(btn, true);
   const c = ac(); c.resume?.(); // inside the tap, so phones allow sound
   try {
+    if (direct) throw new Error('direct'); // bundled calls are already trimmed and levelled
     const { buf, gain, start } = await loadBoosted(url);
-    if (playingBtn !== btn) return; // tapped something else while loading
+    if (my !== soundGen) return; // tapped something else while loading
     const src = c.createBufferSource(); src.buffer = buf;
     const g = c.createGain(), lim = c.createDynamicsCompressor();
     lim.threshold.value = -10; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = .003; lim.release.value = .2;
@@ -261,40 +269,60 @@ async function playUrl(url, btn, maxSec = 14) {
     boosted = { src, gain: g };
     src.onended = () => { if (boosted?.src === src) { boosted = null; setPlaying(playingBtn, false); playingBtn = null; } };
   } catch {
-    if (playingBtn !== btn) return;
+    if (my !== soundGen) return;
     audio.src = url; audio.currentTime = 0;
-    const p = audio.play();
     stopTimer = setTimeout(() => {
-      const fade = setInterval(() => { audio.volume = Math.max(0, audio.volume - .1); if (audio.volume <= 0) { clearInterval(fade); stopSound(); } }, 80);
+      const fade = setInterval(() => { if (my !== soundGen) return clearInterval(fade); audio.volume = Math.max(0, audio.volume - .1); if (audio.volume <= 0) { clearInterval(fade); stopSound(); } }, 80);
     }, maxSec * 1000);
-    return p;
+    // A file that won't play must not leave the button stuck on "Stop".
+    return audio.play().catch(e => { if (my === soundGen) stopSound(); throw e; });
   }
 }
 audio.addEventListener('ended', stopSound);
 const soundIdx = {};
-async function playBeing(taxonId, btn, noteEl, fallbackSay) {
-  if (playingBtn === btn && isPlaying()) { stopSound(); return; }
+// Library species start with their bundled call: a clear, checked recording (tools/pick-calls.mjs).
+const callOfId = id => { const b = byId[id]; return b && CALLS[b.key] ? { key: b.key, ...CALLS[b.key] } : null; };
+function playCall(call, btn, noteEl) {
+  if (noteEl) noteEl.innerHTML = `Clear call · ${esc(call.by)} (${esc(call.license)}) · <a href="${esc(call.page)}" target="_blank" rel="noopener">source</a>. Tap again for recordings from the wild.`;
+  return playUrl(`audio/calls/${call.key}.m4a`, btn, 10, { direct: true });
+}
+async function playBeing(taxonId, btn, noteEl, fallbackSay, { callOnly = false, tries = 0 } = {}) {
+  // Tapping the same button again stops it, even while its recording is still loading.
+  if (btn && playingBtn === btn) { stopSound(); return; }
   ac().resume?.(); // unlock audio during the tap, before any waiting
+  const call = callOfId(taxonId);
+  // First tap: the clear call. Later taps step through wild recordings, then back to the call.
+  if (call && (callOnly || soundIdx[taxonId] === undefined)) {
+    if (!callOnly) soundIdx[taxonId] = -1;
+    return playCall(call, btn, noteEl).catch(() => {});
+  }
+  stopSound(); window.speechSynthesis?.cancel();
+  const my = soundGen;
+  playingBtn = btn; setPlaying(btn, true);
   try {
-    setPlaying(btn, true);
     const list = await getSounds(taxonId);
+    if (my !== soundGen) return;
     if (!list.length) {
-      setPlaying(btn, false);
+      stopSound();
       if (fallbackSay) speak(fallbackSay);
       if (noteEl) noteEl.textContent = 'No field recording available yet — reading it aloud instead.';
       else toast('No recording of this one yet');
       return;
     }
-    const i = (soundIdx[taxonId] = ((soundIdx[taxonId] ?? -1) + 1) % list.length);
+    const prev = soundIdx[taxonId] ?? -1;
+    if (call && prev + 1 >= list.length) { soundIdx[taxonId] = undefined; return playBeing(taxonId, btn, noteEl, fallbackSay); } // loop back to the clear call
+    const i = (soundIdx[taxonId] = (prev + 1) % list.length);
     const s = list[i];
-    if (noteEl) noteEl.innerHTML = `Recording ${i + 1} of ${list.length}${s.place ? ` · ${esc(s.place)}` : ''} · ${esc(s.by)} via <a href="https://www.inaturalist.org/observations/${s.obs}" target="_blank" rel="noopener">iNaturalist</a>`;
+    if (noteEl) noteEl.innerHTML = `Wild recording ${i + 1} of ${list.length}${s.place ? ` · ${esc(s.place)}` : ''} · ${esc(s.by)} via <a href="https://www.inaturalist.org/observations/${s.obs}" target="_blank" rel="noopener">iNaturalist</a>`;
     const title = btn?.closest('[data-wave]')?.querySelector('.sound-title small');
     if (title) title.textContent = `${i + 1} / ${list.length}`;
     await playUrl(s.url, btn);
   } catch (e) {
+    // Another sound started meanwhile, or the child left the page: leave things alone.
+    if ((playingBtn && playingBtn !== btn) || (btn && !btn.isConnected)) return;
     stopSound();
-    // Some recordings fail to decode in some browsers; try the next one.
-    if (e?.name === 'NotSupportedError') return playBeing(taxonId, btn, noteEl, fallbackSay);
+    // Some recordings fail to decode in some browsers; try the next one (a few times at most).
+    if (e?.name === 'NotSupportedError' && tries < 3) return playBeing(taxonId, btn, noteEl, fallbackSay, { tries: tries + 1 });
     if (fallbackSay) speak(fallbackSay);
   }
 }
@@ -324,6 +352,7 @@ const hasTamilVoice = () => speechSynthesis.getVoices?.().some(v => /^ta/i.test(
 let lang = store.get('ap.lang', 'en');
 const setLang = l => { lang = l; store.set('ap.lang', l); syncLangBtn(); };
 function syncLangBtn() {
+  document.documentElement.lang = lang === 'ta' ? 'ta' : 'en';
   const btn = document.getElementById('langBtn'); if (!btn) return;
   btn.querySelector('span').textContent = lang === 'ta' ? 'English' : 'தமிழ்';
   btn.setAttribute('aria-label', lang === 'ta' ? 'Switch to English' : 'தமிழுக்கு மாற்று (Switch to Tamil)');
@@ -409,7 +438,7 @@ function detailBar(href, b) {
     ? `<a class="pn ${dir}" href="${x.h}" data-pn="${dir}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'}: ${esc(x.n)}">${dir === 'prev' ? icon('back') : ''}${x.img ? `<img src="${esc(smallPhoto(x.img))}" alt="">` : ''}<span><small>${dir === 'prev' ? 'Previous' : 'Next'}</small>${esc(x.n)}</span>${dir === 'next' ? icon('arrow') : ''}</a>`
     : `<span class="pn ${dir} off" aria-hidden="true"></span>`;
   return `<div class="dbar">
-    <a class="back-big" href="${b ? '#/' : '#/explore'}" onclick="if(history.length>1){history.back();return false}">${icon('back')}<span>Back</span></a>
+    <a class="back-big" href="${b ? '#/' : '#/explore'}" data-back>${icon('back')}<span>Back</span></a>
     <div class="pn-wrap">${nav(prev, 'prev')}${nav(next, 'next')}</div>
   </div>`;
 }
@@ -427,11 +456,12 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-pn]'
 // even without a Tamil voice installed. Falls back to the device voice if a clip can't play.
 function playClip(url, btn, fallback) {
   stopSound(); window.speechSynthesis?.cancel();
+  const my = soundGen;
   audio.src = url;
   btn?.classList.add('speaking');
   let started = false, gaveUp = false;
   const done = () => btn?.classList.remove('speaking');
-  const giveUp = () => { if (started || gaveUp) return; gaveUp = true; audio.pause(); done(); fallback?.(); };
+  const giveUp = () => { if (started || gaveUp) return; gaveUp = true; done(); if (my !== soundGen) return; audio.pause(); fallback?.(); };
   audio.addEventListener('playing', () => { started = true; }, { once: true });
   audio.addEventListener('ended', done, { once: true });
   audio.addEventListener('pause', done, { once: true });
@@ -557,6 +587,7 @@ function viewExplore() {
 }
 
 // Infinite list of species under the given taxa, loaded as the user scrolls.
+let listIO = null; // the current page's scroll watcher (released on every route change)
 function infiniteSpecies(listEl, more, { taxa, without = [], skip = new Set() }) {
   let page = 1, grid, busy = false, end = false;
   const q = `taxon_id=${taxa.join(',')}${without.length ? `&without_taxon_id=${without.join(',')}` : ''}&quality_grade=research&per_page=30&photos=true`;
@@ -571,15 +602,20 @@ function infiniteSpecies(listEl, more, { taxa, without = [], skip = new Set() })
       grid.insertAdjacentHTML('beforeend', r.results.filter(x => x.taxon.default_photo && !skip.has(x.taxon.id)).map(x => taxonCard(x.taxon)).join(''));
       end = r.results.length < 30; page++;
       more.innerHTML = end ? '<p class="end">You’ve seen them all</p>' : '';
+      busy = false;
+      // Keep filling while the bottom is still near the screen (tall displays) — only after a success.
+      if (!end && more.isConnected && more.getBoundingClientRect().top < innerHeight + 600) load();
     } catch {
+      busy = false;
+      if (!more.isConnected) return;
+      // Offline or rate-limited: wait for the child to tap, don't retry in a loop.
       if (grid) { more.innerHTML = '<button class="btn outline">Try again</button>'; more.firstChild.onclick = load; }
-      else listEl.innerHTML = '<div class="empty"><b>Couldn’t connect</b>Check your internet connection and try again.</div>';
+      else listEl.innerHTML = '<div class="empty"><b>Couldn’t connect</b>Check your internet connection and try again.<div style="margin-top:14px"><button class="btn outline" id="retryList">Try again</button></div></div>', $('#retryList').onclick = () => { listEl.innerHTML = skeletonGrid(8); load(); };
     }
-    busy = false;
-    if (!end && grid && more.isConnected && more.getBoundingClientRect().top < innerHeight + 600) load();
   }
-  const io = new IntersectionObserver(es => { if (!more.isConnected) return io.disconnect(); if (es[0].isIntersecting) load(); }, { rootMargin: '800px 0px' });
-  io.observe(more);
+  listIO?.disconnect();
+  listIO = new IntersectionObserver(es => { if (es[0].isIntersecting && !busy && !more.querySelector('button')) load(); }, { rootMargin: '800px 0px' });
+  listIO.observe(more);
   load();
 }
 const groupTotals = store.get('ap.totals.v1', {});
@@ -621,6 +657,7 @@ async function viewSearch(q) {
       (local.length ? '' : `<div class="empty"><b>No matches</b>Try another name — common or scientific both work.</div>`);
     $('#sub').textContent = `${local.length + res.length} results`;
   } catch {
+    if (!$('#remote')) return; // the child already left the search page
     $('#remote').innerHTML = '<div class="empty"><b>Offline</b>Showing only species from the library.</div>';
     $('#sub').textContent = `${local.length} results`;
   }
@@ -640,7 +677,7 @@ async function viewDetail({ being: b, taxonId }) {
     <div>${b ? `<h1 class="h-display">${esc(b.name)}</h1>` : '<div class="skeleton" style="height:48px;border-radius:12px;width:70%"></div>'}</div></div>`;
   let t;
   try { t = (await api(`/taxa/${id}`)).results[0]; }
-  catch { if (!b) { app.innerHTML = `${back}<div class="empty"><b>Couldn’t load</b>Check your internet connection.</div>`; return; } }
+  catch { if (!b) { if (location.hash === `#/t/${id}`) app.innerHTML = `${back}<div class="empty"><b>Couldn’t load</b>Check your internet connection.</div>`; return; } }
   if (location.hash !== (b ? `#/b/${b.key}` : `#/t/${id}`)) return;
 
   const name = b?.name || cap(t?.preferred_common_name || t?.name);
@@ -694,7 +731,7 @@ async function viewDetail({ being: b, taxonId }) {
           <button class="sound-play" id="playBtn" aria-label="Play sound">${icon('play')}</button>
           <div>
             <div class="sound-title"><span>${b && !b.says.startsWith('(') ? `Call · “${esc(b.says)}”` : 'Field recording'}</span><small></small></div>
-            <p class="sound-note" id="note">${b?.quiet ? `A quiet species — real recordings are rare.` : 'Real recordings from the wild. Tap again for another.'}</p>
+            <p class="sound-note" id="note">${b && CALLS[b.key] ? 'Tap to hear its call. Tap again for recordings from the wild.' : b?.quiet ? 'A quiet species — real recordings are rare.' : 'Real recordings from the wild. Tap again for another.'}</p>
           </div>
         </section>`}
         <div class="d-actions">
@@ -740,8 +777,9 @@ async function viewDetail({ being: b, taxonId }) {
   if (tamil && !ta) {
     // Species outside the library: look for a Tamil name and Tamil Wikipedia summary.
     $('#tanote').hidden = false; $('#tanote').textContent = 'தமிழ் விளக்கத்தைத் தேடுகிறோம்…';
+    const note = $('#tanote');
     tamilFor(id, t?.wikipedia_url).then(r => {
-      if (!$('#tanote')) return;
+      if (!note.isConnected || lang !== 'ta') return; // the child moved on, or switched back to English
       taInfo = r;
       if (r.n) { $('#dname').textContent = r.n; $('#dsub').textContent = `${name} · ${t?.name || ''}`; }
       if (r.bio) { $('#dbio').textContent = r.bio; $('#dbio').lang = 'ta'; $('#tanote').innerHTML = `விளக்கம்: <a href="${esc(r.url || '#')}" target="_blank" rel="noopener">தமிழ் விக்கிப்பீடியா</a>`; }
@@ -825,12 +863,18 @@ function scoreAnswer(mode, missed) {
   if (stats.length) { stats[0].textContent = sc.stars; stats[1].textContent = sc.streak; }
 }
 let lastAnswer;
+let announceTimer;
+const quizEmpty = msg => { app.innerHTML = `<section class="quiz">${quizHead(location.hash.includes('name') ? 'name' : 'sound')}<div class="empty"><b>Can’t start the quiz</b>${msg}<div style="margin-top:14px"><button class="btn outline" onclick="location.reload()">Try again</button></div></div></section>`; };
 const pickAnswer = pool => { let a; do { a = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && a === lastAnswer); return (lastAnswer = a); };
 
 async function viewGame(mode = 'sound') {
+  const here = location.hash;
   await loadCuratedPhotos().catch(() => {});
+  if (location.hash !== here) return; // the child tapped elsewhere while photos loaded
   if (mode === 'name') return viewNameGame();
-  const pool = BEINGS.filter(b => !b.quiet && photoOf(b));
+  let pool = BEINGS.filter(b => CALLS[b.key] && photoOf(b));
+  if (pool.length < 4) pool = BEINGS.filter(b => !b.quiet && photoOf(b)); // too few clear calls: use wild recordings
+  if (pool.length < 4) return quizEmpty('The animal photos and sounds need the internet. Check the connection and try again.');
   const answer = pickAnswer(pool);
   const opts = shuffle([answer, ...shuffle(pool.filter(b => b !== answer)).slice(0, 3)]);
   app.innerHTML = `<section class="quiz">
@@ -842,7 +886,7 @@ async function viewGame(mode = 'sound') {
     <div class="choices">${opts.map(o => `<button class="choice" data-k="${o.key}"><img src="${photoOf(o)}" alt=""><div>${esc(o.name)}</div></button>`).join('')}</div>
     <div class="feedback"><p id="cheer"></p><button class="btn" id="next" hidden>Next sound ${icon('arrow')}</button></div>
   </section>`;
-  const play = () => playBeing(answer.id, $('#gplay'), null, answer.says);
+  const play = () => playBeing(answer.id, $('#gplay'), null, answer.says, { callOnly: true });
   $('#gplay').onclick = play;
   play();
   let done = false, missed = false;
@@ -852,17 +896,18 @@ async function viewGame(mode = 'sound') {
       done = true; c.classList.add('right'); scoreAnswer('sound', missed);
       stopSound(); celebrate(c);
       $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span>`;
-      setTimeout(() => sayName(answer.name, null, TA[answer.key]?.n, answer.key), 900);
+      announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 900);
       $('#next').hidden = false;
     } else {
       missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — listen again.';
     }
   });
-  $('#next').onclick = () => viewGame('sound');
+  $('#next').onclick = () => { clearTimeout(announceTimer); viewGame('sound'); };
 }
 
 async function viewNameGame() {
   const pool = BEINGS.filter(b => photoOf(b));
+  if (pool.length < 4) return quizEmpty('The animal photos need the internet. Check the connection and try again.');
   const answer = pickAnswer(pool);
   // Two look-alikes from the same group keep it interesting; one from elsewhere keeps it fair.
   const near = shuffle(pool.filter(b => b !== answer && b.cat === answer.cat)).slice(0, 2);
@@ -888,7 +933,7 @@ async function viewNameGame() {
     const ph = shuffle(r.results[0]?.taxon_photos || [])[0]?.photo;
     if (ph && lastAnswer === answer && $('#qimg')) { $('#qimg').src = bigPhoto(ph.medium_url); $('#qcredit').textContent = ph.attribution || ''; }
   }).catch(() => {});
-  $('#hint').onclick = e => playBeing(answer.id, e.currentTarget, null, answer.quiet || answer.says.startsWith('(') ? answer.fun : answer.says);
+  $('#hint').onclick = e => playBeing(answer.id, e.currentTarget, null, answer.quiet || answer.says.startsWith('(') ? answer.fun : answer.says, { callOnly: true });
   let done = false, missed = false;
   app.querySelectorAll('.name-choice').forEach(c => c.onclick = () => {
     if (done) return;
@@ -897,13 +942,13 @@ async function viewNameGame() {
       stopSound(); celebrate(c);
       app.querySelectorAll('.name-choice:not(.right)').forEach(x => x.classList.add('dim'));
       $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span> <a class="more-link" href="#/b/${answer.key}">Learn more</a>`;
-      setTimeout(() => sayName(answer.name, null, TA[answer.key]?.n, answer.key), 900);
+      announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 900);
       $('#hint').hidden = true; $('#next').hidden = false;
     } else {
       missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — look again, or hear a hint.';
     }
   });
-  $('#next').onclick = () => viewNameGame();
+  $('#next').onclick = () => { clearTimeout(announceTimer); viewNameGame(); };
 }
 
 // ---------------------------------------------------------------- search + voice
@@ -913,7 +958,8 @@ input.addEventListener('input', () => {
   clearTimeout(deb);
   deb = setTimeout(() => {
     const q = input.value.trim();
-    if (q.length >= 2) location.hash = `#/search/${encodeURIComponent(q)}`;
+    const to = `#/search/${encodeURIComponent(q)}`;
+    if (q.length >= 2) location.hash.startsWith('#/search/') ? location.replace(to) : (location.hash = to);
     else if (!q && location.hash.startsWith('#/search')) location.hash = '#/';
   }, 350);
 });
@@ -948,8 +994,10 @@ function setTab(tab) {
   document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
 }
 function route({ keepScroll = false } = {}) {
-  close3d(); stopSound(); stopPreview();
-  const h = decodeURIComponent(location.hash.slice(1) || '/');
+  close3d(); stopSound(); stopPreview(); window.speechSynthesis?.cancel(); clearTimeout(announceTimer);
+  if (!keepScroll) { listIO?.disconnect(); listIO = null; }
+  let h = location.hash.slice(1) || '/';
+  try { h = decodeURIComponent(h); } catch {} // a hand-typed "50%" shouldn't break the app
   const [, a, b] = h.split('/');
   if (!keepScroll) window.scrollTo(0, 0);
   if (a !== 'search' && input.value && document.activeElement !== input) input.value = '';
@@ -964,7 +1012,11 @@ function route({ keepScroll = false } = {}) {
   if (a === 'faves') { setTab('faves'); return viewFaves(); }
   location.hash = '#/';
 }
-window.addEventListener('hashchange', () => route());
+// Back returns to the previous screen only if this tab has moved within the app; a page opened
+// straight from a link goes to its list instead of leaving the app.
+let movedInApp = false;
+window.addEventListener('hashchange', () => { movedInApp = true; route(); });
+document.addEventListener('click', e => { const a = e.target.closest('[data-back]'); if (a && movedInApp) { e.preventDefault(); history.back(); } });
 window.addEventListener('popstate', () => { if (!$('#viewer3d').hidden) close3d(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#viewer3d').hidden) history.back(); });
 // Keeps the detail bar pinned just under the header, whatever its height.
@@ -978,8 +1030,7 @@ $('#langBtn').onclick = () => {
   // Mid-quiz, relabel the answers instead of starting a new question.
   const choices = app.querySelectorAll('.name-choice');
   if (choices.length) return choices.forEach(c => { const b = byKey[c.dataset.k]; c.textContent = lang === 'ta' && TA[b.key] ? TA[b.key].n : b.name; c.lang = lang === 'ta' ? 'ta' : ''; });
-  if (location.hash.startsWith('#/game')) return;
-  route({ keepScroll: true });
+  if (/^#\/(b|t)\//.test(location.hash)) route({ keepScroll: true });
 };
 route();
 
