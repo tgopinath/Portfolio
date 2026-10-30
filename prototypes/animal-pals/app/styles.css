@@ -140,6 +140,11 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
 }
 .tag3d .ico { width: 13px; height: 13px; }
 .card-btns { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; gap: 6px; }
+/* With a mouse, the buttons appear on hover (and stay while a sound plays); touch screens always show them. */
+@media (hover: hover) and (pointer: fine) {
+  .card-btns { opacity: 0; transform: translateY(6px); transition: opacity .18s, transform .18s; }
+  .card:hover .card-btns, .card:focus-within .card-btns, .card-btns:has(.playing, .speaking) { opacity: 1; transform: none; }
+}
 .name-mini {
   height: 34px; padding: 0 11px 0 9px; border-radius: 999px; background: var(--blue); color: #fff;
   display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600;
