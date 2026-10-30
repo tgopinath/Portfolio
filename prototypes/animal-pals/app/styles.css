@@ -35,6 +35,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
   background: var(--bg); color: var(--ink);
@@ -140,10 +141,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
 }
 .tag3d .ico { width: 13px; height: 13px; }
 .card-btns { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; gap: 6px; }
-/* With a mouse, the buttons appear on hover (and stay while a sound plays); touch screens always show them. */
+/* With a mouse, the buttons and 3D badge appear on hover (and stay while a sound plays); touch screens always show them. */
 @media (hover: hover) and (pointer: fine) {
   .card-btns { opacity: 0; transform: translateY(6px); transition: opacity .18s, transform .18s; }
   .card:hover .card-btns, .card:focus-within .card-btns, .card-btns:has(.playing, .speaking) { opacity: 1; transform: none; }
+  .card .tag3d { opacity: 0; transform: translateY(-4px); transition: opacity .18s, transform .18s; }
+  .card:hover .tag3d, .card:focus-within .tag3d { opacity: 1; transform: none; }
 }
 .name-mini {
   height: 34px; padding: 0 11px 0 9px; border-radius: 999px; background: var(--blue); color: #fff;
@@ -309,25 +312,27 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; text-align: center; min-width: 84px; }
 .stat b { display: block; font: 600 22px var(--serif); font-variant-numeric: tabular-nums; }
 .stat span { font-size: 12px; color: var(--ink-3); }
-.quiz-player { margin: 28px 0; display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px; }
+.quiz-player { margin: 16px 0; display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px; }
 .quiz-player .sound-play { width: 64px; height: 64px; flex-shrink: 0; }
 .choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 @media (max-width: 640px) { .choices { grid-template-columns: 1fr 1fr; } }
 .choice { text-align: left; border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--line); transition: border-color .15s, transform .15s; }
 .choice:hover { border-color: var(--ink-3); }
-.choice img { aspect-ratio: 1; width: 100%; object-fit: cover; background: var(--surface-2); }
+.choice img { aspect-ratio: 4 / 3; width: 100%; object-fit: cover; background: var(--surface-2); max-height: calc((100svh - var(--top-h, 69px) - 420px) / 2); min-height: 90px; }
 .choice div { padding: 10px 12px; font-weight: 600; font-size: 15px; }
 .choice.right { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .choice.wrong { opacity: .4; }
-.feedback { min-height: 28px; margin: 22px 0 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.feedback { min-height: 28px; margin: 14px 0 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .feedback p { margin: 0; font-weight: 600; }
 .feedback .ok { color: var(--accent); }
 
-.quiz-modes { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 12px; margin-bottom: 22px; }
+.quiz-modes { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 12px; margin-bottom: 14px; }
 .quiz-modes a { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 9px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
 .quiz-modes a .ico { width: 17px; height: 17px; }
 .quiz-modes a[aria-current="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-.name-photo { margin: 24px 0 16px; position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-2); aspect-ratio: 4 / 3; max-height: 56vh; width: 100%; }
+/* The whole quiz fits on one screen: the photo takes whatever height is left. */
+.name-photo { margin: 16px 0 12px; position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-2); width: 100%;
+  height: clamp(180px, calc(100svh - var(--top-h, 69px) - 390px), 460px); }
 .name-photo img { width: 100%; height: 100%; object-fit: cover; }
 .name-photo figcaption { position: absolute; left: 10px; bottom: 8px; font-size: 11px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .name-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -395,3 +400,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
 @keyframes fadeup { from { opacity: 0; transform: translate(-50%, 8px); } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+
+/* Quiz: tighter title, and leave room for the phone tab bar. */
+.quiz .h-display { font-size: clamp(28px, 4vw, 40px); }
+.quiz .stat { padding: 6px 12px; } .quiz .stat b { font-size: 19px; }
+@media (max-width: 760px) {
+  .name-photo { height: clamp(150px, calc(100svh - var(--top-h, 118px) - 530px), 360px); }
+  .name-choice, .say-opt { height: 54px; } .say-opt { width: 54px; }
+  .quiz .feedback .btn { height: 42px; padding: 0 14px; }
+}

@@ -163,7 +163,7 @@ app.addEventListener('pointerout', e => {
   if (!previewBox.contains(e.relatedTarget)) stopPreview();
 });
 app.addEventListener('pointerdown', e => {
-  if (e.pointerType === 'mouse' || e.target.closest('[data-play]')) return;
+  if (e.pointerType === 'mouse' || e.target.closest('button')) return;
   const box = previewTarget(e); if (!box) return;
   suppressClick = false;
   holdTimer = setTimeout(() => { suppressClick = true; startPreview(box); }, 350);
@@ -243,7 +243,7 @@ async function playBeing(taxonId, btn, noteEl, fallbackSay) {
 let warnedTamil = false;
 function speak(text, { rate = .92, lang = 'en' } = {}) {
   if (!('speechSynthesis' in window)) return;
-  stopSound(); speechSynthesis.cancel();
+  stopSound();
   const u = new SpeechSynthesisUtterance(text);
   u.rate = rate;
   const voices = speechSynthesis.getVoices();
@@ -256,8 +256,12 @@ function speak(text, { rate = .92, lang = 'en' } = {}) {
     v = voices.find(v => /en[-_](IN|GB|US)/i.test(v.lang) && /samantha|veena|google|natural/i.test(v.name)) || voices.find(v => v.lang.startsWith('en'));
   }
   if (v) u.voice = v;
-  speechSynthesis.speak(u);
+  speak.last = u; // keep a reference: some browsers drop utterances that get garbage-collected mid-speech
+  const busy = speechSynthesis.speaking || speechSynthesis.pending;
+  speechSynthesis.cancel();
+  if (busy) setTimeout(() => speechSynthesis.speak(u), 120); else speechSynthesis.speak(u);
 }
+const hasTamilVoice = () => speechSynthesis.getVoices?.().some(v => /^ta/i.test(v.lang));
 // Explanations can be shown and read in English or Tamil (remembered per device).
 let lang = store.get('ap.lang', 'en');
 const setLang = l => { lang = l; store.set('ap.lang', l); syncLangBtn(); };
@@ -312,7 +316,7 @@ function beingCard(b) {
   </a>`;
 }
 const SILENT = ['Plantae', 'Fungi', 'Chromista', 'Protozoa'];
-const nameBtn = (name, key) => `<button class="name-mini" data-name="${esc(name)}"${TA[key] ? ` data-name-ta="${esc(TA[key].n)}" data-key="${key}"` : ''} aria-label="Say the name: ${esc(name)}">${icon('speak')}<span>Name</span></button>`;
+const nameBtn = (name, key) => `<button class="name-mini" data-name="${esc(name)}"${key ? ` data-key="${key}"` : ''}${TA[key] ? ` data-name-ta="${esc(TA[key].n)}"` : ''} aria-label="Say the name: ${esc(name)}">${icon('speak')}<span>Name</span></button>`;
 const hearBtn = (id, name, say) => `<button class="play-mini" data-play="${id}" data-say="${esc(say)}" aria-label="Hear the ${esc(name)}">${icon('play')}<span class="lbl">Hear</span></button>`;
 const cardBtns = (id, name, say, silent, key) => `<div class="card-btns">${nameBtn(name, key)}${silent ? '' : hearBtn(id, name, say)}</div>`;
 function taxonCard(t) {
@@ -373,11 +377,15 @@ function playClip(url, btn, fallback) {
   audio.play().catch(() => { done(); fallback?.(); });
 }
 const taClip = (key, kind) => TA[key] ? `audio/ta/${key}-${kind}.m4a` : null;
+const enClip = (key, kind) => byKey[key] ? `audio/en/${key}-${kind}.m4a` : null;
+// Library species play recorded clips (reliable on every phone); others use the device voice.
 function sayName(name, btn, nameTa, key) {
   const flash = () => { if (!btn) return; btn.classList.add('speaking'); setTimeout(() => btn.classList.remove('speaking'), 1200); };
+  const sayEn = () => { speak(`${name}.`, { rate: .8 }); flash(); };
   if (lang === 'ta' && taClip(key, 'name')) return playClip(taClip(key, 'name'), btn, () => { speak(`${nameTa || TA[key].n}.`, { rate: .8, lang: 'ta' }); flash(); });
-  if (lang === 'ta' && nameTa) speak(`${nameTa}.`, { rate: .8, lang: 'ta' }); else speak(`${name}.`, { rate: .8 });
-  flash();
+  if (lang === 'ta' && nameTa && hasTamilVoice()) { speak(`${nameTa}.`, { rate: .8, lang: 'ta' }); return flash(); }
+  if (enClip(key, 'name')) return playClip(enClip(key, 'name'), btn, sayEn);
+  sayEn();
 }
 
 // Little game sounds, made on the fly (no files): a happy chime and a "flop".
@@ -660,6 +668,7 @@ async function viewDetail({ being: b, taxonId }) {
     const speakTa = () => speak(`${taInfo.n || name}. ${taInfo.bio}`, { lang: 'ta' });
     if (tamil && b && taClip(b.key, 'about')) playClip(taClip(b.key, 'about'), e.currentTarget, speakTa);
     else if (tamil && taInfo?.bio) speakTa();
+    else if (b && enClip(b.key, 'about')) playClip(enClip(b.key, 'about'), e.currentTarget, () => speak(`${name}. ${bio}`));
     else speak(`${name}. ${bio}`);
   };
   $('#nameBtn').onclick = e => sayName(name, e.currentTarget, taInfo?.n, b?.key);
@@ -779,7 +788,7 @@ async function viewGame(mode = 'sound') {
       done = true; c.classList.add('right'); scoreAnswer('sound', missed);
       stopSound(); celebrate(c);
       $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span>`;
-      setTimeout(() => (lang === 'ta' ? sayName(answer.name, null, TA[answer.key]?.n, answer.key) : speak(sayLine(answer))), 900);
+      setTimeout(() => sayName(answer.name, null, TA[answer.key]?.n, answer.key), 900);
       $('#next').hidden = false;
     } else {
       missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — listen again.';
@@ -800,7 +809,7 @@ async function viewNameGame() {
     <figure class="name-photo"><img id="qimg" src="${bigPhoto(photoOf(answer))}" alt="A mystery animal"><figcaption id="qcredit"></figcaption></figure>
     <div class="name-choices">${opts.map(o => `<div class="name-opt">
       <button class="name-choice" data-k="${o.key}"${lang === 'ta' ? ' lang="ta"' : ''}>${esc(lang === 'ta' && TA[o.key] ? TA[o.key].n : o.name)}</button>
-      <button class="say-opt" data-name="${esc(o.name)}"${TA[o.key] ? ` data-name-ta="${esc(TA[o.key].n)}" data-key="${o.key}"` : ''} aria-label="Hear this answer: ${esc(o.name)}">${icon('speak')}</button>
+      <button class="say-opt" data-name="${esc(o.name)}" data-key="${o.key}"${TA[o.key] ? ` data-name-ta="${esc(TA[o.key].n)}"` : ''} aria-label="Hear this answer: ${esc(o.name)}">${icon('speak')}</button>
     </div>`).join('')}</div>
     <div class="feedback">
       <p id="cheer"></p>
@@ -824,7 +833,7 @@ async function viewNameGame() {
       stopSound(); celebrate(c);
       app.querySelectorAll('.name-choice:not(.right)').forEach(x => x.classList.add('dim'));
       $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span> <a class="more-link" href="#/b/${answer.key}">Learn more</a>`;
-      setTimeout(() => (lang === 'ta' ? sayName(answer.name, null, TA[answer.key]?.n, answer.key) : speak(`${answer.name}! ${answer.fun}`)), 900);
+      setTimeout(() => sayName(answer.name, null, TA[answer.key]?.n, answer.key), 900);
       $('#hint').hidden = true; $('#next').hidden = false;
     } else {
       missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — look again, or hear a hint.';
