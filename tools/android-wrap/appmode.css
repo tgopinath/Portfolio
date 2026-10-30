@@ -1,0 +1,6 @@
+/* Android app mode: show only the 360x780 app screen, scaled to fit the phone, without the iPhone frame or portfolio notes. */
+html,body{margin:0!important;padding:0!important;overflow:hidden!important;height:100%!important;background:var(--app-bg,#fff)!important}
+.phone{position:fixed!important;left:var(--app-x,0)!important;top:var(--app-y,0)!important;width:360px!important;height:780px!important;transform:scale(var(--app-k,1))!important;transform-origin:0 0!important;border-radius:0!important;padding:0!important;box-shadow:none!important;z-index:2147483000!important;background:transparent!important}
+.phone > .screen,.screen-area{border-radius:0!important}
+.island,.homebar,.home-indicator,.side-btn{display:none!important}
+.status{visibility:hidden!important}
