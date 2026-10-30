@@ -37,6 +37,17 @@ const APPS = [
   { key: 'farm', copy: [['farm-manager/prototype', 'prototypes/farm']] }, // screenshots captured from the running Expo web build
   { key: 'dryhouse', build: { dir: 'solar-dry-house', cmd: ['node', 'tools/build-prototype.mjs'], inputs: ['index.html', 'styles.css', 'app.js', 'materials.js', 'weather.js', 'location.js', 'images', 'icons', 'prototype-src'], output: 'prototype/web/index.html' },
     copy: [['solar-dry-house/prototype', 'prototypes/dryhouse']] }, // web and mobile builds; screenshots from build-prototype.mjs --shots
+  { key: 'pals', copy: [['animal-pals/prototype', 'prototypes/animal-pals'],
+      ['animal-pals/index.html', 'prototypes/animal-pals/app/index.html'],
+      ['animal-pals/styles.css', 'prototypes/animal-pals/app/styles.css'],
+      ['animal-pals/app.js', 'prototypes/animal-pals/app/app.js'],
+      ['animal-pals/data.js', 'prototypes/animal-pals/app/data.js'],
+      ['animal-pals/videos.js', 'prototypes/animal-pals/app/videos.js'],
+      ['animal-pals/manifest.json', 'prototypes/animal-pals/app/manifest.json'],
+      ['animal-pals/sw.js', 'prototypes/animal-pals/app/sw.js'],
+      ['animal-pals/icon.svg', 'prototypes/animal-pals/app/icon.svg'],
+      ['animal-pals/icon-192.png', 'prototypes/animal-pals/app/icon-192.png'],
+      ['animal-pals/icon-512.png', 'prototypes/animal-pals/app/icon-512.png']] }, // live app: animal-pals-ivory.vercel.app; shots from the app's tools/shots.mjs
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
