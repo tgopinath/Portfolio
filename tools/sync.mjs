@@ -51,6 +51,23 @@ const APPS = [
       ['animal-pals/icon.svg', 'prototypes/animal-pals/app/icon.svg'],
       ['animal-pals/icon-192.png', 'prototypes/animal-pals/app/icon-192.png'],
       ['animal-pals/icon-512.png', 'prototypes/animal-pals/app/icon-512.png']] }, // live app: animal-pals-ivory.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend'],
+      ['farmer-friend/index.html', 'prototypes/farmer-friend/app/index.html'],
+      ['farmer-friend/styles.css', 'prototypes/farmer-friend/app/styles.css'],
+      ['farmer-friend/app.js', 'prototypes/farmer-friend/app/app.js'],
+      ['farmer-friend/i18n.js', 'prototypes/farmer-friend/app/i18n.js'],
+      ['farmer-friend/images.js', 'prototypes/farmer-friend/app/images.js'],
+      ['farmer-friend/sources.js', 'prototypes/farmer-friend/app/sources.js'],
+      ['farmer-friend/data-crops.js', 'prototypes/farmer-friend/app/data-crops.js'],
+      ['farmer-friend/data-compost.js', 'prototypes/farmer-friend/app/data-compost.js'],
+      ['farmer-friend/data-ta-crops-1.js', 'prototypes/farmer-friend/app/data-ta-crops-1.js'],
+      ['farmer-friend/data-ta-crops-2.js', 'prototypes/farmer-friend/app/data-ta-crops-2.js'],
+      ['farmer-friend/data-ta-compost.js', 'prototypes/farmer-friend/app/data-ta-compost.js'],
+      ['farmer-friend/manifest.json', 'prototypes/farmer-friend/app/manifest.json'],
+      ['farmer-friend/sw.js', 'prototypes/farmer-friend/app/sw.js'],
+      ['farmer-friend/icon.svg', 'prototypes/farmer-friend/app/icon.svg'],
+      ['farmer-friend/icon-192.png', 'prototypes/farmer-friend/app/icon-192.png'],
+      ['farmer-friend/icon-512.png', 'prototypes/farmer-friend/app/icon-512.png']] }, // live app: farmer-friend-kappa.vercel.app; shots from the app's tools/shots.mjs
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
