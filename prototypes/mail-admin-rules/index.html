@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Zoho Mail Admin · Rules</title>
+<title>Zoho Mail Admin · Zia Rules</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -563,8 +563,6 @@ svg.flip{transform:rotate(180deg)}
 @media (max-width:900px){.bwrap .bgrid{grid-template-columns:1fr}.bleft{border-right:0}.rmeta{display:none}}
 @media (max-width:1100px){.g4,.g5{grid-template-columns:1fr 1fr}.g2,.g3{grid-template-columns:1fr}.bgrid{grid-template-columns:1fr}.rp{position:static}.steps{grid-template-columns:1fr 1fr}.orgc{flex-wrap:wrap}.orgc .kv{margin-left:0}}
 @media (max-width:760px){#app{grid-template-columns:64px 1fr}.nav .lbl{display:none}.sub{display:none}.search{display:none}.page{padding:16px}.tblwrap{margin:0 -16px;overflow-x:auto}.g4,.g5{grid-template-columns:1fr}.capm .cols{grid-template-columns:1fr}.lim{grid-template-columns:1fr}.blk{grid-template-columns:1fr}.gs{grid-template-columns:1fr}}
-/* portfolio build: Rules page only */
-#app{grid-template-columns:1fr}#rail{display:none}
 </style>
 </head>
 <body>
@@ -1680,6 +1678,8 @@ document.addEventListener('keydown',e=>{
 function toast(msg,undoId){const el=$('#toast');el.innerHTML=`<div class="tst">${ic('check',16)}<span>${esc(msg)}</span>${undoId?`<button data-act="undo" data-arg="${undoId}">Undo</button>`:''}</div>`;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),5200)}
 function modal(t,b,ok,fn){$('#modal').innerHTML=`<div class="ov"></div><div class="md"><h3 class="${mode==='form'?'up':''}">${t}</h3><div class="mu">${b}</div><div class="row"><button class="btn" id="mno">Cancel</button><button class="btn pri" style="background:var(--red);border-color:var(--red)" id="mok">${ok}</button></div></div>`;$('#mno').onclick=()=>$('#modal').innerHTML='';$('#mok').onclick=()=>{$('#modal').innerHTML='';fn()}}
 render();
+/* portfolio build: only Zia Rules is part of this prototype */
+document.addEventListener('click',e=>{const a=e.target.closest('a.nav');if(a&&!a.classList.contains('ai')){e.preventDefault();e.stopPropagation();toast('This prototype covers Zia Rules only')}},true);
 </script>
 </body>
 </html>
