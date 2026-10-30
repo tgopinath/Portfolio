@@ -627,7 +627,7 @@ async function viewDetail({ being: b, taxonId }) {
         </section>`}
         <div class="d-actions">
           ${b?.m3d ? `<button class="btn accent" id="btn3d">${icon('cube')} View in 3D</button>` : ''}
-          <button class="btn outline" id="nameBtn">${icon('speak')} <span>${L.name}</span></button>
+          <button class="btn blue" id="nameBtn">${icon('speak')} <span>${L.name}</span></button>
           <button class="btn outline" id="sayBtn">${icon('speak')} <span>${L.read}</span></button>
         </div>
 
