@@ -35,7 +35,7 @@ const APPS = [
     copy: [['om-builder/om-builder.html', 'prototypes/om/index.html']], page: 'prototypes/om/index.html' },
   { key: 'farm', copy: ['case-study.html', 'screens.html', 'mobile.html', 'web.html', 'shots'].map((f) => [`farm-manager/prototype/${f}`, `prototypes/farm/${f}`]) }, // the app itself loads from farm-manager-lemon.vercel.app
   { key: 'pals', copy: [['animal-pals/prototype', 'prototypes/zoorassic-park']] }, // mobile.html frames zoorassic-park.vercel.app; shots from the app's tools/shots.mjs
-  { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend']] }, // mobile.html frames farmer-friend-kappa.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend']] }, // mobile.html frames farmerfriend.vercel.app; shots from the app's tools/shots.mjs
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
