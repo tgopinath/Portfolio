@@ -113,7 +113,7 @@ footer{margin-top:64px;border-top:1px solid var(--line);padding-top:18px;font-si
     <div>
       <div class="decision">
         <h3>The dashboard is a to-do list, not a report</h3>
-        <p>The first screen counts the animals, then lists everything that needs attention, ranked <span class="tag danger">Overdue</span><span class="tag warn">Act soon</span><span class="tag">This week</span>. Vaccinations, feed, balances, upkeep and sick animals all land in one list in the same shape, and each carries the button that settles it: <b>Mark given</b>, <b>Done</b>, <b>Restock</b>, <b>Add income</b>. A settled item slides away, and an <b>Undo</b> stays on screen for five seconds in case the tap was a mistake.</p>
+        <p>The first screen counts the animals, then lists everything that needs attention, ranked <span class="tag danger">Overdue</span><span class="tag warn">Act soon</span><span class="tag">This week</span>. Vaccinations, feed, balances, upkeep and sick animals all land in one list in the same shape, and each carries the button that settles it: <b>Mark given</b>, <b>Mark done</b>, <b>Restock</b>, <b>Add income</b>. A settled item slides away, and an <b>Undo</b> stays on screen for five seconds in case the tap was a mistake.</p>
       </div>
       <div class="decision">
         <h3>One record for a goat, one for a flock</h3>
@@ -166,8 +166,8 @@ footer{margin-top:64px;border-top:1px solid var(--line);padding-top:18px;font-si
 
 <section>
   <div class="kicker">Look and feel</div>
-  <h2>Indigo and marigold, and two layouts</h2>
-  <p>The first version used forest green on cream. It read as generic, and green was doing two jobs: brand colour and "all fine". The redesign takes its palette from two plants that grow at the edge of Indian farms. Indigo carries every action and the selected tab. Marigold is the one warm note, kept for things that need attention and for the photo check. Red and green now appear only on money and health status, so they always mean something. Each species keeps its own colour everywhere: goats marigold, cows sky blue, chickens teal.</p>
+  <h2>From friendly to professional, in three passes</h2>
+  <p>The first version used forest green on cream and read as generic. The second swapped in indigo and marigold, pastel species tiles and a characterful display face; it was livelier, but with emoji for every animal and feed bag it looked like a toy rather than a tool someone runs a business on. The current design is a working dashboard: Inter throughout, with fixed-width figures so amounts line up; neutral slate surfaces with one indigo for actions; amber, red and green kept for status only, so they always mean something. Every emoji became a line icon, and each species keeps one quiet colour on its icon.</p>
   <p>On a phone the app keeps a bottom tab bar, large page titles and a floating add button. From 900 pixels wide it becomes an ordinary web app: a sidebar with <b>Add record</b> at the top stays on every page, including an animal's page and the forms, and the dashboard splits into two columns, today's tasks on the left, money, accounts and feed levels on the right.</p>
 </section>
 
@@ -176,19 +176,19 @@ footer{margin-top:64px;border-top:1px solid var(--line);padding-top:18px;font-si
   <h2>Every screen, on a laptop and on a phone</h2>
   <p>One codebase draws both. These are captured from the same build at 1440 and 500 pixels wide, with the same sample farm.</p>
   <figure class="pair">
-    <div class="desk"><img src="shots/web-today.jpg" alt="Today on a laptop: tasks on the left, head counts, money and accounts on the right" width="1440" height="900" loading="lazy"></div>
-    <div class="phone"><img src="shots/farm.jpg" alt="Today on a phone: head count tiles, then the tasks with their buttons underneath each one" width="600" height="1306" loading="lazy"></div>
-    <figcaption><b>Today</b><span>The same list of things to look at, each with its own button. On a laptop the money and head counts sit beside it; on a phone they follow below.</span></figcaption>
+    <div class="desk"><img src="shots/web-today.jpg" alt="Overview on a laptop: four headline figures, then tasks with their buttons on the left and herd, money and accounts on the right" width="1440" height="900" loading="lazy"></div>
+    <div class="phone"><img src="shots/farm.jpg" alt="Overview on a phone: headline figures in a two-by-two grid, then the tasks with their buttons underneath each one" width="600" height="1306" loading="lazy"></div>
+    <figcaption><b>Overview</b><span>Four headline figures, then the list of things to look at, each with its own button. On a laptop the herd, money and accounts sit beside it; on a phone they follow below.</span></figcaption>
   </figure>
   <figure class="pair">
-    <div class="desk"><img src="shots/web-animals.jpg" alt="Animals on a laptop: search, species filters and animal cards in two columns" width="1440" height="900" loading="lazy"></div>
+    <div class="desk"><img src="shots/web-animals.jpg" alt="Animals on a laptop: search, species filters and a table of animals" width="1440" height="900" loading="lazy"></div>
     <div class="phone"><img src="shots/animals.jpg" alt="Animals on a phone: the same search, filters and cards in one column" width="600" height="1306" loading="lazy"></div>
-    <figcaption><b>Animals</b><span>Search and species filters with their counts. Cards sit two across on a laptop and one across on a phone.</span></figcaption>
+    <figcaption><b>Animals</b><span>Search and species filters with their counts. A table with tag, breed, sex, head count and status on a laptop; a compact list on a phone.</span></figcaption>
   </figure>
   <figure class="pair">
     <div class="desk"><img src="shots/web-animal.jpg" alt="Raja's page on a laptop with the sidebar, vaccinations and health log side by side" width="1440" height="900" loading="lazy"></div>
     <div class="phone"><img src="shots/animal.jpg" alt="Raja's page on a phone with vaccinations above the health log" width="600" height="1306" loading="lazy"></div>
-    <figcaption><b>An animal's page</b><span>Status, vaccinations and the health log. On a laptop the sidebar stays and an All animals link replaces the back button.</span></figcaption>
+    <figcaption><b>An animal's page</b><span>Details as labelled fields, a status switch, vaccinations and the health log. On a laptop the name and actions sit in the top bar.</span></figcaption>
   </figure>
   <figure class="pair">
     <div class="desk"><img src="shots/web-money.jpg" alt="Money on a laptop: six-month chart, the month's transactions, accounts and spending by category" width="1440" height="900" loading="lazy"></div>
