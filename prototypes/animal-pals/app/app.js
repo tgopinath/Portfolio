@@ -2,6 +2,7 @@ import { BEINGS, CATEGORIES, KINGDOM, GLB_MODELS } from './data.js';
 import { VIDEOS } from './videos.js';
 import { TA } from './data-ta.js';
 import { CALLS } from './calls.js';
+import { STR, TA_LABELS } from './i18n.js';
 
 const INAT = 'https://api.inaturalist.org/v1';
 const app = document.getElementById('app');
@@ -20,6 +21,15 @@ const GROUPS = [
   { key: 'crawlies', label: 'Spiders, snails & more', taxa: [47119, 47115, 144128, 85493], without: [47459] },
 ];
 const groupByKey = Object.fromEntries(GROUPS.map(g => [g.key, g]));
+// Interface text in the current language (English or Tamil); {placeholders} are filled from vars.
+const tr = (k, vars = {}) => (STR[lang]?.[k] ?? STR.en[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
+const isTa = () => lang === 'ta';
+const groupLabel = g => (isTa() && TA_LABELS.groups[g.key]) || g.label;
+const catLabel = k => (isTa() && TA_LABELS.cats[k]) || catByKey[k].label;
+const kingdomLabel = k => (isTa() && TA_LABELS.kingdom[k.id]) || k.label;
+const kindLabel = iconic => (isTa() && TA_LABELS.kinds[iconic]) || GROUP[iconic] || (isTa() ? TA_LABELS.living : 'Living being');
+// A library species' name in the current language.
+const nm = b => (isTa() && TA[b.key]?.n) || b.name;
 
 // ---------------------------------------------------------------- utils
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -196,7 +206,7 @@ function setPlaying(btn, on) {
   btn.classList.toggle('playing', on);
   btn.closest('[data-wave]')?.classList.toggle('playing-wrap', on);
   const use = btn.querySelector('use'); if (use) use.setAttribute('href', on ? '#i-pause' : '#i-play');
-  const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = on ? 'Stop' : 'Hear';
+  const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = on ? tr('card_stop') : tr('card_hear');
   btn.setAttribute('aria-pressed', on);
 }
 // On iPhones, play through the silent switch like a media app would.
@@ -246,7 +256,7 @@ function stopSound() {
 const isPlaying = () => !!boosted || !audio.paused;
 function muteVideos() {
   document.querySelectorAll('video').forEach(v => { v.muted = true; });
-  document.querySelectorAll('.mute.on').forEach(m => { m.classList.remove('on'); m.querySelector('span').textContent = 'Unmute'; });
+  document.querySelectorAll('.mute.on').forEach(m => { m.classList.remove('on'); m.querySelector('span').textContent = tr('unmute'); });
 }
 // Field recordings can run for minutes; play a short clip and fade it out.
 async function playUrl(url, btn, maxSec = 14, { direct = false } = {}) {
@@ -283,7 +293,7 @@ const soundIdx = {};
 // Library species start with their bundled call: a clear, checked recording (tools/pick-calls.mjs).
 const callOfId = id => { const b = byId[id]; return b && CALLS[b.key] ? { key: b.key, ...CALLS[b.key] } : null; };
 function playCall(call, btn, noteEl) {
-  if (noteEl) noteEl.innerHTML = `Clear call · ${esc(call.by)} (${esc(call.license)}) · <a href="${esc(call.page)}" target="_blank" rel="noopener">source</a>. Tap again for recordings from the wild.`;
+  if (noteEl) noteEl.innerHTML = `${tr('clear_call')} · ${esc(call.by)} (${esc(call.license)}) · <a href="${esc(call.page)}" target="_blank" rel="noopener">${tr('source')}</a>. ${tr('clear_call_more')}`;
   return playUrl(`audio/calls/${call.key}.m4a`, btn, 10, { direct: true });
 }
 async function playBeing(taxonId, btn, noteEl, fallbackSay, { callOnly = false, tries = 0 } = {}) {
@@ -305,15 +315,15 @@ async function playBeing(taxonId, btn, noteEl, fallbackSay, { callOnly = false, 
     if (!list.length) {
       stopSound();
       if (fallbackSay) speak(fallbackSay);
-      if (noteEl) noteEl.textContent = 'No field recording available yet — reading it aloud instead.';
-      else toast('No recording of this one yet');
+      if (noteEl) noteEl.textContent = tr('no_rec_note');
+      else toast(tr('no_rec_toast'));
       return;
     }
     const prev = soundIdx[taxonId] ?? -1;
     if (call && prev + 1 >= list.length) { soundIdx[taxonId] = undefined; return playBeing(taxonId, btn, noteEl, fallbackSay); } // loop back to the clear call
     const i = (soundIdx[taxonId] = (prev + 1) % list.length);
     const s = list[i];
-    if (noteEl) noteEl.innerHTML = `Wild recording ${i + 1} of ${list.length}${s.place ? ` · ${esc(s.place)}` : ''} · ${esc(s.by)} via <a href="https://www.inaturalist.org/observations/${s.obs}" target="_blank" rel="noopener">iNaturalist</a>`;
+    if (noteEl) noteEl.innerHTML = `${tr('wild_rec', { i: i + 1, n: list.length })}${s.place ? ` · ${esc(s.place)}` : ''} · ${esc(s.by)} ${tr('via')} <a href="https://www.inaturalist.org/observations/${s.obs}" target="_blank" rel="noopener">iNaturalist</a>`;
     const title = btn?.closest('[data-wave]')?.querySelector('.sound-title small');
     if (title) title.textContent = `${i + 1} / ${list.length}`;
     await playUrl(s.url, btn);
@@ -337,7 +347,7 @@ function speak(text, { rate = .92, lang = 'en' } = {}) {
   if (lang === 'ta') {
     u.lang = 'ta-IN';
     v = voices.find(v => /^ta/i.test(v.lang));
-    if (!v && voices.length && !warnedTamil) { warnedTamil = true; toast('This device has no Tamil voice yet — add one in its speech settings'); }
+    if (!v && voices.length && !warnedTamil) { warnedTamil = true; toast(tr('no_ta_voice')); }
   } else {
     v = voices.find(v => /en[-_](IN|GB|US)/i.test(v.lang) && /samantha|veena|google|natural/i.test(v.name)) || voices.find(v => v.lang.startsWith('en'));
   }
@@ -354,15 +364,31 @@ const setLang = l => { lang = l; store.set('ap.lang', l); syncLangBtn(); };
 function syncLangBtn() {
   document.documentElement.lang = lang === 'ta' ? 'ta' : 'en';
   const btn = document.getElementById('langBtn'); if (!btn) return;
-  btn.querySelector('span').textContent = lang === 'ta' ? 'English' : 'தமிழ்';
-  btn.setAttribute('aria-label', lang === 'ta' ? 'Switch to English' : 'தமிழுக்கு மாற்று (Switch to Tamil)');
-  btn.setAttribute('aria-pressed', lang === 'ta');
+  btn.setAttribute('aria-checked', lang === 'ta');
+  btn.setAttribute('aria-label', tr('lang_label'));
+  // The fixed parts of the page (menus, search, voice and 3D panels) follow the language too.
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = tr(el.dataset.t); });
+  document.querySelectorAll('[data-t-ph]').forEach(el => { el.placeholder = tr(el.dataset.tPh); });
+  document.querySelectorAll('[data-t-label]').forEach(el => { el.setAttribute('aria-label', tr(el.dataset.tLabel)); });
 }
-const T = {
-  en: { about: 'About', home: 'Habitat', food: 'Diet', fun: 'Did you know', family: 'Family', group: 'Group', order: 'Order', seen: 'Observed', status: 'Status', name: 'Say its name', read: 'Read about it' },
-  ta: { about: 'விளக்கம்', home: 'வாழிடம்', food: 'உணவு', fun: 'தெரியுமா?', family: 'குடும்பம்', group: 'வகை', order: 'வரிசை', seen: 'பார்க்கப்பட்டது', status: 'நிலை', name: 'பெயரைச் சொல்', read: 'தமிழில் கேள்' },
-};
 const hasTamil = s => /[\u0B80-\u0BFF]/.test(s || '');
+// Tamil names for a batch of species, from Wikidata (it links iNaturalist IDs to names in every
+// language; iNaturalist itself has almost none in Tamil). Cached per device; species without a
+// Tamil name keep their English one.
+const taCache = store.get('ap.taNames.v1', {});
+async function taNameMap(ids) {
+  const want = ids.filter(id => !(id in taCache));
+  if (want.length) {
+    const q = `SELECT ?id ?label WHERE { VALUES ?id { ${want.map(id => `"${+id}"`).join(' ')} } ?item wdt:P3151 ?id . ?item rdfs:label ?label FILTER(lang(?label) = "ta") }`;
+    try {
+      const r = await fetch('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(q)).then(r => r.json());
+      want.forEach(id => { taCache[id] = null; });
+      for (const x of r.results.bindings) taCache[x.id.value] = x.label.value;
+      store.set('ap.taNames.v1', taCache);
+    } catch {} // offline or busy: show English this time
+  }
+  return Object.fromEntries(ids.filter(id => taCache[id]).map(id => [id, taCache[id]]));
+}
 // Tamil name and summary for species outside the library: iNaturalist's Tamil name, Tamil Wikipedia's summary.
 async function tamilFor(id, wikiUrl) {
   const out = {};
@@ -379,7 +405,7 @@ async function tamilFor(id, wikiUrl) {
   return out;
 }
 const sayLine = b => b.quiet || b.says.startsWith('(') ? `${b.name}. ${b.fun}` : `${b.name}. The ${b.name.toLowerCase()} says ${b.says}`;
-const callOf = b => b.says.startsWith('(') ? 'Quiet species' : b.says;
+const callOf = b => b.says.startsWith('(') ? tr('quiet') : b.says;
 
 // ---------------------------------------------------------------- saved
 const faves = () => store.get('ap.faves', []);
@@ -397,21 +423,24 @@ function beingCard(b) {
     <div class="card-img" data-being="${b.key}">
       ${imgTag(photoOf(b), b.name)}
       ${b.m3d ? `<span class="tag3d">${icon('cube')}3D</span>` : ''}
-      ${cardBtns(b.id, b.name, sayLine(b), false, b.key)}
+      ${cardBtns(b.id, nm(b), sayLine(b), false)}
     </div>
-    <div class="card-meta"><div><h3 class="card-name">${esc(b.name)}</h3><div class="card-sub">${esc(callOf(b))}</div></div></div>
+    <div class="card-meta"><div>${nameRow(nm(b), b.name, b.key)}<div class="card-sub">${esc(callOf(b))}</div></div></div>
   </a>`;
 }
 const SILENT = ['Plantae', 'Fungi', 'Chromista', 'Protozoa'];
-const nameBtn = (name, key) => `<button class="name-mini" data-name="${esc(name)}"${key ? ` data-key="${key}"` : ''}${TA[key] ? ` data-name-ta="${esc(TA[key].n)}"` : ''} aria-label="Say the name: ${esc(name)}">${icon('speak')}<span>Name</span></button>`;
-const hearBtn = (id, name, say) => `<button class="play-mini" data-play="${id}" data-say="${esc(say)}" aria-label="Hear the ${esc(name)}">${icon('play')}<span class="lbl">Hear</span></button>`;
-const cardBtns = (id, name, say, silent, key) => `<div class="card-btns">${nameBtn(name, key)}${silent ? '' : hearBtn(id, name, say)}</div>`;
-function taxonCard(t) {
+// A blue speaker that says a name; it sits beside the name wherever one is shown.
+const nameBtn = (name, key, cls = 'say-name') => `<button class="${cls}" data-name="${esc(name)}"${key ? ` data-key="${key}"` : ''}${TA[key] ? ` data-name-ta="${esc(TA[key].n)}"` : ''} aria-label="${esc(tr('say_name_of', { name: key && isTa() && TA[key] ? TA[key].n : name }))}">${icon('speak')}</button>`;
+const hearBtn = (id, name, say) => `<button class="play-mini" data-play="${id}" data-say="${esc(say)}" aria-label="${esc(tr('hear_the', { name }))}">${icon('play')}<span class="lbl">${tr('card_hear')}</span></button>`;
+const cardBtns = (id, name, say, silent) => silent ? '' : `<div class="card-btns">${hearBtn(id, name, say)}</div>`;
+const nameRow = (label, nameForVoice, key) => `<div class="name-row"><h3 class="card-name">${esc(label)}</h3>${nameBtn(nameForVoice, key)}</div>`;
+function taxonCard(t, taName) {
   if (byId[t.id]) return beingCard(byId[t.id]);
-  const name = cap(t.preferred_common_name || t.name);
+  const en = cap(t.preferred_common_name || t.name);
+  const name = (isTa() && taName) || en;
   return `<a class="card" href="#/t/${t.id}">
     <div class="card-img" data-sci="${esc(t.name)}">${imgTag(t.default_photo?.medium_url, name)}${cardBtns(t.id, name, name, SILENT.includes(t.iconic_taxon_name))}</div>
-    <div class="card-meta"><div><h3 class="card-name">${esc(name)}</h3><div class="card-sub">${esc(t.name)}</div></div></div>
+    <div class="card-meta"><div>${nameRow(name, en, null).replace('data-name=', taName ? `data-name-ta="${esc(taName)}" data-name=` : 'data-name=')}<div class="card-sub">${esc(t.name)}</div></div></div>
   </a>`;
 }
 const GROUP = { Mammalia: 'Mammal', Aves: 'Bird', Reptilia: 'Reptile', Amphibia: 'Amphibian', Actinopterygii: 'Fish', Insecta: 'Insect', Arachnida: 'Arachnid', Mollusca: 'Mollusk', Plantae: 'Plant', Fungi: 'Fungus', Chromista: 'Algae', Protozoa: 'Protozoan', Animalia: 'Animal' };
@@ -435,10 +464,10 @@ function neighbours(href, b) {
 function detailBar(href, b) {
   const { prev, next } = neighbours(href, b);
   const nav = (x, dir) => x
-    ? `<a class="pn ${dir}" href="${x.h}" data-pn="${dir}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'}: ${esc(x.n)}">${dir === 'prev' ? icon('back') : ''}${x.img ? `<img src="${esc(smallPhoto(x.img))}" alt="">` : ''}<span><small>${dir === 'prev' ? 'Previous' : 'Next'}</small>${esc(x.n)}</span>${dir === 'next' ? icon('arrow') : ''}</a>`
+    ? `<a class="pn ${dir}" href="${x.h}" data-pn="${dir}" aria-label="${dir === 'prev' ? tr('prev') : tr('next')}: ${esc(x.n)}">${dir === 'prev' ? icon('back') : ''}${x.img ? `<img src="${esc(smallPhoto(x.img))}" alt="">` : ''}<span><small>${dir === 'prev' ? tr('prev') : tr('next')}</small>${esc(x.n)}</span>${dir === 'next' ? icon('arrow') : ''}</a>`
     : `<span class="pn ${dir} off" aria-hidden="true"></span>`;
   return `<div class="dbar">
-    <a class="back-big" href="${b ? '#/' : '#/explore'}" data-back>${icon('back')}<span>Back</span></a>
+    <a class="back-big" href="${b ? '#/' : '#/explore'}" data-back>${icon('back')}<span>${tr('back')}</span></a>
     <div class="pn-wrap">${nav(prev, 'prev')}${nav(next, 'next')}</div>
   </div>`;
 }
@@ -536,36 +565,36 @@ async function viewHome(groupKey = 'all') {
   const render = () => {
     const lib = photos?.map ? BEINGS.filter(b => inGroup(b, g)) : (g.key === 'all' ? BEINGS : []);
     app.innerHTML = `
-      ${g.key !== 'all' ? `<div class="page-head"><span class="eyebrow">Group</span><h1 class="h-display">${esc(g.label)}</h1><p class="lede">Our picks first, then every species people have photographed — keep scrolling.</p></div>` : `
+      ${g.key !== 'all' ? `<div class="page-head"><span class="eyebrow">${tr('group')}</span><h1 class="h-display">${esc(groupLabel(g))}</h1><p class="lede">${tr('group_lede')}</p></div>` : `
       <section class="feature">
-        <a class="feature-img" href="#/b/${f.key}" aria-label="${esc(f.name)}">${imgTag(bigPhoto(photoOf(f)), f.name, false)}</a>
+        <a class="feature-img" href="#/b/${f.key}" aria-label="${esc(nm(f))}">${imgTag(bigPhoto(photoOf(f)), nm(f), false)}</a>
         <div class="feature-body">
-          <span class="eyebrow">Featured today</span>
-          <h1 class="h-display">${esc(f.name)}</h1>
-          <p>${esc(f.bio)}</p>
+          <span class="eyebrow">${tr('featured')}</span>
+          <div class="title-row"><h1 class="h-display"${isTa() ? ' lang="ta"' : ''}>${esc(nm(f))}</h1>${nameBtn(f.name, f.key, 'say-name big')}</div>
+          <p${isTa() ? ' lang="ta"' : ''}>${esc(isTa() && TA[f.key] ? TA[f.key].bio : f.bio)}</p>
           <div class="row">
-            <a class="btn accent" href="#/b/${f.key}">Meet the ${esc(f.name.toLowerCase())} ${icon('arrow')}</a>
-            <button class="btn outline" data-play="${f.id}" data-say="${esc(sayLine(f))}">${icon('play')} Hear it</button>
+            <a class="btn accent" href="#/b/${f.key}">${tr('meet', { name: isTa() ? nm(f) : f.name.toLowerCase() })} ${icon('arrow')}</a>
+            <button class="btn outline" data-play="${f.id}" data-say="${esc(sayLine(f))}">${icon('play')} ${tr('hear_it')}</button>
           </div>
         </div>
       </section>
-      <div class="section-head"><div><span class="eyebrow">Library</span><h2 class="h-section">Animals, birds & more</h2></div></div>`}
-      <nav class="filters" aria-label="Groups">
-        ${GROUPS.map(x => `<a class="filter" data-g="${x.key}" href="${x.key === 'all' ? '#/' : `#/g/${x.key}`}" aria-current="${x.key === g.key}">${esc(x.label)}<span class="n"></span></a>`).join('')}
+      <div class="section-head"><div><span class="eyebrow">${tr('library')}</span><h2 class="h-section">${tr('lib_title')}</h2></div></div>`}
+      <nav class="filters" aria-label="${tr('groups_label')}">
+        ${GROUPS.map(x => `<a class="filter" data-g="${x.key}" href="${x.key === 'all' ? '#/' : `#/g/${x.key}`}" aria-current="${x.key === g.key}">${esc(groupLabel(x))}<span class="n"></span></a>`).join('')}
       </nav>
       ${lib.length ? `<div class="grid">${lib.map(beingCard).join('')}</div>` : ''}
-      <div class="section-head"><div><span class="eyebrow">Every species</span><h2 class="h-section">${g.key === 'all' ? 'All animals' : `All ${esc(g.label.toLowerCase())}`}</h2></div></div>
+      <div class="section-head"><div><span class="eyebrow">${tr('every_species')}</span><h2 class="h-section">${g.key === 'all' ? esc(groupLabel(g)) : tr('all_x', { group: esc(isTa() ? groupLabel(g) : g.label.toLowerCase()) })}</h2></div></div>
       <div id="list">${skeletonGrid(8)}</div>
       <div class="load-more" id="more" aria-live="polite"></div>`;
     fillTotals();
     infiniteSpecies($('#list'), $('#more'), { taxa: g.taxa, without: g.without, skip: new Set(lib.map(b => b.id)) });
   };
-  if (!photos?.map) await loadCuratedPhotos().catch(() => toast('Photos could not load — check your connection'));
+  if (!photos?.map) await loadCuratedPhotos().catch(() => toast(tr('photos_fail')));
   if ((location.hash || '#/') === (g.key === 'all' ? '#/' : `#/g/${g.key}`) || (g.key === 'all' && location.hash === '')) render();
 }
 
 const kingdomTiles = list => `<div class="tiles">${list.map(k => `
-  <a class="tile" href="#/explore/${k.id}" data-kid="${k.id}"><span>${esc(k.hint || 'Explore')}</span><b>${esc(k.label)}</b></a>`).join('')}</div>`;
+  <a class="tile" href="#/explore/${k.id}" data-kid="${k.id}"><span>${esc(tr('nav_explore'))}</span><b>${esc(kingdomLabel(k))}</b></a>`).join('')}</div>`;
 function decorateKingdom() {
   // Each tile shows a real photo of the most-observed species in that group.
   for (const el of document.querySelectorAll('.tile[data-kid]')) {
@@ -573,15 +602,15 @@ function decorateKingdom() {
       const t = r.results[0]?.taxon;
       if (!t || !el.isConnected) return;
       el.style.backgroundImage = `url("${t.default_photo.medium_url}")`;
-      el.querySelector('span').textContent = `e.g. ${cap(t.preferred_common_name || t.name)}`;
+      el.querySelector('span').textContent = tr('eg', { name: cap(t.preferred_common_name || t.name) });
     }).catch(() => {});
   }
 }
 
 function viewExplore() {
   app.innerHTML = `
-    <div class="page-head"><span class="eyebrow">Tree of life</span><h1 class="h-display">Every living being</h1>
-    <p class="lede">Browse millions of real observations shared by naturalists around the world — from mammals to mushrooms.</p></div>
+    <div class="page-head"><span class="eyebrow">${tr('tree')}</span><h1 class="h-display">${tr('every_being')}</h1>
+    <p class="lede">${tr('tree_lede')}</p></div>
     ${kingdomTiles(KINGDOM)}`;
   decorateKingdom();
 }
@@ -594,14 +623,17 @@ function infiniteSpecies(listEl, more, { taxa, without = [], skip = new Set() })
   async function load() {
     if (busy || end || !more.isConnected) return;
     busy = true;
-    if (grid) more.innerHTML = '<div class="spinner" role="status" aria-label="Loading more"></div>';
+    if (grid) more.innerHTML = `<div class="spinner" role="status" aria-label="${tr('loading_more')}"></div>`;
     try {
       const r = await api(`/observations/species_counts?${q}&page=${page}`);
       if (!more.isConnected) return;
       if (!grid) { listEl.innerHTML = '<div class="grid"></div>'; grid = listEl.firstChild; }
-      grid.insertAdjacentHTML('beforeend', r.results.filter(x => x.taxon.default_photo && !skip.has(x.taxon.id)).map(x => taxonCard(x.taxon)).join(''));
+      const items = r.results.filter(x => x.taxon.default_photo && !skip.has(x.taxon.id)).map(x => x.taxon);
+      const taNames = isTa() ? await taNameMap(items.map(t => t.id)) : {};
+      if (!more.isConnected) return;
+      grid.insertAdjacentHTML('beforeend', items.map(t => taxonCard(t, taNames[t.id])).join(''));
       end = r.results.length < 30; page++;
-      more.innerHTML = end ? '<p class="end">You’ve seen them all</p>' : '';
+      more.innerHTML = end ? `<p class="end">${tr('seen_all')}</p>` : '';
       busy = false;
       // Keep filling while the bottom is still near the screen (tall displays) — only after a success.
       if (!end && more.isConnected && more.getBoundingClientRect().top < innerHeight + 600) load();
@@ -609,8 +641,8 @@ function infiniteSpecies(listEl, more, { taxa, without = [], skip = new Set() })
       busy = false;
       if (!more.isConnected) return;
       // Offline or rate-limited: wait for the child to tap, don't retry in a loop.
-      if (grid) { more.innerHTML = '<button class="btn outline">Try again</button>'; more.firstChild.onclick = load; }
-      else listEl.innerHTML = '<div class="empty"><b>Couldn’t connect</b>Check your internet connection and try again.<div style="margin-top:14px"><button class="btn outline" id="retryList">Try again</button></div></div>', $('#retryList').onclick = () => { listEl.innerHTML = skeletonGrid(8); load(); };
+      if (grid) { more.innerHTML = `<button class="btn outline">${tr('try_again')}</button>`; more.firstChild.onclick = load; }
+      else listEl.innerHTML = `<div class="empty"><b>${tr('no_connect')}</b>${tr('check_net')}<div style="margin-top:14px"><button class="btn outline" id="retryList">${tr('try_again')}</button></div></div>`, $('#retryList').onclick = () => { listEl.innerHTML = skeletonGrid(8); load(); };
     }
   }
   listIO?.disconnect();
@@ -633,8 +665,8 @@ async function viewExploreGroup(id) {
   const k = KINGDOM.find(k => k.id === id);
   if (!k) return location.replace('#/explore'); // an unknown group link goes back to Explore
   app.innerHTML = `
-    <a class="crumb" href="#/explore">${icon('back')} Tree of life</a>
-    <div class="page-head"><span class="eyebrow">Most observed first</span><h1 class="h-display">${esc(k.label)}</h1></div>
+    <a class="crumb" href="#/explore">${icon('back')} ${tr('tree')}</a>
+    <div class="page-head"><span class="eyebrow">${tr('most_seen')}</span><h1 class="h-display">${esc(kingdomLabel(k))}</h1></div>
     <div id="list">${skeletonGrid(12)}</div>
     <div class="load-more" id="more" aria-live="polite"></div>`;
   infiniteSpecies($('#list'), $('#more'), { taxa: [id] });
@@ -644,23 +676,25 @@ async function viewSearch(q) {
   q = q.trim();
   const input = $('#searchInput'); if (input.value !== q) input.value = q;
   const ql = q.toLowerCase();
-  const local = BEINGS.filter(b => b.name.toLowerCase().includes(ql) || b.key.includes(ql) || catByKey[b.cat].label.toLowerCase().includes(ql));
+  const local = BEINGS.filter(b => b.name.toLowerCase().includes(ql) || b.key.includes(ql) || catByKey[b.cat].label.toLowerCase().includes(ql) || (TA[b.key] && (TA[b.key].n.includes(q) || TA_LABELS.cats[b.cat].includes(q))));
   app.innerHTML = `
-    <div class="page-head"><span class="eyebrow" id="sub">Searching…</span><h1 class="h-display">“${esc(q)}”</h1></div>
-    ${local.length ? `<div class="grid">${local.map(beingCard).join('')}</div><div class="section-head"><div><span class="eyebrow">From the tree of life</span><h2 class="h-section">More matches</h2></div></div>` : ''}
+    <div class="page-head"><span class="eyebrow" id="sub">${tr('searching')}</span><h1 class="h-display">“${esc(q)}”</h1></div>
+    ${local.length ? `<div class="grid">${local.map(beingCard).join('')}</div><div class="section-head"><div><span class="eyebrow">${tr('from_tree')}</span><h2 class="h-section">${tr('more_matches')}</h2></div></div>` : ''}
     <div id="remote">${skeletonGrid(6)}</div>`;
   try {
     const r = await api(`/taxa/autocomplete?q=${encodeURIComponent(q)}&per_page=24&is_active=true`);
     if ($('#searchInput').value.trim() !== q) return;
     const seen = new Set(local.map(b => b.id));
     const res = r.results.filter(t => t.default_photo && !seen.has(t.id));
-    $('#remote').innerHTML = res.length ? `<div class="grid">${res.map(taxonCard).join('')}</div>` :
-      (local.length ? '' : `<div class="empty"><b>No matches</b>Try another name — common or scientific both work.</div>`);
-    $('#sub').textContent = `${local.length + res.length} results`;
+    const taNames = isTa() ? await taNameMap(res.map(t => t.id)) : {};
+    if (!$('#remote')) return;
+    $('#remote').innerHTML = res.length ? `<div class="grid">${res.map(t => taxonCard(t, taNames[t.id])).join('')}</div>` :
+      (local.length ? '' : `<div class="empty"><b>${tr('no_matches')}</b>${tr('no_matches_hint')}</div>`);
+    $('#sub').textContent = tr('results', { n: local.length + res.length });
   } catch {
     if (!$('#remote')) return; // the child already left the search page
-    $('#remote').innerHTML = '<div class="empty"><b>Offline</b>Showing only species from the library.</div>';
-    $('#sub').textContent = `${local.length} results`;
+    $('#remote').innerHTML = `<div class="empty"><b>${tr('offline')}</b>${tr('offline_hint')}</div>`;
+    $('#sub').textContent = tr('results', { n: local.length });
   }
 }
 
@@ -675,10 +709,10 @@ async function viewDetail({ being: b, taxonId }) {
   const id = b?.id ?? taxonId;
   const back = detailBar(b ? `#/b/${b.key}` : `#/t/${id}`, b);
   app.innerHTML = `${back}<div class="detail"><div class="gallery"><div class="hero"><div class="slides skeleton"></div></div></div>
-    <div>${b ? `<h1 class="h-display">${esc(b.name)}</h1>` : '<div class="skeleton" style="height:48px;border-radius:12px;width:70%"></div>'}</div></div>`;
+    <div>${b ? `<h1 class="h-display">${esc(nm(b))}</h1>` : '<div class="skeleton" style="height:48px;border-radius:12px;width:70%"></div>'}</div></div>`;
   let t;
   try { t = (await api(`/taxa/${id}`)).results[0]; }
-  catch { if (!b) { if (location.hash === `#/t/${id}`) app.innerHTML = `${back}<div class="empty"><b>Couldn’t load</b>Check your internet connection.</div>`; return; } }
+  catch { if (!b) { if (location.hash === `#/t/${id}`) app.innerHTML = `${back}<div class="empty"><b>${tr('no_load')}</b>${tr('check_net')}</div>`; return; } }
   if (location.hash !== (b ? `#/b/${b.key}` : `#/t/${id}`)) return;
 
   const name = b?.name || cap(t?.preferred_common_name || t?.name);
@@ -693,15 +727,15 @@ async function viewDetail({ being: b, taxonId }) {
     ['home2', 'Habitat', b.home], ['food', 'Diet', b.food], ['spark', 'Did you know', b.fun],
     family && ['family', 'Family', cap(family.preferred_common_name || family.name)],
   ] : [
-    ['tree', 'Group', GROUP[iconic] || 'Living being'],
+    ['tree', 'Group', kindLabel(iconic)],
     family && ['family', 'Family', cap(family.preferred_common_name || family.name)],
     order && ['tree', 'Order', cap(order.preferred_common_name || order.name)],
-    t?.observations_count && ['eye', 'Observed', `${t.observations_count.toLocaleString()} times`],
+    t?.observations_count && ['eye', 'Observed', tr('times', { n: t.observations_count.toLocaleString() })],
     t?.conservation_status?.status_name && ['shield', 'Status', cap(t.conservation_status.status_name)],
   ];
   const say = b ? sayLine(b) : `${name}.`;
   const ta = b ? TA[b.key] : null;
-  const L = T[lang];
+  const L = { about: tr('about'), home: tr('home'), food: tr('food'), fun: tr('fun'), family: tr('family'), group: tr('group_fact'), order: tr('order'), seen: tr('seen'), status: tr('status'), name: tr('name'), read: tr('read') };
   const tamil = lang === 'ta';
   const factsTa = ta ? [['home2', L.home, ta.home], ['food', L.food, ta.food], ['spark', L.fun, ta.fun]] : null;
   const label = { Habitat: 'home', Diet: 'food', 'Did you know': 'fun', Family: 'family', Group: 'group', Order: 'order', Observed: 'seen', Status: 'status' };
@@ -712,38 +746,34 @@ async function viewDetail({ being: b, taxonId }) {
     <article class="detail">
       <div class="gallery">
         <div class="hero">
-          <div class="slides" id="slides">${pics.map((p, i) => `<figure><img src="${p.url}" alt="${esc(name)}, photo ${i + 1}" ${i ? 'loading="lazy"' : ''}></figure>`).join('') || '<figure></figure>'}</div>
-          <button class="save ${isFave(id) ? 'on' : ''}" id="fave" aria-pressed="${isFave(id)}">${icon('bookmark')}<span>${isFave(id) ? 'Saved' : 'Save'}</span></button>
+          <div class="slides" id="slides">${pics.map((p, i) => `<figure><img src="${p.url}" alt="${esc(name)}, ${tr('photo_n', { n: i + 1 })}" ${i ? 'loading="lazy"' : ''}></figure>`).join('') || '<figure></figure>'}</div>
+          <button class="save ${isFave(id) ? 'on' : ''}" id="fave" aria-pressed="${isFave(id)}">${icon('bookmark')}<span>${isFave(id) ? tr('saved_btn') : tr('save')}</span></button>
         </div>
-        ${pics.length > 1 ? `<div class="thumbs" id="thumbs">${pics.map((p, i) => `<button class="${i ? '' : 'on'}" aria-label="Photo ${i + 1}"><img src="${smallPhoto(p.url)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+        ${pics.length > 1 ? `<div class="thumbs" id="thumbs">${pics.map((p, i) => `<button class="${i ? '' : 'on'}" aria-label="${tr('photo_n', { n: i + 1 })}"><img src="${smallPhoto(p.url)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
         <p class="credit" id="credit">${esc(pics[0]?.by || '')}</p>
       </div>
       <div>
-        <div class="d-tax"><span class="pill">${esc(b ? catByKey[b.cat].label : GROUP[iconic] || 'Living being')}</span>${t?.conservation_status?.status_name && b ? `<span class="pill" style="background:var(--surface-2);color:var(--ink-2)">${esc(cap(t.conservation_status.status_name))}</span>` : ''}</div>
+        <div class="d-tax"><span class="pill">${esc(b ? catLabel(b.cat) : kindLabel(iconic))}</span>${t?.conservation_status?.status_name && b ? `<span class="pill" style="background:var(--surface-2);color:var(--ink-2)">${esc(cap(t.conservation_status.status_name))}</span>` : ''}</div>
         <h1 class="h-display" style="margin-top:12px" id="dname">${esc(tamil && ta ? ta.n : name)}</h1>
         <p class="d-sci" id="dsub">${tamil && ta ? `${esc(name)} · ` : ''}${esc(t?.name || '')}</p>
-        <div class="langs" role="group" aria-label="Language">
-          <button data-lang="en" aria-pressed="${!tamil}">English</button>
-          <button data-lang="ta" aria-pressed="${tamil}" lang="ta">தமிழ்</button>
-        </div>
 
         ${silentKind ? '' : `
         <section class="sound" data-wave>
-          <button class="sound-play" id="playBtn" aria-label="Play sound">${icon('play')}</button>
+          <button class="sound-play" id="playBtn" aria-label="${tr('play_sound')}">${icon('play')}</button>
           <div>
-            <div class="sound-title"><span>${b && !b.says.startsWith('(') ? `Call · “${esc(b.says)}”` : 'Field recording'}</span><small></small></div>
-            <p class="sound-note" id="note">${b && CALLS[b.key] ? 'Tap to hear its call. Tap again for recordings from the wild.' : b?.quiet ? 'A quiet species — real recordings are rare.' : 'Real recordings from the wild. Tap again for another.'}</p>
+            <div class="sound-title"><span>${b && !b.says.startsWith('(') ? `${tr('call')} · “${esc(b.says)}”` : tr('field_rec')}</span><small></small></div>
+            <p class="sound-note" id="note">${b && CALLS[b.key] ? tr('note_call') : b?.quiet ? tr('note_quiet') : tr('note_wild')}</p>
           </div>
         </section>`}
         <div class="d-actions">
-          ${b?.m3d ? `<button class="btn accent" id="btn3d">${icon('cube')} View in 3D</button>` : ''}
+          ${b?.m3d ? `<button class="btn accent" id="btn3d">${icon('cube')} ${tr('view3d')}</button>` : ''}
           <button class="btn blue" id="nameBtn">${icon('speak')} <span>${L.name}</span></button>
           <button class="btn outline" id="sayBtn">${icon('speak')} <span>${L.read}</span></button>
         </div>
 
         <section class="about"><span class="eyebrow">${L.about}</span><p id="dbio"${tamil ? ' lang="ta"' : ''}>${esc(tamil && ta ? ta.bio : bio)}</p><p class="ta-note" id="tanote" hidden></p></section>
         <dl class="facts">${shownFacts.map(([i, l, v]) => `<div class="fact">${icon(i)}<dt>${l}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-        <p class="source">Photos and sounds by contributors on <a href="https://www.inaturalist.org/taxa/${id}" target="_blank" rel="noopener">iNaturalist</a>${t?.wikipedia_url && !b ? ` · Summary from <a href="${esc(t.wikipedia_url)}" target="_blank" rel="noopener">Wikipedia</a>` : ''}.</p>
+        <p class="source">${tr('photos_by')} <a href="https://www.inaturalist.org/taxa/${id}" target="_blank" rel="noopener">iNaturalist</a>${t?.wikipedia_url && !b ? ` · ${tr('summary_from')} <a href="${esc(t.wikipedia_url)}" target="_blank" rel="noopener">Wikipedia</a>` : ''}.</p>
       </div>
     </article>`;
 
@@ -761,8 +791,8 @@ async function viewDetail({ being: b, taxonId }) {
   });
   $('#fave').onclick = e => {
     const on = toggleFave(fav), btn = e.currentTarget;
-    btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on); btn.querySelector('span').textContent = on ? 'Saved' : 'Save';
-    toast(on ? `${name} saved` : 'Removed from saved');
+    btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on); btn.querySelector('span').textContent = on ? tr('saved_btn') : tr('save');
+    toast(on ? tr('saved_toast', { name: tamil && ta ? ta.n : name }) : tr('unsaved_toast'));
   };
   $('#playBtn')?.addEventListener('click', e => playBeing(id, e.currentTarget, $('#note'), say));
   let taInfo = ta ? { n: ta.n, bio: ta.bio } : null;
@@ -774,7 +804,6 @@ async function viewDetail({ being: b, taxonId }) {
     else speak(`${name}. ${bio}`);
   };
   $('#nameBtn').onclick = e => sayName(name, e.currentTarget, taInfo?.n, b?.key);
-  app.querySelectorAll('[data-lang]').forEach(x => x.onclick = () => { if (x.dataset.lang !== lang) { setLang(x.dataset.lang); route({ keepScroll: true }); } });
   if (tamil && !ta) {
     // Species outside the library: look for a Tamil name and Tamil Wikipedia summary.
     $('#tanote').hidden = false; $('#tanote').textContent = 'தமிழ் விளக்கத்தைத் தேடுகிறோம்…';
@@ -795,7 +824,7 @@ async function viewDetail({ being: b, taxonId }) {
     const fig = document.createElement('figure'); fig.className = 'vfig';
     const v = videoEl(vid.large, { poster: vid.poster || pics[0]?.url, cls: 'hero-video on', autoplay: false });
     const playBig = document.createElement('button');
-    playBig.className = 'vplay'; playBig.setAttribute('aria-label', 'Play video'); playBig.innerHTML = icon('play');
+    playBig.className = 'vplay'; playBig.setAttribute('aria-label', tr('play_video')); playBig.innerHTML = icon('play');
     const go = () => { v.play().catch(() => {}); fig.classList.add('live'); };
     const halt = () => { v.pause(); fig.classList.remove('live'); };
     fig.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') go(); });
@@ -803,14 +832,14 @@ async function viewDetail({ being: b, taxonId }) {
     playBig.onclick = () => (v.paused ? go() : halt());
     v.addEventListener('click', () => (v.paused ? go() : halt()));
     const mute = document.createElement('button');
-    mute.className = 'mute'; mute.innerHTML = `${icon('speak')}<span>Unmute</span>`;
-    mute.onclick = () => { v.muted = !v.muted; if (!v.muted) stopSound(); mute.querySelector('span').textContent = v.muted ? 'Unmute' : 'Mute'; mute.classList.toggle('on', !v.muted); };
+    mute.className = 'mute'; mute.innerHTML = `${icon('speak')}<span>${tr('unmute')}</span>`;
+    mute.onclick = () => { v.muted = !v.muted; if (!v.muted) stopSound(); mute.querySelector('span').textContent = v.muted ? tr('unmute') : tr('mute'); mute.classList.toggle('on', !v.muted); };
     fig.append(v, playBig, mute);
     slides.prepend(fig); slides.scrollLeft = 0;
-    pics.unshift({ html: `Video: <a href="${esc(vid.page)}" target="_blank" rel="noopener">${esc(vid.title)}</a> · Wikimedia Commons` });
+    pics.unshift({ html: `${tr('video')}: <a href="${esc(vid.page)}" target="_blank" rel="noopener">${esc(vid.title)}</a> · Wikimedia Commons` });
     let th = $('#thumbs');
     if (!th) { th = document.createElement('div'); th.className = 'thumbs'; th.id = 'thumbs'; slides.closest('.hero').after(th); th.addEventListener('click', e => { const btn = e.target.closest('button'); if (!btn) return; const i = [...th.children].indexOf(btn); slides.scrollTo({ left: i * slides.clientWidth, behavior: 'smooth' }); }); }
-    th.insertAdjacentHTML('afterbegin', `<button class="vthumb" aria-label="Video">${vid.poster ? `<img src="${esc(vid.poster)}" alt="">` : ''}${icon('play')}</button>`);
+    th.insertAdjacentHTML('afterbegin', `<button class="vthumb" aria-label="${tr('video')}">${vid.poster ? `<img src="${esc(vid.poster)}" alt="">` : ''}${icon('play')}</button>`);
     setIdx(0);
   });
 }
@@ -832,27 +861,27 @@ $('#close3d').onclick = () => history.back();
 
 function viewFaves() {
   const list = faves();
-  app.innerHTML = `<div class="page-head"><span class="eyebrow">Your collection</span><h1 class="h-display">Saved</h1></div>
+  app.innerHTML = `<div class="page-head"><span class="eyebrow">${tr('collection')}</span><h1 class="h-display">${tr('saved_title')}</h1></div>
     ${list.length ? `<div class="grid">${list.map(f => f.key && byKey[f.key] ? beingCard(byKey[f.key]) : `
       <a class="card" href="#/t/${f.id}"><div class="card-img">${imgTag(f.photo, f.name)}</div>
-      <div class="card-meta"><div><h3 class="card-name">${esc(f.name)}</h3></div></div></a>`).join('')}</div>`
-      : `<div class="empty"><b>Nothing saved yet</b>Tap Save on any species to keep it here.</div>`}`;
+      <div class="card-meta"><div>${nameRow(f.name, f.name, null)}</div></div></a>`).join('')}</div>`
+      : `<div class="empty"><b>${tr('nothing_saved')}</b>${tr('nothing_saved_hint')}</div>`}`;
 }
 
 // ---------------------------------------------------------------- quiz
 // Two games: "Who's calling?" (hear a call, pick the photo) and "Name it" (see a photo, pick the name).
 const scores = { sound: store.get('ap.score', { stars: 0, played: 0, streak: 0 }), name: store.get('ap.score.name', { stars: 0, played: 0, streak: 0 }) };
 const saveScore = mode => store.set(mode === 'name' ? 'ap.score.name' : 'ap.score', scores[mode]);
-const CHEERS = ['Correct', 'Brilliant', 'Spot on', 'Well done', 'Nailed it'];
+const cheer = () => { const c = tr('cheers').split('|'); return c[Math.floor(Math.random() * c.length)]; };
 function quizHead(mode) {
   const sc = scores[mode];
-  return `<nav class="quiz-modes" aria-label="Quiz type">
-      <a href="#/game" aria-current="${mode === 'sound'}">${icon('quiz')} Who's calling?</a>
-      <a href="#/game/name" aria-current="${mode === 'name'}">${icon('eye')} Name it</a>
+  return `<nav class="quiz-modes" aria-label="${tr('quiz_types')}">
+      <a href="#/game" aria-current="${mode === 'sound'}">${icon('quiz')} ${tr('q_sound')}</a>
+      <a href="#/game/name" aria-current="${mode === 'name'}">${icon('eye')} ${tr('q_name')}</a>
     </nav>
     <div class="quiz-top">
-      <div><span class="eyebrow">${mode === 'name' ? 'Picture quiz' : 'Sound quiz'}</span><h1 class="h-display">${mode === 'name' ? 'Who is this?' : 'Who’s calling?'}</h1></div>
-      <div class="stats"><div class="stat"><b>${sc.stars}</b><span>Correct</span></div><div class="stat"><b>${sc.streak || 0}</b><span>Streak</span></div></div>
+      <div><span class="eyebrow">${mode === 'name' ? tr('picture_quiz') : tr('sound_quiz')}</span><h1 class="h-display">${mode === 'name' ? tr('who_is') : tr('q_sound')}</h1></div>
+      <div class="stats"><div class="stat"><b>${sc.stars}</b><span>${tr('correct')}</span></div><div class="stat"><b>${sc.streak || 0}</b><span>${tr('streak')}</span></div></div>
     </div>`;
 }
 function scoreAnswer(mode, missed) {
@@ -865,7 +894,7 @@ function scoreAnswer(mode, missed) {
 }
 let lastAnswer;
 let announceTimer;
-const quizEmpty = msg => { app.innerHTML = `<section class="quiz">${quizHead(location.hash.includes('name') ? 'name' : 'sound')}<div class="empty"><b>Can’t start the quiz</b>${msg}<div style="margin-top:14px"><button class="btn outline" onclick="location.reload()">Try again</button></div></div></section>`; };
+const quizEmpty = msg => { app.innerHTML = `<section class="quiz">${quizHead(location.hash.includes('name') ? 'name' : 'sound')}<div class="empty"><b>${tr('quiz_empty')}</b>${msg}<div style="margin-top:14px"><button class="btn outline" onclick="location.reload()">${tr('try_again')}</button></div></div></section>`; };
 const pickAnswer = pool => { let a; do { a = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && a === lastAnswer); return (lastAnswer = a); };
 
 async function viewGame(mode = 'sound') {
@@ -875,17 +904,17 @@ async function viewGame(mode = 'sound') {
   if (mode === 'name') return viewNameGame();
   let pool = BEINGS.filter(b => CALLS[b.key] && photoOf(b));
   if (pool.length < 4) pool = BEINGS.filter(b => !b.quiet && photoOf(b)); // too few clear calls: use wild recordings
-  if (pool.length < 4) return quizEmpty('The animal photos and sounds need the internet. Check the connection and try again.');
+  if (pool.length < 4) return quizEmpty(tr('quiz_need_net'));
   const answer = pickAnswer(pool);
   const opts = shuffle([answer, ...shuffle(pool.filter(b => b !== answer)).slice(0, 3)]);
   app.innerHTML = `<section class="quiz">
     ${quizHead('sound')}
     <div class="quiz-player" data-wave>
-      <button class="sound-play" id="gplay" aria-label="Play the mystery sound">${icon('play')}</button>
-      <p>Tap to hear the sound again</p>
+      <button class="sound-play" id="gplay" aria-label="${tr('play_mystery')}">${icon('play')}</button>
+      <p>${tr('tap_again_sound')}</p>
     </div>
-    <div class="choices">${opts.map(o => `<button class="choice" data-k="${o.key}"><img src="${photoOf(o)}" alt=""><div>${esc(o.name)}</div></button>`).join('')}</div>
-    <div class="feedback"><p id="cheer"></p><button class="btn" id="next" hidden>Next sound ${icon('arrow')}</button></div>
+    <div class="choices">${opts.map(o => `<div class="choice-wrap"><button class="choice" data-k="${o.key}"><img src="${photoOf(o)}" alt=""><div${isTa() ? ' lang="ta"' : ''}>${esc(nm(o))}</div></button>${nameBtn(o.name, o.key, 'say-opt in-choice')}</div>`).join('')}</div>
+    <div class="feedback"><p id="cheer"></p><button class="btn" id="next" hidden>${tr('next_sound')} ${icon('arrow')}</button></div>
   </section>`;
   const play = () => playBeing(answer.id, $('#gplay'), null, answer.says, { callOnly: true });
   $('#gplay').onclick = play;
@@ -896,11 +925,11 @@ async function viewGame(mode = 'sound') {
     if (c.dataset.k === answer.key) {
       done = true; c.classList.add('right'); scoreAnswer('sound', missed);
       stopSound(); celebrate(c);
-      $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span>`;
+      $('#cheer').innerHTML = `<span class="ok">${missed ? tr('got_it') : cheer()} — ${tr('its_the', { name: esc(isTa() ? nm(answer) : answer.name.toLowerCase()) })}</span>`;
       announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 900);
       $('#next').hidden = false;
     } else {
-      missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — listen again.';
+      missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = tr('not_quite_sound');
     }
   });
   $('#next').onclick = () => { clearTimeout(announceTimer); viewGame('sound'); };
@@ -908,7 +937,7 @@ async function viewGame(mode = 'sound') {
 
 async function viewNameGame() {
   const pool = BEINGS.filter(b => photoOf(b));
-  if (pool.length < 4) return quizEmpty('The animal photos need the internet. Check the connection and try again.');
+  if (pool.length < 4) return quizEmpty(tr('quiz_need_net'));
   const answer = pickAnswer(pool);
   // Two look-alikes from the same group keep it interesting; one from elsewhere keeps it fair.
   const near = shuffle(pool.filter(b => b !== answer && b.cat === answer.cat)).slice(0, 2);
@@ -916,16 +945,16 @@ async function viewNameGame() {
   const opts = shuffle([answer, ...near, ...far]);
   app.innerHTML = `<section class="quiz">
     ${quizHead('name')}
-    <figure class="name-photo"><img id="qimg" src="${bigPhoto(photoOf(answer))}" alt="A mystery animal"><figcaption id="qcredit"></figcaption></figure>
+    <figure class="name-photo"><img id="qimg" src="${bigPhoto(photoOf(answer))}" alt="${tr('mystery_animal')}"><figcaption id="qcredit"></figcaption></figure>
     <div class="name-choices">${opts.map(o => `<div class="name-opt">
-      <button class="name-choice" data-k="${o.key}"${lang === 'ta' ? ' lang="ta"' : ''}>${esc(lang === 'ta' && TA[o.key] ? TA[o.key].n : o.name)}</button>
-      <button class="say-opt" data-name="${esc(o.name)}" data-key="${o.key}"${TA[o.key] ? ` data-name-ta="${esc(TA[o.key].n)}"` : ''} aria-label="Hear this answer: ${esc(o.name)}">${icon('speak')}</button>
+      <button class="name-choice" data-k="${o.key}"${isTa() ? ' lang="ta"' : ''}>${esc(nm(o))}</button>
+      ${nameBtn(o.name, o.key, 'say-opt')}
     </div>`).join('')}</div>
     <div class="feedback">
       <p id="cheer"></p>
       <div class="row">
-        <button class="btn outline" id="hint">${icon('speak')} Hear a hint</button>
-        <button class="btn" id="next" hidden>Next picture ${icon('arrow')}</button>
+        <button class="btn outline" id="hint">${icon('speak')} ${tr('hint')}</button>
+        <button class="btn" id="next" hidden>${tr('next_picture')} ${icon('arrow')}</button>
       </div>
     </div>
   </section>`;
@@ -942,11 +971,11 @@ async function viewNameGame() {
       done = true; c.classList.add('right'); scoreAnswer('name', missed);
       stopSound(); celebrate(c);
       app.querySelectorAll('.name-choice:not(.right)').forEach(x => x.classList.add('dim'));
-      $('#cheer').innerHTML = `<span class="ok">${missed ? 'Got it' : CHEERS[Math.floor(Math.random() * CHEERS.length)]} — it's the ${esc(answer.name.toLowerCase())}.</span> <a class="more-link" href="#/b/${answer.key}">Learn more</a>`;
+      $('#cheer').innerHTML = `<span class="ok">${missed ? tr('got_it') : cheer()} — ${tr('its_the', { name: esc(isTa() ? nm(answer) : answer.name.toLowerCase()) })}</span> <a class="more-link" href="#/b/${answer.key}">${tr('learn_more')}</a>`;
       announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 900);
       $('#hint').hidden = true; $('#next').hidden = false;
     } else {
-      missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = 'Not quite — look again, or hear a hint.';
+      missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = tr('not_quite_pic');
     }
   });
   $('#next').onclick = () => { clearTimeout(announceTimer); viewNameGame(); };
@@ -969,18 +998,18 @@ $('#searchForm').addEventListener('submit', e => { e.preventDefault(); input.blu
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec;
 $('#micBtn').addEventListener('click', () => {
-  if (!SR) { toast('Voice search needs Chrome, Edge or Safari'); input.focus(); return; }
+  if (!SR) { toast(tr('voice_need')); input.focus(); return; }
   stopSound();
-  rec = new SR(); rec.lang = 'en-IN'; rec.interimResults = true; rec.maxAlternatives = 1;
+  rec = new SR(); rec.lang = isTa() ? 'ta-IN' : 'en-IN'; rec.interimResults = true; rec.maxAlternatives = 1;
   const panel = $('#listening'), txt = $('#listeningText');
-  txt.textContent = 'Say an animal’s name, like "tiger"'; panel.hidden = false;
+  txt.textContent = tr('listen_hint'); panel.hidden = false;
   let final = '';
   rec.onresult = e => {
     const r = [...e.results].map(r => r[0].transcript).join(' ');
     txt.textContent = `“${r}”`;
     if (e.results[e.results.length - 1].isFinal) final = r;
   };
-  rec.onerror = e => { panel.hidden = true; if (e.error === 'not-allowed') toast('Allow microphone access to search by voice'); else if (e.error !== 'aborted') toast('Didn’t catch that — try again'); };
+  rec.onerror = e => { panel.hidden = true; if (e.error === 'not-allowed') toast(tr('mic_allow')); else if (e.error !== 'aborted') toast(tr('didnt_catch')); };
   rec.onend = () => {
     panel.hidden = true;
     const q = final.toLowerCase().replace(/^(show( me)?|find|search( for)?|where is|what is|i want( to see)?|look for)\s+/, '').replace(/^(a|an|the)\s+/, '').replace(/[.?!]/g, '').trim();
@@ -1027,11 +1056,16 @@ window.speechSynthesis?.getVoices();
 syncLangBtn();
 $('#langBtn').onclick = () => {
   setLang(lang === 'ta' ? 'en' : 'ta');
-  toast(lang === 'ta' ? 'தமிழ் — பெயர்களும் விளக்கங்களும் தமிழில்' : 'English');
-  // Mid-quiz, relabel the answers instead of starting a new question.
-  const choices = app.querySelectorAll('.name-choice');
-  if (choices.length) return choices.forEach(c => { const b = byKey[c.dataset.k]; c.textContent = lang === 'ta' && TA[b.key] ? TA[b.key].n : b.name; c.lang = lang === 'ta' ? 'ta' : ''; });
-  if (/^#\/(b|t)\//.test(location.hash)) route({ keepScroll: true });
+  toast(tr('lang_toast'));
+  // Mid-quiz, relabel the answers in place instead of starting a new question.
+  if (location.hash.startsWith('#/game') && app.querySelector('.choice, .name-choice')) {
+    app.querySelectorAll('.name-choice, .choice > div').forEach(el => { const b = byKey[(el.dataset.k || el.parentElement.dataset.k)]; if (!b) return; el.textContent = nm(b); el.lang = isTa() ? 'ta' : ''; });
+    const head = app.querySelector('.quiz-modes'); if (head) { const mode = location.hash.includes('name') ? 'name' : 'sound'; const tmp = document.createElement('div'); tmp.innerHTML = quizHead(mode); head.nextElementSibling.replaceWith(tmp.children[1]); head.replaceWith(tmp.children[0]); }
+    ['#hint', '#next'].forEach(sel => { const el = $(sel); if (!el) return; const k = { '#hint': 'hint', '#next': location.hash.includes('name') ? 'next_picture' : 'next_sound' }[sel]; el.childNodes.forEach(n => { if (n.nodeType === 3 && n.textContent.trim()) n.textContent = ` ${tr(k)} `; }); });
+    const p = app.querySelector('.quiz-player p'); if (p) p.textContent = tr('tap_again_sound');
+    return;
+  }
+  route({ keepScroll: true });
 };
 route();
 

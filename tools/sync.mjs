@@ -45,6 +45,7 @@ const APPS = [
       ['animal-pals/videos.js', 'prototypes/animal-pals/app/videos.js'],
       ['animal-pals/data-ta.js', 'prototypes/animal-pals/app/data-ta.js'],
       ['animal-pals/calls.js', 'prototypes/animal-pals/app/calls.js'],
+      ['animal-pals/i18n.js', 'prototypes/animal-pals/app/i18n.js'],
       ['animal-pals/audio', 'prototypes/animal-pals/app/audio'],
       ['animal-pals/manifest.json', 'prototypes/animal-pals/app/manifest.json'],
       ['animal-pals/sw.js', 'prototypes/animal-pals/app/sw.js'],

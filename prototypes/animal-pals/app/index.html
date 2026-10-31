@@ -55,47 +55,49 @@
         <span>Zoorassic Park</span>
       </a>
       <nav class="topnav" aria-label="Main">
-        <a href="#/" data-tab="home">Discover</a>
-        <a href="#/explore" data-tab="explore">Tree of life</a>
-        <a href="#/game" data-tab="game">Quiz</a>
-        <a href="#/faves" data-tab="faves">Saved</a>
+        <a href="#/" data-tab="home" data-t="nav_home">Discover</a>
+        <a href="#/explore" data-tab="explore" data-t="nav_tree">Tree of life</a>
+        <a href="#/game" data-tab="game" data-t="nav_quiz">Quiz</a>
+        <a href="#/faves" data-tab="faves" data-t="nav_saved">Saved</a>
       </nav>
       <form class="search" id="searchForm" role="search" autocomplete="off">
         <svg class="ico"><use href="#i-search"/></svg>
-        <input id="searchInput" type="search" placeholder="Search any animal, bird, insect or plant" aria-label="Search living beings" enterkeyhint="search" />
-        <button type="button" class="mic" id="micBtn" aria-label="Search by voice" title="Search by voice">
+        <input id="searchInput" type="search" placeholder="Search any animal, bird, insect or plant" aria-label="Search living beings" data-t-ph="search_ph" data-t-label="search_label" enterkeyhint="search" />
+        <button type="button" class="mic" id="micBtn" aria-label="Search by voice" data-t-label="voice_label">
           <svg class="ico"><use href="#i-mic"/></svg>
         </button>
       </form>
-      <button class="langbtn" id="langBtn" type="button" aria-pressed="false"><svg class="ico"><use href="#i-globe"/></svg><span>தமிழ்</span></button>
+      <button class="langswitch" id="langBtn" type="button" role="switch" aria-checked="false" aria-label="Language: English or Tamil">
+        <span class="opt" data-l="en">English</span><span class="opt" data-l="ta" lang="ta">தமிழ்</span>
+      </button>
     </div>
   </header>
 
   <main id="app" tabindex="-1"></main>
 
   <nav class="tabbar" aria-label="Main">
-    <a href="#/" data-tab="home"><svg class="ico"><use href="#i-home"/></svg>Discover</a>
-    <a href="#/explore" data-tab="explore"><svg class="ico"><use href="#i-compass"/></svg>Explore</a>
-    <a href="#/game" data-tab="game"><svg class="ico"><use href="#i-quiz"/></svg>Quiz</a>
-    <a href="#/faves" data-tab="faves"><svg class="ico"><use href="#i-bookmark"/></svg>Saved</a>
+    <a href="#/" data-tab="home"><svg class="ico"><use href="#i-home"/></svg><span data-t="nav_home">Discover</span></a>
+    <a href="#/explore" data-tab="explore"><svg class="ico"><use href="#i-compass"/></svg><span data-t="nav_explore">Explore</span></a>
+    <a href="#/game" data-tab="game"><svg class="ico"><use href="#i-quiz"/></svg><span data-t="nav_quiz">Quiz</span></a>
+    <a href="#/faves" data-tab="faves"><svg class="ico"><use href="#i-bookmark"/></svg><span data-t="nav_saved">Saved</span></a>
   </nav>
 
   <div class="listening" id="listening" hidden>
     <div class="listening-card" role="dialog" aria-label="Voice search">
       <div class="pulse"><svg class="ico"><use href="#i-mic"/></svg></div>
-      <p class="listening-title">Listening…</p>
+      <p class="listening-title" data-t="listening">Listening…</p>
       <p class="listening-hint" id="listeningText">Say an animal's name, like "tiger"</p>
-      <button class="btn outline" id="stopListen">Cancel</button>
+      <button class="btn outline" id="stopListen" data-t="cancel">Cancel</button>
     </div>
   </div>
 
   <div class="viewer3d" id="viewer3d" hidden>
     <div class="viewer3d-bar">
-      <div><span class="eyebrow">3D model</span><strong id="viewer3dTitle"></strong></div>
-      <button class="iconbtn" id="close3d" aria-label="Close 3D view"><svg class="ico"><use href="#i-close"/></svg></button>
+      <div><span class="eyebrow" data-t="model3d">3D model</span><strong id="viewer3dTitle"></strong></div>
+      <button class="iconbtn" id="close3d" aria-label="Close 3D view" data-t-label="close3d"><svg class="ico"><use href="#i-close"/></svg></button>
     </div>
     <div class="viewer3d-stage" id="viewer3dStage"></div>
-    <p class="viewer3d-hint">Drag to rotate · Pinch or scroll to zoom</p>
+    <p class="viewer3d-hint" data-t="hint3d">Drag to rotate · Pinch or scroll to zoom</p>
   </div>
 
   <script type="module" src="app.js"></script>
