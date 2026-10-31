@@ -12,7 +12,7 @@ const SEASONS = {
 };
 
 const CATEGORIES = {
-  cereal: 'Cereals & millets', pulse: 'Pulses', oilseed: 'Oilseeds', vegetable: 'Vegetables',
+  cereal: 'Cereals & millets', pulse: 'Pulses', oilseed: 'Oilseeds', vegetable: 'Vegetables', leafy: 'Leafy greens',
   fruit: 'Fruits', spice: 'Spices', cash: 'Cash crops',
 };
 

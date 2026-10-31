@@ -15,6 +15,9 @@ const cropById = id => CROPS.find(c => c.id === id);
 const inputById = id => COMPOSTS.find(c => c.id === id);
 const nowMonth = () => new Date().getMonth() + 1;
 
+// Crops added from batch files carry their own references.
+Object.assign(SOURCES.crops, window.SOURCES_MORE || {});
+
 /* ---------- Language ---------- */
 // English data is kept as a snapshot; switching to Tamil copies the Tamil text over the same objects,
 // so every view keeps reading CROPS / COMPOSTS / SEASONS as before.
@@ -42,6 +45,7 @@ function applyLang() {
   document.body.classList.toggle('lang-ta', ta);
   document.querySelectorAll('[data-i18n]').forEach(el => { const v = el.dataset.i18n.split('.').reduce((o, k) => o[k], L); el.textContent = v; });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = L[el.dataset.i18nPh]; });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', L[el.dataset.i18nAria]));
   const lb = $('#langBtn'); if (lb) { lb.textContent = L.langSwitch; lb.setAttribute('aria-label', L.langLabel); lb.lang = ta ? 'en' : 'ta'; }
 }
 // The other-language name shown under each title: Tamil under English, English under Tamil.
@@ -69,8 +73,9 @@ function cropCard(c) {
     </div></a>`;
 }
 function orgCard(o) {
-  return `<a class="card org-card" href="#/organic/${o.id}">
-    <span class="org-icon t-${o.type}">${icon(TYPE_ICON[o.type])}</span>
+  const hero = (window.MEDIA_INPUTS || {})[o.id]?.[0];
+  return `<a class="card org-card${hero ? ' has-photo' : ''}" href="#/organic/${o.id}">
+    ${hero ? `<span class="org-photo"><img src="${esc(hero.thumb || hero.src)}" alt="" loading="lazy" onerror="this.parentNode.remove()"><span class="org-icon t-${o.type}">${icon(TYPE_ICON[o.type])}</span></span>` : `<span class="org-icon t-${o.type}">${icon(TYPE_ICON[o.type])}</span>`}
     <div><span class="eyebrow">${INPUT_TYPES[o.type].name}</span></div>
     <h3>${esc(o.name)}</h3><span class="ta">${esc(inputAlt(o))}</span>
     <p>${esc(o.summary)}</p>
@@ -86,6 +91,62 @@ function sourcesBlock(refs) {
   return `<section class="section"><div class="section-head"><div><h2>${L.sourcesTitle}</h2><p>${L.sourcesSub}</p></div></div>
     <div class="card">${sourceLinks(refs)}</div></section>`;
 }
+
+/* ---------- Photos & videos ---------- */
+const MEDIA = window.MEDIA || {}, MEDIA_INPUTS = window.MEDIA_INPUTS || {}, VIDEOS = window.VIDEOS || {};
+// Galleries, pest photos and videos for the crops added later live in *-more files.
+MEDIA.gallery = { ...(MEDIA.gallery || {}), ...((window.MEDIA_MORE || {}).gallery || {}) };
+MEDIA.pests = { ...(MEDIA.pests || {}), ...((window.MEDIA_MORE || {}).pests || {}) };
+VIDEOS.crops = { ...(VIDEOS.crops || {}), ...((window.VIDEOS_MORE || {}).crops || {}) };
+const CAPTIONS_TA = window.CAPTIONS_TA || {};
+const capOf = m => LANG === 'ta' && m.caption && CAPTIONS_TA[m.caption] ? CAPTIONS_TA[m.caption] : (m.caption || '');
+let LB = [];  // photos the open lightbox can page through
+function galleryBlock(items, title, sub) {
+  items = (items || []).filter(Boolean);
+  if (!items.length) return '';
+  const start = LB.length; LB.push(...items);
+  return `<section class="section"><div class="section-head"><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div></div>
+    <div class="gallery">${items.map((m, i) => `<button type="button" class="shot" data-lb="${start + i}" aria-label="${esc(L.openPhoto)}${capOf(m) ? ': ' + esc(capOf(m)) : ''}">
+      <img src="${esc(m.thumb || m.src)}" alt="${esc(capOf(m))}" loading="lazy" onerror="this.closest('.shot').remove()">${capOf(m) ? `<span>${esc(capOf(m))}</span>` : ''}</button>`).join('')}</div></section>`;
+}
+const LANG_NAME = { ta: 'தமிழ்', en: 'English', hi: 'हिन्दी' };
+function videoBlock(list, title, sub) {
+  list = (list || []).slice().sort((a, b) => (b.lang === LANG) - (a.lang === LANG));
+  if (!list.length) return '';
+  return `<section class="section"><div class="section-head"><div><h2>${title}</h2><p>${sub}</p></div></div>
+    <div class="videos">${list.map(v => `<div class="card video">
+      <button type="button" class="video-frame" data-yt="${esc(v.id)}" aria-label="${esc(L.playVideo)}: ${esc(v.title)}">
+        <img src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" loading="lazy"><span class="play">${icon('play')}</span>
+        <span class="vlang">${LANG_NAME[v.lang] || v.lang}</span></button>
+      <div class="video-body"><b>${esc(v.title)}</b><small>${esc(v.channel)} · YouTube</small></div></div>`).join('')}</div>
+    <p class="muted" style="font-size:12.5px;margin-top:8px">${L.videoNote}</p></section>`;
+}
+function bindMedia() {
+  app.querySelectorAll('[data-yt]').forEach(b => b.addEventListener('click', () => {
+    const f = document.createElement('iframe');
+    f.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.yt)}?autoplay=1&rel=0`;
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true; f.title = b.getAttribute('aria-label');
+    b.replaceWith(f);
+  }, { once: true }));
+  app.querySelectorAll('[data-lb]').forEach(b => b.addEventListener('click', () => openLightbox(+b.dataset.lb)));
+}
+const lbDlg = $('#lightbox');
+let lbAt = 0;
+function showLb() {
+  const m = LB[lbAt]; if (!m) return;
+  $('#lbImg').src = m.src || m.thumb; $('#lbImg').alt = capOf(m);
+  $('#lbCap').textContent = capOf(m); $('#lbCredit').textContent = m.credit || '';
+  $('#lbCount').textContent = `${lbAt + 1} / ${LB.length}`;
+}
+function openLightbox(i) { lbAt = i; showLb(); lbDlg.showModal(); }
+const lbStep = d => { lbAt = (lbAt + d + LB.length) % LB.length; showLb(); };
+$('#lbPrev').addEventListener('click', () => lbStep(-1));
+$('#lbNext').addEventListener('click', () => lbStep(1));
+lbDlg.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') lbStep(-1); if (e.key === 'ArrowRight') lbStep(1); });
+lbDlg.addEventListener('click', e => { if (e.target === lbDlg) lbDlg.close(); });
+let tx = null;
+lbDlg.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+lbDlg.addEventListener('touchend', e => { if (tx == null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 50) lbStep(dx < 0 ? 1 : -1); tx = null; });
 
 /* ---------- Accuracy report ---------- */
 function viewSources() {
@@ -104,6 +165,7 @@ function viewSources() {
     </div>
     <div class="acc-bar">${bar.map(([k, , c]) => `<i style="flex:${tot[k]};background:${c}"></i>`).join('')}</div>
     <div class="legend">${bar.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l}: ${tot[k]} (${pct(tot[k])}%)</span>`).join('')}</div>
+    ${CROPS.length > 30 ? `<p class="card season-about" style="margin-top:16px">${L.moreNote(CROPS.length - 30)}</p>` : ''}
     <section class="section"><div class="section-head"><div><h2>${L.bySection}</h2></div></div>
       <div class="card"><table class="use-table">${R.groups.map((g, i) => { const m = g.correct + g.approx + g.wrong + g.unverified;
         return `<tr><td>${esc(L.groups[i])}</td><td>${L.sectionLine(m, Math.round((g.correct + g.approx) / m * 100), g.wrong)}</td></tr>`; }).join('')}</table></div></section>
@@ -125,6 +187,7 @@ function viewHome() {
   const strip = MONTHS.map((_, i) => `<span class="${i + 1 === m ? 'now' : SEASON_MONTHS[s].includes(i + 1) ? 'in' : ''}"></span>`).join('');
   const featured = ['jeevamrutham', 'vermicompost', 'neemastra'].map(inputById);
   return `
+    <form class="search home-search" id="homeSearch" role="search">${icon('search')}<input id="hq" type="search" placeholder="${esc(L.homeSearchPh)}" autocomplete="off" aria-label="${esc(L.homeSearchPh)}"></form>
     <div class="hero fade-in">
       <section class="season-card ${s}">
         <span class="season-art">${icon(s === 'kharif' ? 'rain' : s === 'rabi' ? 'leaf' : 'sun')}</span>
@@ -234,7 +297,6 @@ function viewSeasons(sel, month) {
   const sow = CROPS.filter(c => c.sow.includes(pickM)), harv = CROPS.filter(c => c.harvest.includes(pickM));
   const pill = c => `<a class="pill" href="#/crop/${c.id}">${photo(c.id)}${esc(c.name)}</a>`;
   const filt = store.get('calCat', 'all');
-  const calCrops = CROPS.filter(c => filt === 'all' || c.cat === filt);
   return `
     <div class="fade-in">
       <span class="eyebrow">${L.plannerEyebrow}</span>
@@ -261,17 +323,26 @@ function viewSeasons(sel, month) {
         </div>
       </section>
 
-      <section class="section">
+      <section class="section" id="calendar">
         <div class="section-head"><div><h2>${L.calendar}</h2><p>${L.calendarSub}</p></div></div>
-        <div class="chips scroll" style="margin-bottom:12px">
+        <div class="cal-tools">
+          <label class="search cal-search">${icon('search')}<input id="calQ" type="search" placeholder="${esc(L.calSearch)}" autocomplete="off" aria-label="${esc(L.calSearch)}"></label>
+          <div class="seg" id="calSort" role="group" aria-label="${esc(L.calSortLabel)}">
+            <button type="button" data-sort="group" class="${store.get('calSort', 'group') === 'group' ? 'on' : ''}">${L.calByType}</button>
+            <button type="button" data-sort="soon" class="${store.get('calSort', 'group') === 'soon' ? 'on' : ''}">${L.calSoon}</button>
+            <button type="button" data-sort="az" class="${store.get('calSort', 'group') === 'az' ? 'on' : ''}">${L.calAZ}</button>
+          </div>
+        </div>
+        <div class="chips scroll" style="margin:12px 0">
           ${[['all', L.allCrops], ...Object.entries(CATEGORIES)].map(([k, v]) => `<button class="chip ${k === filt ? 'on' : ''}" data-calcat="${k}">${v}</button>`).join('')}
         </div>
-        <div class="legend" style="margin-bottom:10px"><span><i style="background:var(--green)"></i>${L.sowing}</span><span><i style="background:var(--sun)"></i>${L.harvest}</span><span><i style="background:var(--green-soft)"></i>${L.thisMonth}</span></div>
-        <div class="card cal"><div class="cal-table">
-          <div class="cal-row head"><span class="cal-name">${L.crop}</span>${L.monthsShort.map(x => `<span>${x}</span>`).join('')}</div>
-          ${calCrops.map(c => `<div class="cal-row"><a class="cal-name" href="#/crop/${c.id}">${esc(c.name)}</a>${MONTHS.map((_, i) =>
-            `<span class="cal-cell ${i + 1 === m ? 'cur' : ''}">${c.sow.includes(i + 1) ? '<i class="s"></i>' : ''}${c.harvest.includes(i + 1) ? '<i class="h"></i>' : ''}</span>`).join('')}</div>`).join('')}
-        </div></div>
+        <div class="cal-legend">
+          <span><i class="lg-s"></i>${L.sowing}</span><span><i class="lg-h"></i>${L.harvest}</span>
+          <span><i class="lg-now"></i>${L.thisMonth}: ${monthName(m)}</span>
+          <span><i class="sow-dot static"></i>${L.sowThisMonth}</span>
+          <span class="muted" id="calCount"></span>
+        </div>
+        <div class="card cal2" id="calWrap"></div>
         <p class="muted" style="font-size:13px;margin-top:10px">${L.longCrops}</p>
       </section>
       ${disclaimerHtml()}
@@ -290,6 +361,7 @@ function viewCrops() {
     <div class="chips scroll" id="seasonChips" style="margin-top:8px">${[['all', L.anySeason], ...Object.entries(SEASONS).map(([k, v]) => [k, v.name])].map(([k, v]) => `<button class="chip ${k === st.season ? 'on' : ''}" data-season="${k}">${v}</button>`).join('')}</div>
     <p class="result-count" id="count"></p>
     <div class="grid" id="cropGrid"></div>
+    <section class="section" id="worldSec" hidden><div class="section-head"><div><h2>${L.worldTitle}</h2><p>${L.worldSub}</p></div></div><div class="grid" id="worldGrid"></div></section>
     ${disclaimerHtml()}
   </div>`;
 }
@@ -298,11 +370,23 @@ function bindCrops() {
   const draw = () => {
     const q = st.q.trim().toLowerCase();
     const list = CROPS.filter(c => (st.cat === 'all' || c.cat === st.cat) && (st.season === 'all' || c.seasons.includes(st.season)) &&
-      (!q || [c.name, c.ta, enName(c.id), c.sci, CATEGORIES[c.cat], BASE.cats[c.cat]].some(x => x.toLowerCase().includes(q))));
+      (!q || [c.name, c.ta, enName(c.id), c.sci, CATEGORIES[c.cat], BASE.cats[c.cat]].some(x => x && x.toLowerCase().includes(q))));
     $('#cropGrid').innerHTML = list.map(cropCard).join('') || `<p class="empty">${L.noMatch}</p>`;
     $('#count').textContent = L.countOf(list.length, CROPS.length);
     store.set('cropFilter', st);
+    clearTimeout(worldT);
+    const sec = $('#worldSec');
+    if (q.length < 3) { sec.hidden = true; return; }
+    worldT = setTimeout(async () => {
+      sec.hidden = false; $('#worldGrid').innerHTML = `<p class="empty">${L.searching}</p>`;
+      try {
+        const res = await worldSearch(st.q.trim());
+        if (st.q.trim().toLowerCase() !== q) return;
+        $('#worldGrid').innerHTML = res.map(plantCard).join('') || `<p class="empty">${L.worldNone}</p>`;
+      } catch { $('#worldGrid').innerHTML = `<p class="empty">${L.needNet}</p>`; }
+    }, 450);
   };
+  let worldT;
   $('#q').addEventListener('input', e => { st.q = e.target.value; draw(); });
   $('#catChips').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (!b) return; st.cat = b.dataset.cat; $('#catChips').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); draw(); });
   $('#seasonChips').addEventListener('click', e => { const b = e.target.closest('[data-season]'); if (!b) return; st.season = b.dataset.season; $('#seasonChips').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); draw(); });
@@ -313,7 +397,7 @@ function viewCrop(id) {
   const c = cropById(id); if (!c) return notFound();
   const m = nowMonth(), p = CROP_IMAGES[c.id];
   const F = L.facts;
-  const facts = [[F.season, c.seasons.map(s => SEASONS[s].name).join(', ')], [F.days, c.days], [F.soil, c.soil], [F.ph, c.ph],
+  const facts = [[F.season, c.seasons.map(s => `${SEASONS[s].name} · ${SEASONS[s].months}`)], [F.days, c.days], [F.soil, c.soil], [F.ph, c.ph],
     [F.temp, c.temp], [F.water, `${L.water[c.water]} · ${L.rainWord(c.rain)}`], [F.spacing, c.spacing], [F.seed, c.seed]];
   const row = (lab, arr, cls) => `<span class="lab">${lab}</span>${MONTHS.map((_, i) => `<i class="${arr.includes(i + 1) ? cls : ''}" title="${L.months[i]}"></i>`).join('')}`;
   const sowingNow = c.sow.includes(m);
@@ -327,10 +411,12 @@ function viewCrop(id) {
         <div class="ta">${esc(altName(c))}</div>
         <div class="sci">${esc(c.sci)}</div>
         <p class="intro">${esc(c.intro)}</p>
-        <div class="tags">${seasonTags(c)}<span class="tag">${icon('drop')}${L.water[c.water]}</span>${sowingNow ? `<span class="tag" style="background:var(--green-soft);color:var(--green)">${icon('check')}${L.sowThisMonth}</span>` : ''}</div>
+        <div class="tags">${seasonTags(c)}<span class="tag">${icon('drop')}${L.water[c.water]}</span>${sowingNow ? `<span class="tag" style="background:var(--green-soft);color:var(--green)">${icon('check')}${L.sowThisMonth}</span>` : ''}${c.custom ? `<span class="tag">${icon('sprout')}${L.addedByAdmin}</span>` : ''}</div>
       </div>
     </div>
-    <div class="facts">${facts.map(([k, v]) => `<div class="fact"><small>${k}</small><b>${esc(v)}</b></div>`).join('')}</div>
+    ${c.custom ? `<p class="card season-about" style="margin-top:18px">${L.customNote}</p>` : ''}
+    <div class="facts">${facts.map(([k, v]) => `<div class="fact"><small>${k}</small><b>${Array.isArray(v) ? v.map(x => `<span class="fact-line">${esc(x)}</span>`).join('') : esc(v)}</b></div>`).join('')}</div>
+    ${galleryBlock((MEDIA.gallery || {})[c.id], L.photos, L.photosSub(c.name.split(' (')[0]))}
 
     <section class="section">
       <div class="section-head"><div><h2>${L.calendar}</h2><p>${esc(L.expectedYield(c.yield))}</p></div></div>
@@ -342,12 +428,15 @@ function viewCrop(id) {
 
     <section class="section">
       <div class="section-head"><div><h2>${L.howToGrow}</h2><p>${L.howToGrowSub}</p></div></div>
-      <div class="steps">${Object.entries(c.steps).map(([k, v], i) => `<div class="card step"><span class="step-num">${i + 1}</span><div><h3>${L.steps[k]}</h3><p>${esc(v)}</p></div></div>`).join('')}</div>
+      <div class="steps">${Object.entries(c.steps).filter(([, v]) => v).map(([k, v], i) => `<div class="card step"><span class="step-num">${i + 1}</span><div><h3>${L.steps[k]}</h3><p>${esc(v)}</p></div></div>`).join('')}</div>
     </section>
+    ${videoBlock((VIDEOS.crops || {})[c.id], L.watchGrow, L.watchSub)}
 
     <section class="section">
       <div class="section-head"><div><h2>${L.pests}</h2><p>${L.pestsSub}</p></div></div>
-      <div class="card pests">${c.pests.map(([n, t]) => `<div class="pest"><b>${icon('bug')}${esc(n)}</b><p>${esc(t)}</p></div>`).join('')}</div>
+      <div class="card pests">${c.pests.map(([n, t], i) => { const ph = ((MEDIA.pests || {})[c.id] || [])[i];
+        const lb = ph ? LB.push({ ...ph, caption: n }) - 1 : -1;
+        return `<div class="pest${ph ? ' has-photo' : ''}">${ph ? `<button type="button" class="pest-photo" data-lb="${lb}" aria-label="${esc(L.openPhoto)}: ${esc(n)}"><img src="${esc(ph.thumb || ph.src)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>` : ''}<b>${ph ? '' : icon('bug')}${esc(n)}</b><p>${esc(t)}</p></div>`; }).join('')}</div>
     </section>
 
     <section class="section two-col" style="margin-top:28px">
@@ -395,6 +484,8 @@ function viewInput(id) {
   const usedBy = CROPS.filter(c => c.compost.includes(o.id));
   return `<div class="fade-in">
     <a class="back" href="#/organic">${icon('back')}${L.backInputs}</a>
+    ${(() => { const h = (MEDIA_INPUTS[o.id] || [])[0]; if (!h) return ''; const i = LB.push(h) - 1;
+      return `<button type="button" class="org-banner" data-lb="${i}" aria-label="${esc(L.openPhoto)}"><img src="${esc(h.src || h.thumb)}" alt="${esc(capOf(h))}" onerror="this.parentNode.remove()"><span>${esc(h.credit || '')}</span></button>`; })()}
     <div class="org-hero">
       <span class="org-icon t-${o.type}">${icon(TYPE_ICON[o.type])}</span>
       <div class="detail-head">
@@ -416,6 +507,8 @@ function viewInput(id) {
           <div class="section-head"><div><h2>${L.howMake}</h2></div></div>
           <div class="card" style="padding:22px 20px"><ol class="howto">${o.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>
         </section>
+        ${videoBlock((VIDEOS.inputs || {})[o.id], L.watchMake, L.watchSub)}
+        ${galleryBlock((MEDIA_INPUTS[o.id] || []).slice(1), L.photos, '')}
         <div class="ready">${icon('check')}<div><b>${L.howReady}</b><p>${esc(o.ready)}</p></div></div>
         <section class="section" style="margin-top:28px">
           <div class="section-head"><div><h2>${L.howUse}</h2><p>${esc(o.nutrients)}</p></div></div>
@@ -482,6 +575,128 @@ function bindInput(id) {
   draw();
 }
 
+/* ---------- Plants added by the admin ---------- */
+// The live API sits on Vercel; copies of the app elsewhere (the portfolio) read it from there.
+const API = /vercel\.app$|localhost|127\.0\.0\.1/.test(location.hostname) && location.port !== '5240' ? '' : 'https://farmer-friend-kappa.vercel.app';
+const builtInIds = new Set(CROPS.map(c => c.id));
+function addCustomPlants(list) {
+  if (!Array.isArray(list)) return false;
+  let changed = false;
+  for (const p of list) {
+    if (!p || !p.id || builtInIds.has(p.id)) continue;
+    const crop = { ...p, cat: CATEGORIES[p.cat] || BASE.cats[p.cat] ? p.cat : 'vegetable', custom: true,
+      seasons: p.seasons?.length ? p.seasons : ['kharif'], sow: p.sow || [], harvest: p.harvest || [],
+      steps: { prep: '', sow: '', water: '', feed: '', weed: '', harvest: '', ...p.steps }, pests: p.pests || [], tips: p.tips || [], compost: (p.compost || []).filter(id => COMPOSTS.some(o => o.id === id)) };
+    delete crop.taText; delete crop.image; delete crop.sources;
+    const i = CROPS.findIndex(c => c.id === p.id);
+    if (i >= 0) { CROPS[i] = crop; BASE.crops[i] = structuredClone(crop); } else { CROPS.push(crop); BASE.crops.push(structuredClone(crop)); }
+    if (p.image?.src) CROP_IMAGES[p.id] = p.image; else delete CROP_IMAGES[p.id];
+    SOURCES.crops[p.id] = p.sources || [];
+    // Only filled-in Tamil fields replace the English; lists must match the English length.
+    const t = p.taText || {}, ta = {};
+    for (const k of ['name', 'intro', 'days', 'soil', 'temp', 'rain', 'spacing', 'seed', 'yield', 'companion']) if (t[k]) ta[k] = t[k];
+    if (t.steps && Object.values(t.steps).some(Boolean)) ta.steps = Object.fromEntries(Object.keys(crop.steps).map(k => [k, t.steps[k] || crop.steps[k]]));
+    if (t.pests?.length === crop.pests.length) ta.pests = t.pests;
+    if (t.tips?.length === crop.tips.length) ta.tips = t.tips;
+    window.CROPS_TA = window.CROPS_TA || {};
+    if (Object.keys(ta).length) window.CROPS_TA[p.id] = ta; else delete window.CROPS_TA[p.id];
+    if (!crop.ta && ta.name) crop.ta = ta.name;
+    changed = true;
+  }
+  // Drop plants the admin has deleted.
+  const ids = new Set(list.map(p => p && p.id));
+  for (let i = CROPS.length - 1; i >= 0; i--) if (CROPS[i].custom && !ids.has(CROPS[i].id)) { CROPS.splice(i, 1); BASE.crops.splice(i, 1); changed = true; }
+  return changed;
+}
+async function loadCustomPlants() {
+  const cached = store.get('customPlants');
+  if (cached && addCustomPlants(cached)) applyLang();
+  try {
+    const list = await fetch(API + '/api/plants', { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject());
+    store.set('customPlants', list);
+    if (addCustomPlants(list)) { applyLang(); const y = scrollY; route(); scrollTo(0, y); }
+  } catch {}
+}
+
+/* ---------- Any plant (iNaturalist + Wikipedia) ---------- */
+const stripTags = h => String(h || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+const libraryBySci = sci => CROPS.find(c => sci && c.sci && (sci.toLowerCase() === c.sci.toLowerCase() || sci.toLowerCase().startsWith(c.sci.toLowerCase() + ' ')));
+const isTamil = s => /[\u0B80-\u0BFF]/.test(s || '');
+async function worldSearch(q) {
+  const u = l => `https://api.inaturalist.org/v1/taxa/autocomplete?q=${encodeURIComponent(q)}&iconic_taxa=Plantae&per_page=12&preferred_place_id=6681&locale=${l}`;
+  const [en, ta] = await Promise.all([fetch(u('en')).then(r => r.json()), LANG === 'ta' || isTamil(q) ? fetch(u('ta')).then(r => r.json()) : { results: [] }]);
+  // iNaturalist does not index Tamil names: map a Tamil word to English page titles through Tamil Wikipedia.
+  if (isTamil(q) && !(en.results || []).length) {
+    try {
+      const w = await fetch(`https://ta.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=langlinks&lllang=en&format=json&origin=*`).then(r => r.json());
+      const titles = Object.values(w.query?.pages || {}).sort((a, b) => a.index - b.index).map(p => p.langlinks?.[0]?.['*']).filter(Boolean);
+      for (const tl of titles) {
+        const r = await fetch(u('en').replace(`q=${encodeURIComponent(q)}`, `q=${encodeURIComponent(tl)}`)).then(r => r.json());
+        en.results = [...(en.results || []), ...(r.results || []).slice(0, 4)];
+      }
+    } catch {}
+  }
+  const taName = Object.fromEntries((ta.results || []).filter(t => isTamil(t.preferred_common_name)).map(t => [t.id, t.preferred_common_name]));
+  const seen = new Set();
+  return [...(en.results || []), ...(ta.results || [])].filter(t => t.default_photo && t.iconic_taxon_name === 'Plantae' && !libraryBySci(t.name) && !seen.has(t.id) && seen.add(t.id))
+    .map(t => ({ ...t, en: isTamil(t.preferred_common_name) ? '' : t.preferred_common_name, taName: taName[t.id] || (isTamil(t.preferred_common_name) ? t.preferred_common_name : '') }));
+}
+const plantName = t => (LANG === 'ta' && t.taName) || t.en || t.taName || t.name;
+const plantCard = t => `<a class="card crop-card" href="#/plant/${t.id}">
+    <div class="crop-photo"><img src="${esc(t.default_photo.medium_url)}" alt="" loading="lazy"><span class="water-badge">${icon('search')}${L.worldBadge}</span></div>
+    <div class="crop-body"><h3>${esc(plantName(t))}</h3><span class="ta sci">${esc(t.name)}</span>
+      <span class="meta">${esc(L.ranks[t.rank] || t.rank)}</span></div></a>`;
+
+function viewPlant(id) {
+  return `<div class="fade-in" id="plantPage"><a class="back" href="#/crops">${icon('back')}${L.allCrops}</a>
+    <div class="skeleton" style="height:320px;border-radius:22px"></div><div class="skeleton" style="height:120px;margin-top:16px"></div></div>`;
+}
+async function loadPlant(id) {
+  const el = $('#plantPage'); if (!el) return;
+  try {
+    const get = l => fetch(`https://api.inaturalist.org/v1/taxa/${encodeURIComponent(id)}?locale=${l}&preferred_place_id=6681`).then(r => r.json()).then(r => r.results?.[0]);
+    const [t, tt] = await Promise.all([get('en'), get('ta').catch(() => null)]);
+    if (!t) throw 0;
+    t.en = t.preferred_common_name; t.taName = isTamil(tt?.preferred_common_name) ? tt.preferred_common_name : '';
+    const lib = libraryBySci(t.name);
+    if (lib) { location.replace('#/crop/' + lib.id); return; }
+    let summary = stripTags(t.wikipedia_summary), wiki = t.wikipedia_url, wikiLang = 'en';
+    if (LANG === 'ta' && wiki) {
+      try {
+        const title = decodeURIComponent(wiki.split('/wiki/')[1] || '');
+        const ll = await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=ta&format=json&origin=*&titles=${encodeURIComponent(title)}`).then(r => r.json());
+        const taTitle = Object.values(ll.query?.pages || {})[0]?.langlinks?.[0]?.['*'];
+        if (taTitle) {
+          const sm = await fetch(`https://ta.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(taTitle)}`).then(r => r.json());
+          if (sm.extract) { summary = sm.extract; wiki = sm.content_urls?.desktop?.page || wiki; wikiLang = 'ta'; if (!t.taName && isTamil(sm.title)) t.taName = sm.title; }
+        }
+      } catch {}
+    }
+    const photos = (t.taxon_photos || []).slice(0, 8).map(x => ({ src: x.photo.large_url || x.photo.medium_url, thumb: x.photo.medium_url, credit: x.photo.attribution }));
+    const hero = photos[0];
+    if (!$('#plantPage')) return;
+    LB = [];
+    el.innerHTML = `<a class="back" href="#/crops">${icon('back')}${L.allCrops}</a>
+      <div class="detail-hero">
+        <figure class="detail-photo" style="margin:0">${hero ? `<img src="${esc(hero.src)}" alt="${esc(plantName(t))}"><figcaption>${esc(hero.credit)}</figcaption>` : ''}</figure>
+        <div class="detail-head">
+          <span class="eyebrow">${L.worldEyebrow}</span>
+          <h1>${esc(plantName(t))}</h1>
+          ${LANG === 'ta' && t.taName && t.en ? `<div class="ta">${esc(t.en)}</div>` : LANG === 'en' && t.taName ? `<div class="ta">${esc(t.taName)}</div>` : ''}
+          <div class="sci">${esc(t.name)}${t.ancestors?.find(a => a.rank === 'family') ? ` · ${esc(t.ancestors.find(a => a.rank === 'family').name)}` : ''}</div>
+          ${summary ? `<p class="intro">${esc(summary)}</p>${wikiLang === 'en' && LANG === 'ta' ? `<p class="muted" style="font-size:13px;margin-top:6px">${L.noTamilWiki}</p>` : ''}` : `<p class="intro">${L.noSummary}</p>`}
+          <div class="tags" style="margin-top:14px">${wiki ? `<a class="tag" href="${esc(wiki)}" target="_blank" rel="noopener">${icon('next')}Wikipedia</a>` : ''}<a class="tag" href="https://www.inaturalist.org/taxa/${t.id}" target="_blank" rel="noopener">${icon('next')}iNaturalist</a></div>
+        </div>
+      </div>
+      <div class="note-card card" style="margin-top:22px"><span class="org-icon t-seed">${icon('alert')}</span><div><h3>${L.worldNoteTitle}</h3><p>${L.worldNote}</p></div></div>
+      ${galleryBlock(photos.slice(1), L.photos, '')}
+      ${disclaimerHtml()}`;
+    bindMedia();
+  } catch {
+    if ($('#plantPage')) $('#plantPage').innerHTML = `<a class="back" href="#/crops">${icon('back')}${L.allCrops}</a><h1 class="page-title">${L.worldFail}</h1>`;
+  }
+}
+
 const notFound = () => `<div class="fade-in"><a class="back" href="#/">${icon('back')}${L.home}</a><h1 class="page-title">${L.notFound}</h1></div>`;
 
 /* ---------- Router ---------- */
@@ -489,27 +704,101 @@ function route() {
   const parts = location.hash.replace(/^#\/?/, '').split('/');
   const [a, b, c] = parts;
   let html, after, tab;
-  if (!a) { html = viewHome(); after = loadWeather; tab = 'home'; }
+  LB = [];
+  if (!a) { html = viewHome(); after = () => { loadWeather(); bindHomeSearch(); }; tab = 'home'; }
   else if (a === 'seasons') { html = b === 'month' ? viewSeasons(null, +c) : viewSeasons(b); tab = 'seasons'; after = () => bindSeasons(b === 'month'); }
   else if (a === 'crops') { html = viewCrops(); after = bindCrops; tab = 'crops'; }
   else if (a === 'crop') { html = viewCrop(b); tab = 'crops'; }
+  else if (a === 'plant') { html = viewPlant(b); tab = 'crops'; after = () => loadPlant(b); }
   else if (a === 'organic' && b) { html = viewInput(b); after = () => bindInput(b); tab = 'compost'; }
   else if (a === 'sources') { html = viewSources(); }
   else if (a === 'organic' || a === 'compost') { html = viewOrganic(); after = bindOrganic; tab = 'compost'; }
   else html = notFound();
   app.innerHTML = html;
+  bindMedia();
   document.querySelectorAll('.tabs a').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
   const t = tab && tab !== 'home' ? `${L.titles[tab]} · FarmerFriend` : 'FarmerFriend';
   document.title = a === 'crop' && cropById(b) ? `${cropById(b).name} · FarmerFriend` : a === 'organic' && inputById(b) ? `${inputById(b).name} · FarmerFriend` : t || 'FarmerFriend';
   after && after();
   if (!(a === 'seasons' && b === 'month')) window.scrollTo(0, 0);
 }
+function bindHomeSearch() {
+  $('#homeSearch').addEventListener('submit', e => {
+    e.preventDefault();
+    const q = $('#hq').value.trim(); if (!q) return;
+    store.set('cropFilter', { cat: 'all', season: 'all', q });
+    location.hash = '#/crops';
+  });
+}
+// Runs of consecutive months as [start, length], wrapping Dec → Jan into two pieces.
+function monthRuns(months) {
+  const set = new Set(months), runs = [];
+  for (let mm = 1; mm <= 12; mm++) {
+    if (!set.has(mm) || set.has(mm - 1)) continue;
+    let n = 1; while (set.has(mm + n)) n++;
+    runs.push([mm, n]);
+  }
+  return runs;
+}
+const runLabel = (lab, months) => monthRuns(months).map(([st, n]) => n === 1 ? L.monthsShort[st - 1] : `${L.monthsShort[st - 1]} – ${L.monthsShort[st + n - 2]}`).join(', ');
+// Months until the crop's next sowing month (0 = sow now).
+const untilSow = (c, m) => Math.min(...c.sow.map(x => (x - m + 12) % 12), 99);
+
+function renderCalendar() {
+  const el = $('#calWrap'); if (!el) return;
+  const m = nowMonth(), filt = store.get('calCat', 'all'), sort = store.get('calSort', 'group');
+  const q = ($('#calQ')?.value || '').trim().toLowerCase();
+  let list = CROPS.filter(c => (filt === 'all' || c.cat === filt) &&
+    (!q || [c.name, c.ta, enName(c.id), c.sci].some(x => x && x.toLowerCase().includes(q))));
+  if (sort === 'az') list.sort((a, b) => a.name.localeCompare(b.name, L.locale));
+  if (sort === 'soon') list.sort((a, b) => untilSow(a, m) - untilSow(b, m) || a.name.localeCompare(b.name, L.locale));
+  $('#calCount').textContent = L.countOf(list.length, CROPS.length);
+  const seasonBand = `<div class="cal2-row cal2-band"><span class="cal2-name"></span>
+      <span class="band kharif" style="grid-column:7 / span 4">${SEASONS.kharif.name}</span>
+      <span class="band rabi" style="grid-column:11 / span 3">${SEASONS.rabi.name}</span>
+      <span class="band rabi" style="grid-column:2 / span 2">${SEASONS.rabi.name}</span>
+      <span class="band zaid" style="grid-column:4 / span 3">${SEASONS.zaid.name}</span></div>`;
+  const head = `<div class="cal2-row cal2-head"><span class="cal2-name">${L.crop}</span>${L.monthsShort.map((x, i) =>
+    `<span class="mh ${i + 1 === m ? 'cur' : ''}" style="grid-column:${i + 2}">${x}</span>`).join('')}</div>`;
+  const bars = (months, cls, lab) => monthRuns(months).map(([st, n]) => {
+    const wrapL = st === 1 && months.includes(12), wrapR = st + n - 1 === 12 && months.includes(1);
+    return `<i class="bar ${cls}${wrapL ? ' wl' : ''}${wrapR ? ' wr' : ''}" style="grid-column:${st + 1} / span ${n}" title="${esc(lab)}: ${esc(runLabel(lab, months))}"></i>`;
+  }).join('');
+  const row = c => {
+    const p = CROP_IMAGES[c.id], soon = untilSow(c, m);
+    return `<a class="cal2-row crop" href="#/crop/${c.id}">
+      <span class="cal2-name"><span class="thumb">${p ? `<img src="${esc(p.thumb)}" alt="" loading="lazy">` : `<span class="ph">${esc(c.name[0])}</span>`}${soon === 0 ? `<i class="sow-dot" title="${esc(L.sowThisMonth)}"></i>` : ''}</span>
+        <span><b>${esc(c.name)}</b><small>${esc(altName(c) || '')}</small></span></span>
+      <span class="now-col" style="grid-column:${m + 1}"></span>
+      <span class="lane s">${bars(c.sow, 's', L.sowRow)}</span>
+      <span class="lane h">${c.harvest.length ? bars(c.harvest, 'h', L.harvestRow) : `<i class="bar long" style="grid-column:2 / span 12">${esc(c.days)}</i>`}</span>
+    </a>`;
+  };
+  let body;
+  if (sort === 'group' && filt === 'all' && !q) {
+    body = Object.keys(CATEGORIES).map(k => { const g = list.filter(c => c.cat === k); return g.length ? `<div class="cal2-group">${esc(CATEGORIES[k])} <span>${g.length}</span></div>${g.map(row).join('')}` : ''; }).join('');
+  } else body = list.map(row).join('');
+  el.innerHTML = `<div class="cal2-scroll"><div class="cal2-table">${seasonBand}${head}${body || `<p class="empty" style="padding:18px">${L.noMatch}</p>`}</div></div>`;
+  // Bring the current month into view when the table is wider than the screen.
+  const sc = el.querySelector('.cal2-scroll'), mh = el.querySelector('.mh.cur'), nm = el.querySelector('.cal2-head .cal2-name');
+  if (sc && mh && nm && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = Math.max(0, mh.offsetLeft - nm.offsetWidth - mh.offsetWidth * 2);
+}
+
 function bindSeasons(scrollToMonth) {
   if (scrollToMonth) $('#month').scrollIntoView({ block: 'start' });
+  renderCalendar();
   document.querySelectorAll('[data-calcat]').forEach(b => b.addEventListener('click', () => {
     store.set('calCat', b.dataset.calcat);
-    const y = window.scrollY; route(); window.scrollTo(0, y);
+    document.querySelectorAll('[data-calcat]').forEach(x => x.classList.toggle('on', x === b));
+    renderCalendar();
   }));
+  $('#calSort')?.addEventListener('click', e => {
+    const b = e.target.closest('[data-sort]'); if (!b) return;
+    store.set('calSort', b.dataset.sort);
+    $('#calSort').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    renderCalendar();
+  });
+  $('#calQ')?.addEventListener('input', renderCalendar);
 }
 window.addEventListener('hashchange', route);
 
@@ -547,4 +836,5 @@ $('#placeInput').addEventListener('input', e => {
 });
 
 route();
+loadCustomPlants();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
