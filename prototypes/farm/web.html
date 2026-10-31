@@ -8,7 +8,7 @@
   // Opened on its own, or with room for the desktop layout, the web app is
   // simply the web page itself. The browser-window frame below is only for a
   // narrow viewer, where it keeps the sidebar layout visible.
-  if (window.top === window.self || innerWidth >= 900) location.replace("app/");
+  if (window.top === window.self || innerWidth >= 900) location.replace("https://farm-manager-lemon.vercel.app/");
 </script>
 <style>
 :root{--bg:#E9ECF5;--chrome:#FFFFFF;--line:#DCE0EC;--ink:#151A33;--muted:#5D6483;--accent:#3046C5}
@@ -38,10 +38,10 @@ body{background:radial-gradient(50% 45% at 90% 0%,#FFE3AD66,transparent 70%),rad
 <div id="fit">
   <div class="window" id="win">
     <div class="bar" aria-hidden="true"><div class="dots"><i></i><i></i><i></i></div><div class="url">Farm Manager</div><div style="width:50px"></div></div>
-    <iframe src="app/" title="Farm Manager web app"></iframe>
+    <iframe src="https://farm-manager-lemon.vercel.app/" title="Farm Manager web app"></iframe>
   </div>
 </div>
-<p class="note">The web app at laptop size, with the same sample farm as the phone. <a href="app/" target="_blank" rel="noopener">Open full screen</a></p>
+<p class="note">The web app at laptop size, with the same sample farm as the phone. <a href="https://farm-manager-lemon.vercel.app/" target="_blank" rel="noopener">Open full screen</a></p>
 <script>
   const win = document.getElementById('win'), fit = document.getElementById('fit')
   function scale() {

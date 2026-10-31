@@ -18,6 +18,7 @@ const STATE = path.join(TOOLS, '.sync-state.json');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 // Source paths are relative to ~/Documents, destinations to the portfolio root.
+// Apps that run on Vercel are not copied: the portfolio loads them (and their shots) from the live site.
 const APPS = [
   { key: 'calendar', copy: [['calendar-prototype/index.html', 'prototypes/calendar/index.html']],
     page: 'prototypes/calendar/index.html', prep: "localStorage.setItem('calproto.hint','1')" },
@@ -32,56 +33,9 @@ const APPS = [
     watch: ['prototypes/ulaa-browser'], page: 'prototypes/ulaa-browser/index.html' },
   { key: 'om', build: { dir: 'om-builder', cmd: ['python3', 'build.py'], inputs: ['app.js', 'styles.css', 'index.html', 'assets', 'build.py'], output: 'om-builder.html' },
     copy: [['om-builder/om-builder.html', 'prototypes/om/index.html']], page: 'prototypes/om/index.html' },
-  { key: 'wakemethere', copy: [['WakeMeThere/prototype', 'prototypes/wakemethere']] }, // card uses the app's own screenshots, no captured thumb
-  { key: 'forge', copy: [['ForgeTrainer/prototype', 'prototypes/forge']] }, // screenshots come from the app's UI test (testPortfolioShots)
-  { key: 'farm', copy: [['farm-manager/prototype', 'prototypes/farm']] }, // screenshots captured from the running Expo web build
-  { key: 'dryhouse', build: { dir: 'solar-dry-house', cmd: ['node', 'tools/build-prototype.mjs'], inputs: ['index.html', 'styles.css', 'app.js', 'materials.js', 'weather.js', 'location.js', 'images', 'icons', 'prototype-src'], output: 'prototype/web/index.html' },
-    copy: [['solar-dry-house/prototype', 'prototypes/dryhouse']] }, // web and mobile builds; screenshots from build-prototype.mjs --shots
-  { key: 'pals', copy: [['animal-pals/prototype', 'prototypes/animal-pals'],
-      ['animal-pals/index.html', 'prototypes/animal-pals/app/index.html'],
-      ['animal-pals/styles.css', 'prototypes/animal-pals/app/styles.css'],
-      ['animal-pals/app.js', 'prototypes/animal-pals/app/app.js'],
-      ['animal-pals/data.js', 'prototypes/animal-pals/app/data.js'],
-      ['animal-pals/videos.js', 'prototypes/animal-pals/app/videos.js'],
-      ['animal-pals/data-ta.js', 'prototypes/animal-pals/app/data-ta.js'],
-      ['animal-pals/calls.js', 'prototypes/animal-pals/app/calls.js'],
-      ['animal-pals/i18n.js', 'prototypes/animal-pals/app/i18n.js'],
-      ['animal-pals/audio', 'prototypes/animal-pals/app/audio'],
-      ['animal-pals/manifest.json', 'prototypes/animal-pals/app/manifest.json'],
-      ['animal-pals/sw.js', 'prototypes/animal-pals/app/sw.js'],
-      ['animal-pals/icon.svg', 'prototypes/animal-pals/app/icon.svg'],
-      ['animal-pals/icon-192.png', 'prototypes/animal-pals/app/icon-192.png'],
-      ['animal-pals/icon-512.png', 'prototypes/animal-pals/app/icon-512.png']] }, // live app: animal-pals-ivory.vercel.app; shots from the app's tools/shots.mjs
-  { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend'],
-      ['farmer-friend/index.html', 'prototypes/farmer-friend/app/index.html'],
-      ['farmer-friend/styles.css', 'prototypes/farmer-friend/app/styles.css'],
-      ['farmer-friend/app.js', 'prototypes/farmer-friend/app/app.js'],
-      ['farmer-friend/i18n.js', 'prototypes/farmer-friend/app/i18n.js'],
-      ['farmer-friend/images.js', 'prototypes/farmer-friend/app/images.js'],
-      ['farmer-friend/images-local.js', 'prototypes/farmer-friend/app/images-local.js'],
-      ['farmer-friend/sources.js', 'prototypes/farmer-friend/app/sources.js'],
-      ['farmer-friend/data-crops.js', 'prototypes/farmer-friend/app/data-crops.js'],
-      ['farmer-friend/data-crops-more-1.js', 'prototypes/farmer-friend/app/data-crops-more-1.js'],
-      ['farmer-friend/data-crops-more-2.js', 'prototypes/farmer-friend/app/data-crops-more-2.js'],
-      ['farmer-friend/data-crops-more-3.js', 'prototypes/farmer-friend/app/data-crops-more-3.js'],
-      ['farmer-friend/data-crops-more-4.js', 'prototypes/farmer-friend/app/data-crops-more-4.js'],
-      ['farmer-friend/data-compost.js', 'prototypes/farmer-friend/app/data-compost.js'],
-      ['farmer-friend/data-ta-crops-1.js', 'prototypes/farmer-friend/app/data-ta-crops-1.js'],
-      ['farmer-friend/data-ta-crops-2.js', 'prototypes/farmer-friend/app/data-ta-crops-2.js'],
-      ['farmer-friend/data-ta-compost.js', 'prototypes/farmer-friend/app/data-ta-compost.js'],
-      ['farmer-friend/media.js', 'prototypes/farmer-friend/app/media.js'],
-      ['farmer-friend/media-inputs.js', 'prototypes/farmer-friend/app/media-inputs.js'],
-      ['farmer-friend/media-more-1.js', 'prototypes/farmer-friend/app/media-more-1.js'],
-      ['farmer-friend/media-more-2.js', 'prototypes/farmer-friend/app/media-more-2.js'],
-      ['farmer-friend/videos.js', 'prototypes/farmer-friend/app/videos.js'],
-      ['farmer-friend/videos-more.js', 'prototypes/farmer-friend/app/videos-more.js'],
-      ['farmer-friend/captions-ta.js', 'prototypes/farmer-friend/app/captions-ta.js'],
-      ['farmer-friend/manifest.json', 'prototypes/farmer-friend/app/manifest.json'],
-      ['farmer-friend/sw.js', 'prototypes/farmer-friend/app/sw.js'],
-      ['farmer-friend/icon.svg', 'prototypes/farmer-friend/app/icon.svg'],
-      ['farmer-friend/icon-192.png', 'prototypes/farmer-friend/app/icon-192.png'],
-      ['farmer-friend/icon-512.png', 'prototypes/farmer-friend/app/icon-512.png'],
-      ['farmer-friend/img', 'prototypes/farmer-friend/app/img']] }, // live app: farmer-friend-kappa.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'farm', copy: ['case-study.html', 'screens.html', 'mobile.html', 'web.html', 'shots'].map((f) => [`farm-manager/prototype/${f}`, `prototypes/farm/${f}`]) }, // the app itself loads from farm-manager-lemon.vercel.app
+  { key: 'pals', copy: [['animal-pals/prototype', 'prototypes/animal-pals']] }, // mobile.html frames animal-pals-ivory.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend']] }, // mobile.html frames farmer-friend-kappa.vercel.app; shots from the app's tools/shots.mjs
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
