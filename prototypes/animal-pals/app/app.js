@@ -201,6 +201,43 @@ async function getSounds(taxonId) {
     url: s.file_url, by: s.attribution || o.user?.login, obs: o.id, place: o.place_guess,
   })));
 }
+// Sound files on Wikimedia Commons for a species (many are clean xeno-canto bird recordings).
+async function getCommonsSounds(sci) {
+  if (!sci) return [];
+  const r = await fetch('https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
+    action: 'query', generator: 'search', gsrsearch: `filetype:audio "${sci}"`, gsrnamespace: 6, gsrlimit: 6,
+    prop: 'videoinfo', viprop: 'url|size|derivatives', format: 'json', origin: '*',
+  })).then(r => r.json()).catch(() => null);
+  return Object.values(r?.query?.pages || {}).flatMap(p => {
+    const v = p.videoinfo?.[0];
+    if (!v || v.size > 15e6 || !(v.duration > 1 && v.duration < 240) || BAD_SOUND.test(p.title)) return [];
+    const url = /\.(mp3|wav|m4a)$/i.test(v.url) ? v.url : (v.derivatives || []).find(d => /mp3/.test(d.transcodekey || d.type))?.src;
+    return url ? [{ url, by: 'Wikimedia Commons', page: v.descriptionurl, src: 'commons' }] : [];
+  });
+}
+const BAD_SOUND = /train|traffic|car |engine|music|song by|speech|interview|lecture|church|bell|crowd|market|street/i;
+// Several candidate recordings are decoded and measured; the clearest plays first.
+const ranked = new Map();
+const rankCache = store.get('ap.rank.v1', {});
+function rankedSounds(taxonId) {
+  if (ranked.has(taxonId)) return ranked.get(taxonId);
+  const p = (async () => {
+    const [inat, sci] = await Promise.all([getSounds(taxonId), api(`/taxa/${taxonId}`).then(r => r.results[0]?.name).catch(() => null)]);
+    const commons = await getCommonsSounds(sci).catch(() => []);
+    const all = [...inat, ...commons];
+    const order = rankCache[taxonId];
+    if (order) return [...order.map(u => all.find(s => s.url === u)).filter(Boolean), ...all.filter(s => !order.includes(s.url))];
+    const pool = [...inat.slice(0, 5), ...commons.slice(0, 3)];
+    const timeout = ms => new Promise((_, no) => setTimeout(() => no(new Error('slow')), ms));
+    const scores = await Promise.all(pool.map(s => Promise.race([loadBoosted(s.url), timeout(9000)]).then(m => m.clarity, () => -99)));
+    const best = pool.map((s, i) => ({ s, c: scores[i] })).filter(x => x.c > -99).sort((a, b) => b.c - a.c).map(x => x.s);
+    const rest = all.filter(s => !best.includes(s));
+    if (best.length) { rankCache[taxonId] = best.map(s => s.url); store.set('ap.rank.v1', rankCache); }
+    return [...best, ...rest];
+  })();
+  ranked.set(taxonId, p); p.catch(() => ranked.delete(taxonId));
+  return p;
+}
 function setPlaying(btn, on) {
   if (!btn) return;
   btn.classList.toggle('playing', on);
@@ -221,7 +258,8 @@ let boosted = null; // { src, gain } while a boosted recording plays
 async function loadBoosted(url) {
   if (bufCache.has(url)) return bufCache.get(url);
   const p = (async () => {
-    const r = await fetch(SOUND_RELAY + encodeURIComponent(url));
+    const direct = /^https:\/\/upload\.wikimedia\.org\//.test(url);
+    const r = await fetch(direct ? url : SOUND_RELAY + encodeURIComponent(url));
     if (!r.ok) throw new Error(r.status);
     const buf = await ac().decodeAudioData(await r.arrayBuffer());
     // Measure the first 30 s: overall loudness (RMS) and where the sound first rises above the background.
@@ -235,9 +273,15 @@ async function loadBoosted(url) {
       let e = 0; for (let j = i; j < i + win; j++) e += ch[j] * ch[j];
       if (Math.sqrt(e / win) > floor) { start = Math.max(0, i / buf.sampleRate - .15); break; }
     }
+    // Clarity: how far the loud moments (the call) stand above the quiet ones (background), in dB.
+    const frames = [];
+    for (let i = 0; i + win < n; i += win) { let e = 0; for (let j = i; j < i + win; j += 4) e += ch[j] * ch[j]; frames.push(Math.sqrt(e / (win / 4))); }
+    frames.sort((a, b) => a - b);
+    const q = p => frames[Math.min(frames.length - 1, Math.floor(frames.length * p))] || 1e-5;
+    const clarity = 20 * Math.log10(q(.95) / Math.max(q(.2), 1e-5)) - (peak < .02 ? 10 : 0);
     // Aim for a strong, even level; the limiter catches peaks the boost pushes too high.
     const gain = Math.min(14, Math.max(1, .3 / rms), 1.4 / Math.max(peak, 1e-3) * 2.5);
-    return { buf, gain, start: Math.min(start, Math.max(0, buf.duration - 3)) };
+    return { buf, gain, clarity, start: Math.min(start, Math.max(0, buf.duration - 3)) };
   })();
   bufCache.set(url, p);
   p.catch(() => bufCache.delete(url));
@@ -309,8 +353,9 @@ async function playBeing(taxonId, btn, noteEl, fallbackSay, { callOnly = false, 
   stopSound(); window.speechSynthesis?.cancel();
   const my = soundGen;
   playingBtn = btn; setPlaying(btn, true);
+  if (noteEl && !ranked.has(taxonId) && !rankCache[taxonId]) noteEl.textContent = tr('finding_sound');
   try {
-    const list = await getSounds(taxonId);
+    const list = await rankedSounds(taxonId);
     if (my !== soundGen) return;
     if (!list.length) {
       stopSound();
@@ -323,7 +368,7 @@ async function playBeing(taxonId, btn, noteEl, fallbackSay, { callOnly = false, 
     if (call && prev + 1 >= list.length) { soundIdx[taxonId] = undefined; return playBeing(taxonId, btn, noteEl, fallbackSay); } // loop back to the clear call
     const i = (soundIdx[taxonId] = (prev + 1) % list.length);
     const s = list[i];
-    if (noteEl) noteEl.innerHTML = `${tr('wild_rec', { i: i + 1, n: list.length })}${s.place ? ` · ${esc(s.place)}` : ''} · ${esc(s.by)} ${tr('via')} <a href="https://www.inaturalist.org/observations/${s.obs}" target="_blank" rel="noopener">iNaturalist</a>`;
+    if (noteEl) noteEl.innerHTML = `${tr('wild_rec', { i: i + 1, n: list.length })}${s.place ? ` · ${esc(s.place)}` : ''} ${s.src === 'commons' ? '' : ` · ${esc(s.by)} ${tr('via')}`} ${s.src === 'commons' ? `<a href="${esc(s.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>` : `<a href="https://www.inaturalist.org/observations/${s.obs}" target="_blank" rel="noopener">iNaturalist</a>`}`;
     const title = btn?.closest('[data-wave]')?.querySelector('.sound-title small');
     if (title) title.textContent = `${i + 1} / ${list.length}`;
     await playUrl(s.url, btn);
@@ -816,7 +861,13 @@ async function viewDetail({ being: b, taxonId }) {
       else $('#tanote').textContent = 'இதற்குத் தமிழ் விளக்கம் இன்னும் இல்லை — ஆங்கிலத்தில் காட்டுகிறோம்.';
     });
   }
-  $('#btn3d')?.addEventListener('click', () => open3d(name, b.m3d));
+  $('#btn3d')?.addEventListener('click', () => open3d(tamil && ta ? ta.n : name, b.m3d));
+  // No checked model for this species: look for one automatically and add the button if found.
+  if (!b?.m3d) find3d(id, b?.name || cap(t?.preferred_common_name || ''), t?.name, iconic).then(m3d => {
+    const row = $('.d-actions'); if (!m3d || !row?.isConnected || $('#btn3d')) return;
+    row.insertAdjacentHTML('afterbegin', `<button class="btn accent" id="btn3d">${icon('cube')} ${tr('view3d')}</button>`);
+    $('#btn3d').onclick = () => open3d(tamil && ta ? ta.n : name, m3d);
+  });
 
   // Lead with real footage when Commons has a suitable clip.
   getVideo(t?.name, name, b?.key).then(vid => {
@@ -844,6 +895,26 @@ async function viewDetail({ being: b, taxonId }) {
   });
 }
 
+// Words that rule a model out for a kids' app (cartoons of people, monsters, weapons, gore and so on).
+const BAD_3D = /skull|skeleton|bone|cranium|jaw\b|teeth|organs?\b|anatom|internal|dissect|x-?ray|train|locomotive|vehicle|\bcar\b|truck|ship\b|boat|plane|aircraft|building|furniture|chair|lamp|drone|vertebra|fossil|anime|manga|mecha|robot|cyber|droid|furry|anthro|gwen|man\b|woman|girl|boy|lady|guy|human|avatar|vrchat|chibi|fantasy|dragon|demon|devil|monster|zombie|undead|alien|creature|beast|kaiju|statue|sculpt|bust|head\b|mask|costume|plush|toy|lego|pokemon|minecraft|fortnite|fnaf|lost ark|warrior|knight|armou?r|weapon|gun|sword|tank|nsfw|sexy|nude|blood|gore|dead|death|horror|scary|evil|diorama|scene|pack|kit|logo|game ready character|rig only|base mesh|hybrid|mutant|cartoon|toon|kawaii|cute/i;
+const found3d = store.get('ap.3d.v1', {});
+async function find3d(taxonId, common, sci, iconic) {
+  if (taxonId in found3d) return found3d[taxonId];
+  const words = [common, sci].filter(Boolean).map(s => s.toLowerCase());
+  const key = words.flatMap(w => [w, w.split(/\s+/).pop()]);
+  const ok = m => !m.isAgeRestricted && !BAD_3D.test(m.name) && key.some(k => k.length > 2 && m.name.toLowerCase().includes(k));
+  const cat = ['Plantae', 'Fungi'].includes(iconic) ? 'nature-plants' : 'animals-pets';
+  const search = async params => (await fetch('https://api.sketchfab.com/v3/search?' + new URLSearchParams({ type: 'models', count: 24, ...params })).then(r => r.json())).results || [];
+  let uid = null;
+  try {
+    for (const q of [common, sci].filter(Boolean)) {
+      const pick = (await search({ q, staffpicked: true, categories: cat })).find(ok) || (await search({ q, categories: cat, sort_by: '-likeCount' })).find(m => ok(m) && m.likeCount >= 10);
+      if (pick) { uid = pick.uid; break; }
+    }
+  } catch { return null; } // offline: try again next time
+  found3d[taxonId] = uid ? `sf:${uid}` : null; store.set('ap.3d.v1', found3d);
+  return found3d[taxonId];
+}
 function open3d(title, m3d) {
   const stage = $('#viewer3dStage');
   $('#viewer3dTitle').textContent = title;
@@ -893,7 +964,14 @@ function scoreAnswer(mode, missed) {
   if (stats.length) { stats[0].textContent = sc.stars; stats[1].textContent = sc.streak; }
 }
 let lastAnswer;
-let announceTimer;
+let announceTimer, autoNextTimer;
+// After a right answer the next question comes by itself in 2 s; the Next button fills up meanwhile.
+function autoNext(c) {
+  const next = $('#next'); if (!next) return;
+  next.classList.add('auto');
+  clearTimeout(autoNextTimer);
+  autoNextTimer = setTimeout(() => { if (c.isConnected && next.isConnected) next.click(); }, 2000);
+}
 const quizEmpty = msg => { app.innerHTML = `<section class="quiz">${quizHead(location.hash.includes('name') ? 'name' : 'sound')}<div class="empty"><b>${tr('quiz_empty')}</b>${msg}<div style="margin-top:14px"><button class="btn outline" onclick="location.reload()">${tr('try_again')}</button></div></div></section>`; };
 const pickAnswer = pool => { let a; do { a = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && a === lastAnswer); return (lastAnswer = a); };
 
@@ -926,13 +1004,13 @@ async function viewGame(mode = 'sound') {
       done = true; c.classList.add('right'); scoreAnswer('sound', missed);
       stopSound(); celebrate(c);
       $('#cheer').innerHTML = `<span class="ok">${missed ? tr('got_it') : cheer()} — ${tr('its_the', { name: esc(isTa() ? nm(answer) : answer.name.toLowerCase()) })}</span>`;
-      announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 900);
-      $('#next').hidden = false;
+      announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 550);
+      $('#next').hidden = false; autoNext(c);
     } else {
       missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = tr('not_quite_sound');
     }
   });
-  $('#next').onclick = () => { clearTimeout(announceTimer); viewGame('sound'); };
+  $('#next').onclick = () => { clearTimeout(announceTimer); clearTimeout(autoNextTimer); viewGame('sound'); };
 }
 
 async function viewNameGame() {
@@ -972,13 +1050,13 @@ async function viewNameGame() {
       stopSound(); celebrate(c);
       app.querySelectorAll('.name-choice:not(.right)').forEach(x => x.classList.add('dim'));
       $('#cheer').innerHTML = `<span class="ok">${missed ? tr('got_it') : cheer()} — ${tr('its_the', { name: esc(isTa() ? nm(answer) : answer.name.toLowerCase()) })}</span> <a class="more-link" href="#/b/${answer.key}">${tr('learn_more')}</a>`;
-      announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 900);
-      $('#hint').hidden = true; $('#next').hidden = false;
+      announceTimer = setTimeout(() => { if (c.isConnected) sayName(answer.name, null, TA[answer.key]?.n, answer.key); }, 550);
+      $('#hint').hidden = true; $('#next').hidden = false; autoNext(c);
     } else {
       missed = true; c.classList.add('wrong'); stopSound(); flop(c); $('#cheer').textContent = tr('not_quite_pic');
     }
   });
-  $('#next').onclick = () => { clearTimeout(announceTimer); viewNameGame(); };
+  $('#next').onclick = () => { clearTimeout(announceTimer); clearTimeout(autoNextTimer); viewNameGame(); };
 }
 
 // ---------------------------------------------------------------- search + voice
@@ -1024,7 +1102,7 @@ function setTab(tab) {
   document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
 }
 function route({ keepScroll = false } = {}) {
-  close3d(); stopSound(); stopPreview(); window.speechSynthesis?.cancel(); clearTimeout(announceTimer);
+  close3d(); stopSound(); stopPreview(); window.speechSynthesis?.cancel(); clearTimeout(announceTimer); clearTimeout(autoNextTimer);
   if (!keepScroll) { listIO?.disconnect(); listIO = null; }
   let h = location.hash.slice(1) || '/';
   try { h = decodeURIComponent(h); } catch {} // a hand-typed "50%" shouldn't break the app

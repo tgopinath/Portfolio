@@ -444,3 +444,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; outline: none
 .choice-wrap .choice div { padding-right: 52px; }
 .say-opt.in-choice { position: absolute; right: 8px; bottom: 6px; width: 38px; height: 38px; border-radius: 12px; }
 .say-opt.in-choice .ico { width: 20px; height: 20px; }
+
+/* Quiz: the Next button fills from left to right during the 2 s before the next question. */
+#next.auto { position: relative; overflow: hidden; isolation: isolate; }
+#next.auto::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--accent); transform-origin: left; animation: fillNext 2s linear forwards; }
+@keyframes fillNext { from { transform: scaleX(0); } to { transform: scaleX(1); } }

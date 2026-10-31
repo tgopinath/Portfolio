@@ -33,7 +33,7 @@ export const STR = {
     hear_answer: 'Hear this answer: {name}', play_mystery: 'Play the mystery sound',
     quiz_empty: 'Can’t start the quiz', quiz_need_net: 'The animal photos and sounds need the internet. Check the connection and try again.',
     voice_need: 'Voice search needs Chrome, Edge or Safari', mic_allow: 'Allow microphone access to search by voice', didnt_catch: 'Didn’t catch that — try again',
-    photos_fail: 'Photos could not load — check your connection', no_ta_voice: 'This device has no Tamil voice yet — add one in its speech settings',
+    photos_fail: 'Photos could not load — check your connection', finding_sound: 'Finding the clearest recording…', no_ta_voice: 'This device has no Tamil voice yet — add one in its speech settings',
   },
   ta: {
     nav_home: 'கண்டறி', nav_tree: 'உயிர் மரம்', nav_explore: 'ஆராய்', nav_quiz: 'விளையாட்டு', nav_saved: 'சேமித்தவை',
@@ -67,7 +67,7 @@ export const STR = {
     hear_answer: 'இந்தப் பதிலைக் கேள்: {name}', play_mystery: 'மர்ம ஒலியை இயக்கு',
     quiz_empty: 'விளையாட்டைத் தொடங்க முடியவில்லை', quiz_need_net: 'விலங்குப் படங்களுக்கும் ஒலிகளுக்கும் இணையம் தேவை. இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
     voice_need: 'குரல் தேடலுக்கு Chrome, Edge அல்லது Safari தேவை', mic_allow: 'குரல் தேடலுக்கு மைக்ரோஃபோன் அனுமதி கொடுங்கள்', didnt_catch: 'சரியாகக் கேட்கவில்லை — மீண்டும் சொல்லுங்கள்',
-    photos_fail: 'படங்கள் ஏற்றப்படவில்லை — இணைப்பைச் சரிபார்க்கவும்', no_ta_voice: 'இந்தச் சாதனத்தில் தமிழ்க் குரல் இல்லை — பேச்சு அமைப்புகளில் சேர்க்கவும்',
+    photos_fail: 'படங்கள் ஏற்றப்படவில்லை — இணைப்பைச் சரிபார்க்கவும்', finding_sound: 'தெளிவான பதிவைத் தேடுகிறோம்…', no_ta_voice: 'இந்தச் சாதனத்தில் தமிழ்க் குரல் இல்லை — பேச்சு அமைப்புகளில் சேர்க்கவும்',
   },
 };
 
