@@ -36,6 +36,7 @@ const APPS = [
   { key: 'farm', copy: ['case-study.html', 'screens.html', 'mobile.html', 'web.html', 'shots'].map((f) => [`farm-manager/prototype/${f}`, `prototypes/farm/${f}`]) }, // the app itself loads from farm-manager-lemon.vercel.app
   { key: 'pals', copy: [['animal-pals/prototype', 'prototypes/zoorassic-park']] }, // mobile.html frames zoorassic-park.vercel.app; shots from the app's tools/shots.mjs
   { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend']] }, // mobile.html frames farmerfriend.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'kaadu', copy: [['kaadu/prototype', 'prototypes/kaadu']] }, // mobile.html frames kaadu-plants.vercel.app; shots from the app's tools/shots.mjs
   { key: 'mettu', copy: [['mettu/prototype', 'prototypes/mettu']] }, // mobile.html frames mettu.vercel.app; shots from the app's tools/shots.mjs
   { key: 'water', copy: [['water-manager/prototype', 'prototypes/water-manager']] }, // mobile.html frames water-manager-beryl.vercel.app; shots from the app's tools/shots.mjs
   { key: 'veyil', copy: [['veyil/prototype', 'prototypes/veyil']] }, // mobile.html frames veyil-xi.vercel.app; shots from the app's tools/shots.mjs
