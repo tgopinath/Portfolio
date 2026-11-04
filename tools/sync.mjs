@@ -37,6 +37,9 @@ const APPS = [
   { key: 'pals', copy: [['animal-pals/prototype', 'prototypes/zoorassic-park']] }, // mobile.html frames zoorassic-park.vercel.app; shots from the app's tools/shots.mjs
   { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend']] }, // mobile.html frames farmerfriend.vercel.app; shots from the app's tools/shots.mjs
   { key: 'mettu', copy: [['mettu/prototype', 'prototypes/mettu']] }, // mobile.html frames mettu.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'water', copy: [['water-manager/prototype', 'prototypes/water-manager']] }, // mobile.html frames water-manager-beryl.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'veyil', copy: [['veyil/prototype', 'prototypes/veyil']] }, // mobile.html frames veyil-xi.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'udambu', copy: [['udambu/prototype', 'prototypes/udambu']] }, // mobile.html frames udambu.vercel.app; shots from the app's tools/shots.mjs
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
