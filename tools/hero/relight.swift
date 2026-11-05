@@ -22,6 +22,24 @@ func linear(_ p0: CGPoint, _ c0: CIColor, _ p1: CGPoint, _ c1: CIColor) -> CIIma
   let f = CIFilter.linearGradient(); f.point0 = p0; f.point1 = p1; f.color0 = c0; f.color1 = c1; return f.outputImage!.cropped(to: canvas)
 }
 
+// A 256x1 colour ramp for CIColorMap: brightness in, colour out.
+func ramp(_ stops: [(CGFloat, String)]) -> CIImage {
+  let ctxG = CGContext(data: nil, width: 256, height: 1, bitsPerComponent: 8, bytesPerRow: 0, space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+  func rgb(_ h: String) -> (CGFloat, CGFloat, CGFloat) { let v = Int(h, radix: 16)!; return (CGFloat(v >> 16 & 255) / 255, CGFloat(v >> 8 & 255) / 255, CGFloat(v & 255) / 255) }
+  for x in 0..<256 {
+    let t = CGFloat(x) / 255
+    var i = 0; while i < stops.count - 2 && t > stops[i + 1].0 { i += 1 }
+    let (t0, c0) = stops[i], (t1, c1) = stops[i + 1], k = max(0, min(1, (t - t0) / max(t1 - t0, 0.0001)))
+    let a = rgb(c0), b = rgb(c1)
+    ctxG.setFillColor(red: a.0 + (b.0 - a.0) * k, green: a.1 + (b.1 - a.1) * k, blue: a.2 + (b.2 - a.2) * k, alpha: 1)
+    ctxG.fill(CGRect(x: x, y: 0, width: 1, height: 1))
+  }
+  return CIImage(cgImage: ctxG.makeImage()!)
+}
+// Key side (left): shadows sink to navy, lit skin goes hot red. Far side (right): highlights go cyan-blue.
+let mapRed = ramp([(0, "070B14"), (0.22, "1A2232"), (0.42, "55283A"), (0.62, "B83E52"), (0.8, "EC6A62"), (0.93, "FBA28E"), (1, "FFE3D8")])
+let mapBlue = ramp([(0, "070B14"), (0.22, "16223A"), (0.45, "2C4C72"), (0.68, "5C8FC4"), (0.86, "A3CDF0"), (1, "EAF5FF")])
+
 // ---------- the scene (static) ----------
 var bg = linear(CGPoint(x: 0, y: 300), col("1A2C47"), CGPoint(x: 1600, y: 760), col("5FA4D6"))
 bg = over(radial(CGPoint(x: 1450, y: 880), 900, col("9AD6F7", 0.85)), bg)                 // cool sky, top right
@@ -78,32 +96,39 @@ let s = H * 1.12 / size.height
 let place = CGAffineTransform(scaleX: s, y: s).concatenating(CGAffineTransform(translationX: 1140 - size.width / 2 * s, y: -H * 0.1))
 let mirror = CGAffineTransform(scaleX: -1, y: 1).concatenating(CGAffineTransform(translationX: size.width, y: 0))
 
-func lit(_ frame: CIImage, _ mask: CIImage) -> CIImage {
-  // person and mask in canvas space
+// Returns the lit person and their soft cut-out mask, in canvas space.
+// k: 0 facing front .. 1 at profile. The red key falls on the side the face turns toward and grows with the turn,
+// so facing front is lit evenly and the mirrored clip matches it at the hand-off.
+func lit(_ frame: CIImage, _ mask: CIImage, _ k: CGFloat) -> (CIImage, CIImage) {
   let p = frame.transformed(by: place), m = mask.transformed(by: place)
-  // grade: deep, contrasty shadows so the coloured lights carry the face
-  var graded = p.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0.55, kCIInputBrightnessKey: -0.14, kCIInputContrastKey: 1.55])
-  // light map across the head: hot red from the left, cool cyan-blue from the right
-  let lightMap = linear(CGPoint(x: 860, y: 0), col("FF2A40"), CGPoint(x: 1380, y: 0), col("4FA8FF"))
-  let tinted = lightMap.applyingFilter("CIHardLightBlendMode", parameters: [kCIInputBackgroundImageKey: graded])
-  // keep a little of the skin tone, then sink the shadows into blue
-  graded = tinted.applyingFilter("CIDissolveTransition", parameters: [kCIInputTargetImageKey: graded, kCIInputTimeKey: 0.12])
-  graded = CIImage(color: col("A9BEDA")).cropped(to: canvas).applyingFilter("CIMultiplyBlendMode", parameters: [kCIInputBackgroundImageKey: graded])
-  // a red key on the cheek and jaw on the left
-  let key = radial(CGPoint(x: 960, y: 480), 300, col("FF2A40", 0.6))
-  graded = key.applyingFilter("CIScreenBlendMode", parameters: [kCIInputBackgroundImageKey: graded])
-  let falloff = linear(CGPoint(x: 0, y: 0), col("0A1426"), CGPoint(x: 0, y: 360), col("FFFFFF"))
+  let lum = p.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0, kCIInputBrightnessKey: 0, kCIInputContrastKey: 1.12])
+    .applyingFilter("CIGammaAdjust", parameters: ["inputPower": 1.12])
+  let red = lum.applyingFilter("CIColorMap", parameters: ["inputGradientImage": mapRed])
+  let blue = lum.applyingFilter("CIColorMap", parameters: ["inputGradientImage": mapBlue])
+  let split = linear(CGPoint(x: 1050, y: 0), col("FFFFFF"), CGPoint(x: 1300, y: 0), col("000000"))
+  let even = CIImage(color: col("808080")).cropped(to: canvas)
+  let side = even.applyingFilter("CIDissolveTransition", parameters: [kCIInputTargetImageKey: split, kCIInputTimeKey: k])
+  let mapped = red.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: blue, kCIInputMaskImageKey: side])
+  // mostly the real skin, coloured by the two lights
+  let natural = p.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0.9, kCIInputBrightnessKey: -0.08, kCIInputContrastKey: 1.08])
+  var graded = mapped.applyingFilter("CIDissolveTransition", parameters: [kCIInputTargetImageKey: natural, kCIInputTimeKey: 0.36])
+  let falloff = linear(CGPoint(x: 0, y: 0), col("1A2840"), CGPoint(x: 0, y: 330), col("FFFFFF"))
   graded = falloff.applyingFilter("CIMultiplyBlendMode", parameters: [kCIInputBackgroundImageKey: graded])
-  // rim light along the silhouette: red on the left edge, blue on the right
-  let inner = m.applyingFilter("CIMorphologyMinimum", parameters: [kCIInputRadiusKey: 14])
-  let edge = inner.applyingFilter("CISubtractBlendMode", parameters: [kCIInputBackgroundImageKey: m]).applyingGaussianBlur(sigma: 7).cropped(to: canvas)
-  let rimCol = linear(CGPoint(x: 880, y: 0), col("FF2E4A"), CGPoint(x: 1360, y: 0), col("6CC4FF"))
+  // a thin, soft rim: warm on the key side, cool behind
+  let inner = m.applyingFilter("CIMorphologyMinimum", parameters: [kCIInputRadiusKey: 8])
+  let edge = inner.applyingFilter("CISubtractBlendMode", parameters: [kCIInputBackgroundImageKey: m]).applyingGaussianBlur(sigma: 4).cropped(to: canvas)
+  let rimCol = linear(CGPoint(x: 1000, y: 0), col("FF5A5E", 0.75), CGPoint(x: 1300, y: 0), col("8FD2FF", 0.65))
   let rim = rimCol.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: canvas), kCIInputMaskImageKey: edge])
   graded = rim.applyingFilter("CIScreenBlendMode", parameters: [kCIInputBackgroundImageKey: graded])
-  // soft cut edge, then onto the scene
   let soft = m.applyingFilter("CIMorphologyMinimum", parameters: [kCIInputRadiusKey: 3]).applyingGaussianBlur(sigma: 1.8).cropped(to: canvas)
-  return graded.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: bg, kCIInputMaskImageKey: soft]).cropped(to: canvas)
+  return (graded.cropped(to: canvas), soft)
 }
+func onScene(_ person: CIImage, _ soft: CIImage) -> CIImage {
+  person.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: bg, kCIInputMaskImageKey: soft]).cropped(to: canvas)
+}
+// The mirrored clip flips the lit person (light and all) about the face, on the same scene.
+let flip = CGAffineTransform(a: -1, b: 0, c: 0, d: 1, tx: 2 * 1140, ty: 0)
+let total = max(1, Int((endSec * Double(fps)).rounded()) - 1)
 
 var n = 0
 while let sb = out.copyNextSampleBuffer() {
@@ -113,14 +138,17 @@ while let sb = out.copyNextSampleBuffer() {
   mask = mask.transformed(by: CGAffineTransform(scaleX: size.width / mask.extent.width, y: size.height / mask.extent.height))
   let frame = CIImage(cvPixelBuffer: pb)
   let t = CMSampleBufferGetPresentationTimeStamp(sb)
-  for (img, ad) in [(lit(frame, mask), aa), (lit(frame.transformed(by: mirror), mask.transformed(by: mirror)), ab)] {
+  let k = CGFloat(min(1, Double(n) / Double(total)))
+  let (person, soft) = lit(frame, mask, k)
+  let imgA = onScene(person, soft), imgB = onScene(person.transformed(by: flip).cropped(to: canvas), soft.transformed(by: flip).cropped(to: canvas))
+  for (img, ad) in [(imgA, aa), (imgB, ab)] {
     var o: CVPixelBuffer?; CVPixelBufferPoolCreatePixelBuffer(nil, ad.pixelBufferPool!, &o); ctx.render(img, to: o!)
     while !ad.assetWriterInput.isReadyForMoreMediaData { usleep(2000) }
     ad.append(o!, withPresentationTime: t)
   }
-  if n == 0, let still = stillOut { let cg = ctx.createCGImage(lit(frame, mask), from: canvas)!; let d = CGImageDestinationCreateWithURL(URL(fileURLWithPath: still) as CFURL, "public.jpeg" as CFString, 1, nil)!; CGImageDestinationAddImage(d, cg, nil); CGImageDestinationFinalize(d) }
+  if n == Int(ProcessInfo.processInfo.environment["STILLN"] ?? "0")!, let still = stillOut { let cg = ctx.createCGImage(imgA, from: canvas)!; let d = CGImageDestinationCreateWithURL(URL(fileURLWithPath: still) as CFURL, "public.jpeg" as CFString, 1, nil)!; CGImageDestinationAddImage(d, cg, nil); CGImageDestinationFinalize(d) }
   n += 1
-  if ProcessInfo.processInfo.environment["STILL"] != nil { break }
+  if ProcessInfo.processInfo.environment["STILL"] != nil && n > Int(ProcessInfo.processInfo.environment["STILLN"] ?? "0")! { break }
 }
 for (w, ad) in [(wa, aa), (wb, ab)] { ad.assetWriterInput.markAsFinished(); w.finishWriting { sem.signal() }; sem.wait() }
 print("frames", n, wa.error?.localizedDescription ?? "ok", wb.error?.localizedDescription ?? "ok")

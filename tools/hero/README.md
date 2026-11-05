@@ -9,8 +9,8 @@ swiftc -O relight.swift -o relight
 
 What it does:
 - Cuts the person out of each frame with Vision person segmentation.
-- Relights them: a red key and rim from the left, blue from the right.
+- Relights them softly, keeping most of the real skin tone. A warm red key falls on the side the face turns toward, cool blue on the ear and the back of the head. It's even when facing front.
 - Places them on the right of a generated blue scene with a red glow and embers.
 - Writes every frame as a keyframe, so scrubbing `currentTime` with the pointer stays smooth.
 
-The mirrored clip turns the other way with the same scene and lights. `index.html` shows `hero.mp4` when the pointer is left of the face and `hero-mirror.mp4` when it is to the right.
+The mirrored clip is the same lit person flipped, on the same scene, so both directions look alike and the hand-off at the front frame is seamless. `index.html` shows `hero.mp4` when the pointer is left of the face and `hero-mirror.mp4` when it is to the right.
