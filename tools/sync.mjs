@@ -41,6 +41,7 @@ const APPS = [
   { key: 'water', copy: [['water-manager/prototype', 'prototypes/water-manager']] }, // mobile.html frames water-manager-beryl.vercel.app; shots from the app's tools/shots.mjs
   { key: 'veyil', copy: [['veyil/prototype', 'prototypes/veyil']] }, // mobile.html frames veyil-xi.vercel.app; shots from the app's tools/shots.mjs
   { key: 'udambu', copy: [['udambu/prototype', 'prototypes/udambu']] }, // mobile.html frames udambu.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'kalvi', copy: [['kalvi/prototype', 'prototypes/kalvi']] }, // mobile.html frames kalvi-learn.vercel.app; shots from the app's tools/shots.mjs
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
