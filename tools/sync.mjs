@@ -42,6 +42,7 @@ const APPS = [
   { key: 'veyil', copy: [['veyil/prototype', 'prototypes/veyil']] }, // mobile.html frames veyil-xi.vercel.app; shots from the app's tools/shots.mjs
   { key: 'udambu', copy: [['udambu/prototype', 'prototypes/udambu']] }, // mobile.html frames udambu.vercel.app; shots from the app's tools/shots.mjs
   { key: 'kalvi', copy: [['kalvi/prototype', 'prototypes/kalvi']] }, // mobile.html frames kalvi-learn.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'indiamap', copy: [['india-map-explorer/prototype', 'prototypes/india-map-explorer']] }, // mobile.html frames india-map-explorer-two.vercel.app; shots from the app's tools/shots.mjs
   { key: 'stickybar', copy: [['StickyBar/prototype', 'prototypes/stickybar']] }, // native desktop app: screens page + shots only; DMG/EXE/ZIP live on GitHub Releases
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
