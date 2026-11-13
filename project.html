@@ -10,9 +10,9 @@
 <style>body{margin:0;background:#0a1322;color:#eef4fb;font-family:system-ui,sans-serif}</style>
 </head>
 <body>
-<nav class="gnav" aria-label="Main navigation"><a href="index.html#work">Work</a><a href="index.html#side-projects">Side projects</a><a href="index.html#about">About</a><a href="index.html#contact">Contact</a></nav>
 <main id="page" class="wrap pp"><p class="pp-loading">Loading the project…</p></main>
 <footer class="wrap"><span>© <span id="year"></span> Gopinath Thandapani</span><a href="index.html#work">All projects</a></footer>
+<script src="assets/sidebar.js"></script>
 <script>
 (async function(){
   document.getElementById('year').textContent=new Date().getFullYear();
@@ -31,6 +31,7 @@
   const cards=[...doc.querySelectorAll('#work .card[data-project], #side-projects .card[data-project]')];
   const i=cards.findIndex(c=>c.dataset.project===key);
   if(i<0) return fail('That project isn’t on the portfolio. It may have been renamed.');
+  buildSidebar({doc, current:key});
   const card=cards[i], side=!!card.closest('#side-projects'), pr=protos[key]||{};
   const title=(card.querySelector('h3')||{}).textContent||pr.title||key;
   document.title=title+' · Gopinath Thandapani';
@@ -38,6 +39,10 @@
   const el=(t,c,txt)=>{const e=document.createElement(t); if(c) e.className=c; if(txt!=null) e.textContent=txt; return e};
 
   page.innerHTML='';
+  // back to the project list: return to where the visitor came from on the home page, or to this project's group
+  const back=el('a','pp-back','← Back to all projects'); back.href='index.html#'+(side?'side-projects':'work');
+  back.addEventListener('click',e=>{ try{ const r=new URL(document.referrer); if(r.origin===location.origin&&/\/(index\.html)?$/.test(r.pathname)&&history.length>1){ e.preventDefault(); history.back() } }catch(_){} });
+  page.appendChild(back);
   const crumbs=el('nav','crumbs'); crumbs.setAttribute('aria-label','Breadcrumb');
   crumbs.innerHTML='<a href="index.html#work">Projects</a><span aria-hidden="true">/</span><a href="index.html#'+(side?'side-projects':'work')+'">'+(side?'Side projects':'Zoho product work')+'</a>';
   page.appendChild(crumbs);
