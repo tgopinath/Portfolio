@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0a1322">
+<meta name="theme-color" content="#f6f7fb">
 <meta name="description" content="Gopinath Thandapani — Senior Product Designer. Product experiences, enterprise workflows, and design systems.">
 <title>Gopinath Thandapani — Product Designer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,11 +11,11 @@
 <style>
 :root{
   --red:#ff3550; --blue:#59b4ff; --sky:#59b4ff; --hero-ink:#08101c;
-  --bg:#0a1322; --surface:#101c30; --raised:#15243c; --line:#21344f;
-  --text:#eef4fb; --muted:#a2b4c9; --faint:#7487a0; --accent:#ff5468;
+  --bg:#f6f7fb; --surface:#ffffff; --raised:#f1f3f8; --line:#e2e6ef;
+  --text:#141a26; --muted:#4a5366; --faint:#6b7486; --accent:#d92f45;
   --display:"Rajdhani","Geist",system-ui,sans-serif; --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;
   --max:1240px; --gut:clamp(18px,4vw,48px); --r:20px;
-  color-scheme:dark;
+  color-scheme:light;
 }
 *{box-sizing:border-box}html{scroll-behavior:smooth}section[id]{scroll-margin-top:88px}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -292,6 +292,52 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-s
 }
 @media(max-width:480px){.gnav a{padding:8px 11px;font-size:14px}.pill{height:48px;padding:0 24px;font-size:15px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+
+/* ---------- light theme: pastel cards with subtle patterns ---------- */
+/* Seven pastels and four faint patterns; each card takes the next pastel (data-tone) and pattern (data-pat). */
+[data-tone="1"]{--pa:#fde6dc;--pb:#fff4ef;--pi:#e9b8a3}
+[data-tone="2"]{--pa:#dcf2e6;--pb:#f1faf5;--pi:#a6d4bc}
+[data-tone="3"]{--pa:#e7e2fb;--pb:#f5f3fe;--pi:#bcb1ea}
+[data-tone="4"]{--pa:#dbeafb;--pb:#f1f7fe;--pi:#a8c7ec}
+[data-tone="5"]{--pa:#fbf0cf;--pb:#fefaee;--pi:#e6cf86}
+[data-tone="6"]{--pa:#fbe0e7;--pb:#fef3f6;--pi:#eab0c0}
+[data-tone="7"]{--pa:#e3eddc;--pb:#f4f8f1;--pi:#b5cda6}
+[data-pat="1"]{--pat:radial-gradient(color-mix(in srgb,var(--pi) 70%,transparent) 1.1px,transparent 1.6px) 0 0/16px 16px}
+[data-pat="2"]{--pat:repeating-linear-gradient(135deg,color-mix(in srgb,var(--pi) 45%,transparent) 0 1px,transparent 1px 12px)}
+[data-pat="3"]{--pat:linear-gradient(color-mix(in srgb,var(--pi) 40%,transparent) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(90deg,color-mix(in srgb,var(--pi) 40%,transparent) 1px,transparent 1px) 0 0/22px 22px}
+[data-pat="4"]{--pat:radial-gradient(circle at 50% 120%,transparent 0 18px,color-mix(in srgb,var(--pi) 50%,transparent) 18px 19px,transparent 19px) 0 0/40px 20px}
+.ptile{background:var(--pb,var(--surface));border-color:color-mix(in srgb,var(--pi,#dfe3ec) 55%,#fff)}
+.ptile:hover{background:var(--pb,var(--raised));border-color:var(--pi,#c9cfdb);box-shadow:0 18px 40px -26px color-mix(in srgb,var(--pi,#99a) 90%,#000)}
+.pt-img,.pp-art{background:var(--pat,none),var(--pa,#eef1f6)}
+.pt-img .thumb.wmt,.pp-art .thumb.wmt{background:transparent}
+.pp-art{border-color:color-mix(in srgb,var(--pi,#dfe3ec) 60%,#fff)}
+.wmt .phones img{border-color:#1b1f2a;background:#1b1f2a;box-shadow:0 18px 34px -18px #1b1f2a73}
+.thumb.wmt.duo .web-win{box-shadow:0 0 0 1px #141a2614,0 22px 44px -24px #141a2659}
+.thumb.wmt.duo .wbar{background:#f1f3f7;border-bottom-color:#e4e7ee}.thumb.wmt.duo .wbar i{background:#d3d7e0}.thumb.wmt.duo .wbar b{background:#e4e7ee}
+.pt-meta span{background:#ffffffb3;border-color:color-mix(in srgb,var(--pi,#dfe3ec) 60%,#fff);color:var(--muted)}
+.pt-meta span.k{color:var(--accent);border-color:#d92f4533}
+.pfilter button:hover,.pp-back:hover,.pp-nav a:hover{border-color:#c9cfdb}
+.pfilter button[aria-pressed=true] i{color:#ffffffb3}
+.tag{background:#ffffffb3}.tag.live{border-color:#d92f4533}
+.apk-dl:hover{background:#2a3242}.live-dl:hover{border-color:#c9cfdb}.apk-dl svg{color:#3ddc84}
+.knav button:hover:not(:disabled),.kchip:hover{border-color:#c9cfdb}
+.kchip[aria-pressed=true] i{color:#ffffffb3}
+.ktest{background:radial-gradient(color-mix(in srgb,var(--wash,#dfe7ff) 90%,#8890a0) 1px,transparent 1.5px) 0 0/18px 18px,color-mix(in srgb,var(--wash,#dfe7ff) 45%,#fff);border-color:color-mix(in srgb,var(--wash,#dfe7ff) 80%,#c9cfdb)}
+.ktest-av{background:var(--av-bg,#eef2f9);color:var(--av-fg,#4a5a7a)}
+.closing{background:radial-gradient(50% 120% at 0% 100%,#fbe0e7,transparent 70%),radial-gradient(60% 120% at 100% 0%,#dbeafb,transparent 70%),#fff}
+.pp-frame{border-color:var(--line)}
+.lhs{background:#ffffffeb;border-right-color:var(--line);scrollbar-color:#cfd5e0 transparent}
+.lhs-nav a:hover,.lhs-projects li a:hover,.lhs-projects summary:hover{background:#141a260a}
+.lhs-nav a[aria-current],.lhs-projects li a[aria-current]{background:#141a260f}
+.lhs-av{background:linear-gradient(160deg,#dbeafb,#fbe0e7)}
+@media(max-width:1100px){.lhs-toggle{background:#ffffffd9;border-color:var(--line)}.lhs-toggle span[aria-hidden],.lhs-open .lhs-toggle span[aria-hidden]:after{background:#141a26;box-shadow:0 -6px 0 #141a26,0 6px 0 #141a26}.lhs-open .lhs-toggle span[aria-hidden]{box-shadow:0 0 0 #141a26}.lhs{box-shadow:20px 0 60px -30px #141a2640}.lhs-scrim{background:#141a2633}}
+.pt-img > img,.pp-art > img{position:absolute;left:8%;right:8%;top:10%;width:84%;height:auto;bottom:0;aspect-ratio:auto;object-fit:cover;object-position:top left;border-radius:10px 10px 0 0;box-shadow:0 0 0 1px #141a2612,0 22px 44px -24px #141a2666;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.pt-img > img{height:90%}.pp-art > img{height:90%}
+.ptile:hover .pt-img > img{transform:translateY(-3%)}
+/* the hero stays a dark cinematic band (its scene is part of the video) */
+.hero{color:#fff}
+.hero-media:after{background:linear-gradient(90deg,#08101ccc 0%,#08101c80 30%,transparent 58%)}
+@media(max-width:860px){.hero-media:after{background:linear-gradient(0deg,#0b1424 0%,#08101ccc 34%,transparent 62%)}.hero{background:#0b1424}}
 </style>
 </head>
 <body>
@@ -748,9 +794,10 @@ document.querySelectorAll('.card[data-project]').forEach(c=>c.addEventListener('
     if(card.querySelector('.live-dl')) out.push('Web');
     return out;
   }
+  var tileN=0;
   function tile(card, kind){
     var key=card.dataset.project, h=card.querySelector('h3'), p=card.querySelector('.wide-body > p, .story p:not(.meta)'), a=document.createElement('a');
-    a.className='ptile'; a.href='project.html?p='+encodeURIComponent(key); a.dataset.key=key;
+    a.className='ptile'; a.href='project.html?p='+encodeURIComponent(key); a.dataset.key=key; var n=tileN++; a.dataset.tone=n%7+1; a.dataset.pat=n%4+1;
     var img=document.createElement('div'); img.className='pt-img';
     var th=card.querySelector('.thumb'), fig=card.querySelector('figure img');
     if(th){ img.appendChild(th.cloneNode(true)) } else if(fig){ var i=fig.cloneNode(true); i.loading='lazy'; img.appendChild(i) }
