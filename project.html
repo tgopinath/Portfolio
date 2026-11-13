@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a1322">
+<title>Project · Gopinath Thandapani</title>
+<!-- One page for every project. It reads index.html (its stylesheet, the project cards and the prototype list),
+     so a project added to the home page gets its own page with no extra work. URL: project.html?p=<key>[&v=<view>] -->
+<style>body{margin:0;background:#0a1322;color:#eef4fb;font-family:system-ui,sans-serif}</style>
+</head>
+<body>
+<nav class="gnav" aria-label="Main navigation"><a href="index.html#work">Work</a><a href="index.html#side-projects">Side projects</a><a href="index.html#about">About</a><a href="index.html#contact">Contact</a></nav>
+<main id="page" class="wrap pp"><p class="pp-loading">Loading the project…</p></main>
+<footer class="wrap"><span>© <span id="year"></span> Gopinath Thandapani</span><a href="index.html#work">All projects</a></footer>
+<script>
+(async function(){
+  document.getElementById('year').textContent=new Date().getFullYear();
+  const page=document.getElementById('page');
+  const q=new URLSearchParams(location.search), key=q.get('p');
+  const fail=(msg)=>{ page.innerHTML='<div class="pp-loading"><div><h1 style="font-family:var(--display);text-transform:uppercase">Project not found</h1><p>'+msg+'</p><p><a class="textlink" href="index.html#work">See all projects</a></p></div></div>' };
+  let html;
+  try { html=await (await fetch('index.html',{cache:'no-cache'})).text() } catch(e){ return fail('Check your connection and reload the page.') }
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  // the home page's fonts and stylesheet
+  doc.querySelectorAll('head link[rel=stylesheet], head link[rel=preconnect], head style').forEach(n=>document.head.appendChild(n.cloneNode(true)));
+  // the prototype list (const protos={...}) from the home page's script
+  let protos={};
+  const m=html.match(/const protos=(\{[\s\S]*?\n\});/);
+  if(m){ try{ protos=new Function('return '+m[1])() }catch(e){} }
+  const cards=[...doc.querySelectorAll('#work .card[data-project], #side-projects .card[data-project]')];
+  const i=cards.findIndex(c=>c.dataset.project===key);
+  if(i<0) return fail('That project isn’t on the portfolio. It may have been renamed.');
+  const card=cards[i], side=!!card.closest('#side-projects'), pr=protos[key]||{};
+  const title=(card.querySelector('h3')||{}).textContent||pr.title||key;
+  document.title=title+' · Gopinath Thandapani';
+  const desc=pr.text||((card.querySelector('.wide-body > p, .story p:not(.meta)')||{}).textContent||'');
+  const el=(t,c,txt)=>{const e=document.createElement(t); if(c) e.className=c; if(txt!=null) e.textContent=txt; return e};
+
+  page.innerHTML='';
+  const crumbs=el('nav','crumbs'); crumbs.setAttribute('aria-label','Breadcrumb');
+  crumbs.innerHTML='<a href="index.html#work">Projects</a><span aria-hidden="true">/</span><a href="index.html#'+(side?'side-projects':'work')+'">'+(side?'Side projects':'Zoho product work')+'</a>';
+  page.appendChild(crumbs);
+
+  const head=el('section','pp-head'), text=el('div');
+  const dept=card.querySelector('.dept'); if(dept) text.appendChild(el('span','dept',dept.textContent));
+  text.appendChild(el('h1',null,title));
+  text.appendChild(el('p','lede',desc.trim()));
+  const facts=card.querySelector('.wide-facts'); if(facts) text.appendChild(facts.cloneNode(true));
+  const meta=card.querySelector('.story .meta'); if(meta) text.appendChild(el('p','kicker',meta.textContent));
+  const getApp=card.querySelector('.get-app'); if(getApp) text.appendChild(getApp.cloneNode(true));
+  const tags=card.querySelector('.tags'); if(tags){ const t=tags.cloneNode(true); t.querySelectorAll('.round-arrow,.case-open').forEach(n=>n.remove()); text.appendChild(t) }
+  const art=el('div','pp-art'), th=card.querySelector('.thumb'), fig=card.querySelector('figure img');
+  if(th) art.appendChild(th.cloneNode(true)); else if(fig) art.appendChild(fig.cloneNode(true));
+  head.append(text,art); page.appendChild(head);
+
+  const views=pr.views||[];
+  if(views.length){
+    const sec=el('section','pp-views'), bar=el('div','pp-bar');
+    bar.appendChild(el('h2',null,views.length>1?'Try it':'Try it: '+views[0][0]));
+    const tabs=el('div','pp-tabs'); tabs.setAttribute('role','tablist'); tabs.setAttribute('aria-label','Views');
+    const open=el('a','vbtn','Open in a new tab ↗'); open.target='_blank'; open.rel='noopener';
+    const frame=el('div','pp-frame'), ifr=el('iframe'); ifr.title=title; ifr.setAttribute('allow','geolocation'); frame.appendChild(ifr);
+    let cur=Math.max(0,Math.min(views.length-1,parseInt(q.get('v')||'0',10)||0));
+    const show=(n,push)=>{ cur=n; ifr.src=views[n][1]; open.href=views[n][1];
+      tabs.querySelectorAll('button').forEach((b,j)=>b.setAttribute('aria-selected',j===n));
+      if(push){ const u=new URL(location); n?u.searchParams.set('v',n):u.searchParams.delete('v'); history.replaceState(null,'',u) } };
+    if(views.length>1) views.forEach(([label],j)=>{ const b=el('button',null,label); b.type='button'; b.setAttribute('role','tab'); b.addEventListener('click',()=>show(j,true)); tabs.appendChild(b) });
+    if(views.length>1) bar.appendChild(tabs);
+    bar.appendChild(open);
+    sec.append(bar,frame); page.appendChild(sec);
+    // a prototype that focuses a field on load must not scroll this page down
+    let moved=false; ['wheel','touchmove','keydown'].forEach(t=>addEventListener(t,()=>{moved=true},{once:true,passive:true}));
+    ifr.addEventListener('load',()=>{ if(!moved) window.scrollTo(0,0) });
+    show(cur,false);
+  }
+
+  // previous / next across all projects, in the home page's order
+  const nav=el('nav','pp-nav'); nav.setAttribute('aria-label','More projects');
+  const link=(c,cls,label)=>{ const a=el('a',cls); a.href='project.html?p='+encodeURIComponent(c.dataset.project); a.append(el('small',null,label),el('b',null,(c.querySelector('h3')||{}).textContent||c.dataset.project)); return a };
+  const prev=cards[(i-1+cards.length)%cards.length], next=cards[(i+1)%cards.length];
+  nav.append(link(prev,'prev','← Previous project'),link(next,'next','Next project →'));
+  page.appendChild(nav);
+  document.addEventListener('keydown',e=>{ if(e.target.closest('input,textarea,iframe')) return; if(e.key==='ArrowLeft') nav.querySelector('.prev').click(); if(e.key==='ArrowRight') nav.querySelector('.next').click() });
+  window.scrollTo(0,0);
+})();
+</script>
+</body>
+</html>

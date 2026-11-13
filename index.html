@@ -32,7 +32,7 @@ h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.02em;text-wrap:balance}
 
 /* glass nav */
 .gnav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9;display:flex;gap:2px;padding:5px;border-radius:999px;background:#16161a9e;border:1px solid #ffffff24;box-shadow:0 10px 30px -14px #0000008c,inset 0 1px 0 #ffffff1f;-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5)}
-.gnav a{font-size:15px;font-weight:500;padding:9px 18px;border-radius:999px;color:#fff}
+.gnav a{white-space:nowrap;font-size:15px;font-weight:500;padding:9px 18px;border-radius:999px;color:#fff}
 .gnav a:hover{background:#ffffff1f}
 
 /* hero: full-bleed cinematic clip, red key light from the left, blue from the right */
@@ -248,7 +248,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-s
   .closing{grid-template-columns:1fr}
   .viewer{padding:0}.vpanel{border-radius:0;border:0}.vhead{flex-wrap:wrap;gap:10px;padding:12px 14px}.vtitle p{display:none}.vtabs{order:3;width:100%;margin-left:0;overflow-x:auto}.vactions{margin-left:auto}.vbtn span.lbl{display:none}
 }
-@media(max-width:480px){.gnav a{padding:8px 14px;font-size:14px}.pill{height:48px;padding:0 24px;font-size:15px}}
+@media(max-width:480px){.gnav a{padding:8px 11px;font-size:14px}.pill{height:48px;padding:0 24px;font-size:15px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -438,10 +438,10 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-s
       <p>An irrigation planner for small farms. It works out which field needs water today, how many litres and how long to run the pump, from each field’s crop, soil and watering method and live rain and evaporation from Open-Meteo. Before a storm it plans how much rain the roofs and land can send into the borewell recharge pit or storage, and it keeps a log of litres pumped, pump hours and electricity.</p>
       <ul class="wide-facts">
         <li><b>Role</b>Product design and front-end build</li>
-        <li><b>Stack</b>HTML, CSS, JavaScript, Open-Meteo, Firebase sign-in</li>
+        <li><b>Stack</b>HTML, CSS, JavaScript, Open-Meteo</li>
         <li><b>Status</b>Live web app, installable on phones</li>
       </ul>
-      <div class="get-app"><a class="live-dl" href="https://water-manager-beryl.vercel.app" target="_blank" rel="noopener"><span><b>Open the live app ↗</b><small>On a phone: Share → Add to Home Screen</small></span></a><span class="apk-note">Sign in with Google to keep your farm on every device.</span></div>
+      <div class="get-app"><a class="live-dl" href="https://water-manager-beryl.vercel.app" target="_blank" rel="noopener"><span><b>Open the live app ↗</b><small>On a phone: Share → Add to Home Screen</small></span></a><span class="apk-note"></span></div>
       <div class="tags"><span class="tag">Mobile + Web App</span><span class="tag">Data + Weather</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="water" aria-label="Open Water Manager prototype">Open the project</a></div>
     </div>
   </article>
@@ -620,7 +620,7 @@ forge:{title:"Forge",text:"A personal trainer for iOS: goal-based plans, animate
 farm:{title:"Farm Manager",text:"A goat, cow and chicken farm app for iOS, Android and the web. Both prototypes run the real app with one sample farm, saved in your browser.",views:[["Mobile app","prototypes/farm/mobile.html"],["Web app","prototypes/farm/web.html"],["Case study","prototypes/farm/case-study.html"],["App screens","prototypes/farm/screens.html"]]},
 pals:{title:"Vanam",text:"See and hear animals, birds and every living being: real photos and field recordings from iNaturalist, video previews on hover, 3D models, voice search, six games and read-aloud stories in English and Tamil.",views:[["Mobile app","prototypes/zoorassic-park/mobile.html"],["Web app","https://vanam-app.vercel.app/"]]},
 mettu:{title:"Mettu (மெட்டு)",text:"A ringtone studio in English and Tamil. Trim a song on a waveform that snaps to quiet points and beats, fade and level it, hear it on a fake incoming call, and set it as a ringtone, alarm or one contact's tone on Android. Paste a YouTube or Spotify link to name the song and find licensed sources.",views:[["Mobile app","prototypes/mettu/mobile.html"],["Web app","https://mettu.vercel.app/"]]},
-water:{title:"Water Manager",text:"Which field to water today, how many litres and how long to run the pump, from live rain and evaporation. Plan borewell recharge before a storm and keep a log of water, pump hours and electricity. Sign in with Google to open it.",views:[["Mobile app","prototypes/water-manager/mobile.html"],["Web app","https://water-manager-beryl.vercel.app/"]]},
+water:{title:"Water Manager",text:"Which field to water today, how many litres and how long to run the pump, from live rain and evaporation. Plan borewell recharge before a storm and keep a log of water, pump hours and electricity.",views:[["Mobile app","prototypes/water-manager/mobile.html"],["Web app","https://water-manager-beryl.vercel.app/"]]},
 veyil:{title:"Veyil (வெயில்)",text:"A shop for sun-dried vegetables, leaves, pickles and vathal. Browse by type or by dish, filter by form and spice, and see what each pack equals fresh and how long it soaks. Checkout is a demo.",views:[["Mobile app","prototypes/veyil/mobile.html"],["Web app","https://veyil-xi.vercel.app/"]]},
 udambu:{title:"Udambu (உடம்பு)",text:"The human body for children as young as five, as a dark anatomy atlas: real 3D models of 49 parts, eight-second demos of each part working, every line read aloud, 35 illnesses explained gently, and a quiz that teaches after every answer.",views:[["Mobile app","prototypes/udambu/mobile.html"],["Web app","https://udambu.vercel.app/"]]},
 pulse:{title:"Amazon Pulse",text:"Which products are in demand, which are rising and which are worth selling on Amazon India. Rankings for any day, week, month or year, trend and opportunity scores with their signals, profit after fees and GST, catalog search and an AI assistant. These screens show the demo mode on labelled synthetic data.",views:[["Screens","prototypes/amazon-pulse/index.html"]]},
