@@ -40,8 +40,24 @@ func ramp(_ stops: [(CGFloat, String)]) -> CIImage {
 let mapRed = ramp([(0, "070B14"), (0.22, "1A2232"), (0.42, "55283A"), (0.62, "B83E52"), (0.8, "EC6A62"), (0.93, "FBA28E"), (1, "FFE3D8")])
 let mapBlue = ramp([(0, "070B14"), (0.22, "16223A"), (0.45, "2C4C72"), (0.68, "5C8FC4"), (0.86, "A3CDF0"), (1, "EAF5FF")])
 
+struct LCG { var s: UInt64; mutating func next() -> Double { s = s &* 6364136223846793005 &+ 1442695040888963407; return Double(s >> 11) / Double(1 << 53) } }
 // ---------- the scene (static) ----------
-var bg = linear(CGPoint(x: 0, y: 300), col("1A2C47"), CGPoint(x: 1600, y: 760), col("5FA4D6"))
+// THEME=light: a soft pastel studio (sky to blush, pastel bokeh). Otherwise the dark cinematic scene.
+let lightTheme = ProcessInfo.processInfo.environment["THEME"] == "light"
+var bg: CIImage
+if lightTheme {
+  bg = linear(CGPoint(x: 0, y: 200), col("FBEFF2"), CGPoint(x: 1600, y: 800), col("E4EEFB"))
+  bg = over(radial(CGPoint(x: 1380, y: 820), 900, col("D6E7FA", 0.9)), bg)              // cool light, top right
+  bg = over(radial(CGPoint(x: 120, y: 240), 700, col("FCDDE3", 0.85)), bg)              // warm blush, low left
+  bg = over(radial(CGPoint(x: 700, y: 900), 520, col("EEE7FB", 0.7)), bg)               // lavender, top middle
+  var g2 = LCG(s: 11)
+  for i in 0..<16 { // soft pastel bokeh
+    let x = CGFloat(g2.next()) * 1000 + 40, y = CGFloat(g2.next()) * 760 + 60, r = CGFloat(14 + g2.next() * 46)
+    let c = [col("F7C6D0", 0.35), col("C9DDF6", 0.4), col("DCD2F5", 0.35), col("FFE2C7", 0.35)][i % 4]
+    bg = over(radial(CGPoint(x: x, y: y), r, c).applyingGaussianBlur(sigma: 5).cropped(to: canvas), bg)
+  }
+} else {
+bg = linear(CGPoint(x: 0, y: 300), col("1A2C47"), CGPoint(x: 1600, y: 760), col("5FA4D6"))
 bg = over(radial(CGPoint(x: 1450, y: 880), 900, col("9AD6F7", 0.85)), bg)                 // cool sky, top right
 // blurred city blocks for depth on the left
 for (x, y, w, h, al) in [(60.0, 0.0, 260.0, 760.0, 0.34), (300, 0, 180, 560, 0.24), (520, 0, 240, 820, 0.2), (40, 520, 380, 120, 0.18)] {
@@ -54,7 +70,6 @@ let streak = radial(CGPoint(x: 0, y: 0), 300, col("FF3B5C", 0.75)).transformed(b
 bg = over(streak.cropped(to: canvas).applyingGaussianBlur(sigma: 28).cropped(to: canvas), bg)
 // embers / bokeh
 var rng = SystemRandomNumberGenerator()
-struct LCG { var s: UInt64; mutating func next() -> Double { s = s &* 6364136223846793005 &+ 1442695040888963407; return Double(s >> 11) / Double(1 << 53) } }
 var g = LCG(s: 7)
 for i in 0..<26 {
   let x = CGFloat(g.next()) * 820, y = CGFloat(g.next()) * 640 + 40, r = CGFloat(3 + g.next() * 9)
@@ -69,6 +84,8 @@ for _ in 0..<10 { // a few large soft bokeh discs in blue
   bg = over(radial(CGPoint(x: x, y: y), r, col("A9D8F5", 0.16)).applyingGaussianBlur(sigma: 6).cropped(to: canvas), bg)
 }
 bg = bg.applyingFilter("CIVignette", parameters: [kCIInputIntensityKey: 0.45, kCIInputRadiusKey: 2.8]).applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 1.25]).cropped(to: canvas)
+
+}
 
 // ---------- video in/out ----------
 let asset = AVURLAsset(url: src); let sem = DispatchSemaphore(value: 0)
@@ -111,13 +128,13 @@ func lit(_ frame: CIImage, _ mask: CIImage, _ k: CGFloat) -> (CIImage, CIImage) 
   let mapped = red.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: blue, kCIInputMaskImageKey: side])
   // mostly the real skin, coloured by the two lights
   let natural = p.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0.9, kCIInputBrightnessKey: -0.08, kCIInputContrastKey: 1.08])
-  var graded = mapped.applyingFilter("CIDissolveTransition", parameters: [kCIInputTargetImageKey: natural, kCIInputTimeKey: 0.36])
-  let falloff = linear(CGPoint(x: 0, y: 0), col("1A2840"), CGPoint(x: 0, y: 330), col("FFFFFF"))
+  var graded = mapped.applyingFilter("CIDissolveTransition", parameters: [kCIInputTargetImageKey: natural, kCIInputTimeKey: lightTheme ? 0.62 : 0.36])
+  let falloff = linear(CGPoint(x: 0, y: 0), col(lightTheme ? "C9D3E6" : "1A2840"), CGPoint(x: 0, y: 330), col("FFFFFF"))
   graded = falloff.applyingFilter("CIMultiplyBlendMode", parameters: [kCIInputBackgroundImageKey: graded])
   // a thin, soft rim: warm on the key side, cool behind
   let inner = m.applyingFilter("CIMorphologyMinimum", parameters: [kCIInputRadiusKey: 8])
   let edge = inner.applyingFilter("CISubtractBlendMode", parameters: [kCIInputBackgroundImageKey: m]).applyingGaussianBlur(sigma: 4).cropped(to: canvas)
-  let rimCol = linear(CGPoint(x: 1000, y: 0), col("FF5A5E", 0.75), CGPoint(x: 1300, y: 0), col("8FD2FF", 0.65))
+  let rimCol = linear(CGPoint(x: 1000, y: 0), col("FF5A5E", lightTheme ? 0.4 : 0.75), CGPoint(x: 1300, y: 0), col("8FD2FF", lightTheme ? 0.4 : 0.65))
   let rim = rimCol.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: canvas), kCIInputMaskImageKey: edge])
   graded = rim.applyingFilter("CIScreenBlendMode", parameters: [kCIInputBackgroundImageKey: graded])
   let soft = m.applyingFilter("CIMorphologyMinimum", parameters: [kCIInputRadiusKey: 3]).applyingGaussianBlur(sigma: 1.8).cropped(to: canvas)
