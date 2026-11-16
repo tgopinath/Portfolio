@@ -45,6 +45,7 @@ const APPS = [
   { key: 'pesu', copy: [['pesu/prototype', 'prototypes/pesu']] }, // mobile.html frames pesu-phrases.vercel.app; shots from the app's tools/shots.mjs
   { key: 'indiamap', copy: [['india-map-explorer/prototype', 'prototypes/india-map-explorer']] }, // mobile.html frames india-map-explorer-two.vercel.app; shots from the app's tools/shots.mjs
   { key: 'stickybar', copy: [['StickyBar/prototype', 'prototypes/stickybar']] }, // native desktop app: screens page + shots only; DMG/EXE/ZIP live on GitHub Releases
+  { key: 'moneymaster', copy: [['money-master/prototype', 'prototypes/money-master']] }, // mobile.html frames money-master-wine.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: tools/web-moneymaster.jpg -> assets/thumbs)
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
