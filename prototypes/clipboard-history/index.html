@@ -47,20 +47,22 @@ figcaption b{color:var(--ink)}
 <main>
   <section class="intro">
     <div>
-      <span class="k">Desktop app · macOS</span>
+      <span class="k">Desktop app · macOS and Windows</span>
       <div class="head"><img src="shots/icon-256.png" alt="" width="256" height="256"><h1>Clipboard History</h1></div>
-      <p>A clipboard manager that lives in the menu bar. It starts at login and quietly saves every copy, text and images, without ever being opened. When you need something you copied earlier, press <kbd>⌃⌘V</kbd> from any app, type a few letters and press Return.</p>
+      <p>A clipboard manager that lives in the menu bar on a Mac and the system tray on Windows. It starts when you sign in and quietly saves every copy, text and images, without ever being opened. When you need something you copied earlier, press <kbd>⌃⌘V</kbd> on a Mac or <kbd>Ctrl+Alt+H</kbd> on Windows from any app, type a few letters and press Return.</p>
       <div class="dl">
         <a href="https://github.com/tgopinath/ClipboardHistory/releases/latest/download/ClipboardHistory.dmg">Download for Mac (.dmg)<small>DMG · 0.8 MB · macOS 14 Sonoma or later</small></a>
-        <a class="alt" href="https://github.com/tgopinath/ClipboardHistory" target="_blank" rel="noopener">Source on GitHub ↗<small>One Swift file, built with build.sh</small></a>
-        <p>Open the DMG and drag Clipboard History to Applications. The first time, right-click the app and choose Open, because it isn't notarised.</p>
+        <a href="https://github.com/tgopinath/ClipboardHistory/releases/latest/download/ClipboardHistory-Setup.exe">Download for Windows (.exe)<small>EXE · 64 MB · Windows 10/11 (64-bit), .NET included</small></a>
+        <a class="alt" href="https://github.com/tgopinath/ClipboardHistory" target="_blank" rel="noopener">Source on GitHub ↗<small>Swift on macOS, C# WinForms (.NET 8) on Windows</small></a>
+        <p><b>Mac:</b> open the DMG and drag Clipboard History to Applications. The first time, right-click the app and choose Open, because it isn't notarised.</p>
+        <p><b>Windows:</b> run the installer (per user, no admin needed). It isn't code-signed, so if SmartScreen says “Windows protected your PC”, choose More info, then Run anyway. The tray icon may be under the ^ overflow arrow.</p>
       </div>
     </div>
     <ul>
-      <li>Menu bar only, no Dock icon. The icon pulses briefly each time a copy is saved.</li>
+      <li>Menu bar only on a Mac, with no Dock icon; the icon pulses briefly each time a copy is saved. System tray on Windows.</li>
       <li>Keeps 200 items by default (50 to 1000), saved across restarts.</li>
-      <li>Search as you type, <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>↩</kbd> to pick, <kbd>⌘1–9</kbd> for the first nine.</li>
-      <li>Copy one item, or <kbd>⇧⌘C</kbd> Copy All: every item, or only the search matches, joined line by line.</li>
+      <li>Opens with <kbd>⌃⌘V</kbd> on a Mac or <kbd>Ctrl+Alt+H</kbd> on Windows. Search as you type, <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>↩</kbd> to pick, <kbd>⌘1–9</kbd> (<kbd>Ctrl+1–9</kbd> on Windows) for the first nine.</li>
+      <li>Copy one item, or <kbd>⇧⌘C</kbd> (<kbd>Ctrl+Shift+C</kbd>) Copy All: every item, or only the search matches, joined line by line.</li>
       <li>Pin items to their own Pinned section, delete, pause recording, clear history.</li>
       <li>Strictly newest first. Picking an old item keeps its original time instead of jumping to the top.</li>
       <li>Skips secrets that password managers mark as concealed.</li>
@@ -76,7 +78,7 @@ figcaption b{color:var(--ink)}
 
   <section>
     <h2>The panel</h2>
-    <p class="sub">Rendered from the app's own SwiftUI views with sample data, in light and dark mode. Scroll sideways for more.</p>
+    <p class="sub">The Mac app, rendered from its own SwiftUI views with sample data, in light and dark mode. The Windows tray app has the same features. Scroll sideways for more.</p>
     <div class="panels">
       <figure><div class="panel"><img src="shots/panel-light.jpg" alt="History panel: a search field and Copy All button, a Pinned section with a URL and an email signature, then recent copies with their ⌘ number and time" width="600" height="758" loading="lazy"></div><figcaption><b>History.</b> Pinned first, then everything else, newest first.</figcaption></figure>
       <figure><div class="panel"><img src="shots/search-light.jpg" alt="Searching for design: two matches, and the Copy All button now reads Copy 2" width="600" height="758" loading="lazy"></div><figcaption><b>Search.</b> Copy All turns into Copy 2 for just the matches.</figcaption></figure>
@@ -85,7 +87,7 @@ figcaption b{color:var(--ink)}
     </div>
   </section>
 
-  <p class="foot">Built with Swift, SwiftUI and AppKit in a single file, with no dependencies. History is stored locally in ~/Library/Application Support/ClipboardHistory. Source on <a href="https://github.com/tgopinath/ClipboardHistory" target="_blank" rel="noopener">GitHub ↗</a>.</p>
+  <p class="foot">Built with Swift, SwiftUI and AppKit in a single file on macOS, and C# WinForms on .NET 8 on Windows (installer built by GitHub Actions). History is stored locally on your computer. Source on <a href="https://github.com/tgopinath/ClipboardHistory" target="_blank" rel="noopener">GitHub ↗</a>.</p>
 </main>
 </body>
 </html>
