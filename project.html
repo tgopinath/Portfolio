@@ -60,7 +60,33 @@
   if(th) art.appendChild(th.cloneNode(true)); else if(fig) art.appendChild(fig.cloneNode(true));
   head.append(text,art); page.appendChild(head);
 
-  const views=pr.views||[];
+  // a case study is a long read: it sits closed below the views and loads only when the visitor opens it
+  const allViews=pr.views||[], isCase=v=>/^Case study/i.test(v[0]);
+  const views=allViews.filter(v=>!isCase(v)), cases=allViews.filter(isCase);
+  if(cases.length&&!document.getElementById('pp-case-css')){ const st=el('style'); st.id='pp-case-css'; st.textContent=
+    '.pp-case{margin:28px 0 0;border:1px solid var(--line,#e2e6ef);border-radius:var(--r,20px);background:var(--surface,#fff);overflow:hidden}'+
+    '.pp-case summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:16px;padding:22px 26px}'+
+    '.pp-case summary::-webkit-details-marker{display:none}'+
+    '.pp-case summary h2{margin:0;flex:1}'+
+    '.pp-case summary .pp-case-hint{font-size:14px;color:var(--muted,#4a5366)}'+
+    '.pp-case summary .pp-case-chev{width:36px;height:36px;border-radius:50%;border:1px solid var(--line,#e2e6ef);display:grid;place-items:center;transition:transform .2s ease;flex:none}'+
+    '.pp-case[open] summary .pp-case-chev{transform:rotate(180deg)}'+
+    '.pp-case summary:hover .pp-case-chev{border-color:#c9cfdb}'+
+    '.pp-case summary:focus-visible{outline:2px solid var(--accent,#d92f45);outline-offset:-2px}'+
+    '.pp-case-body{padding:0 26px 26px}.pp-case-body .pp-frame{margin:0}.pp-case-open{display:inline-block;margin:12px 0 0}'+
+    '@media (prefers-reduced-motion:reduce){.pp-case summary .pp-case-chev{transition:none}}';
+    document.head.appendChild(st) }
+  const addCase=()=>cases.forEach(([label,src])=>{
+    const d=el('details','pp-case'), s=el('summary');
+    s.append(el('h2',null,label), el('span','pp-case-hint','Read how it was designed'));
+    const chev=el('span','pp-case-chev'); chev.setAttribute('aria-hidden','true'); chev.textContent='⌄'; s.appendChild(chev);
+    const body=el('div','pp-case-body'), fr=el('div','pp-frame'), f=el('iframe'); f.title=title+' case study'; fr.appendChild(f);
+    const o=el('a','vbtn pp-case-open','Open in a new tab ↗'); o.href=src; o.target='_blank'; o.rel='noopener';
+    body.append(fr,o); d.append(s,body);
+    d.addEventListener('toggle',()=>{ if(d.open&&!f.src) f.src=src });
+    if(q.get('case')==='1'){ d.open=true }
+    page.appendChild(d);
+  });
   if(views.length){
     const sec=el('section','pp-views'), bar=el('div','pp-bar');
     bar.appendChild(el('h2',null,views.length>1?'Try it':'Try it: '+views[0][0]));
@@ -80,6 +106,7 @@
     ifr.addEventListener('load',()=>{ if(!moved) window.scrollTo(0,0) });
     show(cur,false);
   }
+  addCase();
 
   // previous / next across all projects, in the home page's order
   const nav=el('nav','pp-nav'); nav.setAttribute('aria-label','More projects');
