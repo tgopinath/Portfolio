@@ -47,6 +47,7 @@ const APPS = [
   { key: 'stickybar', copy: [['StickyBar/prototype', 'prototypes/stickybar']] }, // native desktop app: screens page + shots only; DMG/EXE/ZIP live on GitHub Releases
   { key: 'moneymaster', copy: [['money-master/prototype', 'prototypes/money-master']] }, // mobile.html frames money-master-wine.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: tools/web-moneymaster.jpg -> assets/thumbs)
   { key: 'clipboard', copy: [['ClipboardHistory/prototype', 'prototypes/clipboard-history']] }, // native macOS app: screens page + shots only (tools/make-shots.sh); DMG lives on GitHub Releases
+  { key: 'tycoon', copy: [['tycoon-table/prototype', 'prototypes/tycoon-table']] }, // mobile.html frames tycoon-table.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: tools/web-tycoon.jpg -> assets/thumbs)
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
