@@ -51,6 +51,8 @@ const APPS = [
   { key: 'tycoon', copy: [['tycoon-table/prototype', 'prototypes/tycoon-table']] }, // mobile.html frames tycoon-table.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: tools/web-tycoon.jpg -> assets/thumbs)
   { key: 'puzzlequest', copy: [['All pets/puzzle-quest/prototype', 'prototypes/puzzle-quest']] }, // mobile.html frames puzzle-quest-ecru.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: prototype/shots/web.jpg -> assets/thumbs/web-puzzlequest.jpg)
   { key: 'wonderworld', copy: [['All pets/wonderworld-vr/prototype', 'prototypes/wonderworld-vr']] }, // mobile.html frames wonderworld-vr.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: prototype/shots/web.jpg -> assets/thumbs/web-wonderworld.jpg)
+  { key: 'kanal', copy: [['All pets/kanal/prototype', 'prototypes/kanal']] }, // mobile.html frames kanal-menu.vercel.app; shots from the app (desktop thumb: shots-desktop/web.jpg -> assets/thumbs/web-kanal.jpg); iphone.html + iphone/ are made in the portfolio from shots-native/ios-hig
+  { key: 'keyboard', copy: [['All pets/Practice/kids-keyboard-adventure/prototype/mobile.html', 'prototypes/kids-keyboard/mobile.html']] }, // frames kids-keyboard-adventure.vercel.app; card shots copied by hand from prototype/shots (desktop thumb: tools/web-keyboard.jpg)
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
