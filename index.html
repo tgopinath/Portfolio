@@ -915,8 +915,9 @@ document.querySelectorAll('.card[data-project]').forEach(c=>c.addEventListener('
     var h=0; [].forEach.call(probe.children,function(c){h=Math.max(h,c.getBoundingClientRect().height)}); probe.remove();
     slide.style.setProperty('--kh',Math.ceil(h)+'px');
   }
-  function card(d){var c=hue(d.name);
-      return '<figure class="ktest" style="--dot:'+dot(d.cat)+';--wash:'+(WASH[d.cat]||'#e5e9f7')+'">'+MARK+'<blockquote>'+esc(d.text)+'</blockquote><figcaption><span class="ktest-av" style="--av-bg:'+c[0]+';--av-fg:'+c[1]+'">'+esc(d.init)+'</span><span><b>'+esc(d.name)+'</b>On '+esc(d.proj)+'</span><span class="ktest-tag">'+esc(d.tag)+'</span></figcaption></figure>'}
+  var TONES=[['#dfe7ff','#4d6bfe'],['#fde9d3','#e8891c'],['#d9f2e9','#1f9d6b'],['#f1e1fa','#9b59d0'],['#fbe0e8','#e0457b'],['#dcefff','#1a8fd6'],['#ebf0d2','#7a9a1f']];
+  function card(d){var c=hue(d.name),t=TONES[Math.max(0,data.indexOf(d))%TONES.length];
+      return '<figure class="ktest" style="--dot:'+t[1]+';--wash:'+t[0]+'">'+MARK+'<blockquote>'+esc(d.text)+'</blockquote><figcaption><span class="ktest-av" style="--av-bg:'+c[0]+';--av-fg:'+c[1]+'">'+esc(d.init)+'</span><span><b>'+esc(d.name)+'</b>On '+esc(d.proj)+'</span><span class="ktest-tag">'+esc(d.tag)+'</span></figcaption></figure>'}
   function render(){
     measure();
     var n=per(); at=Math.max(0,Math.min(at,Math.max(0,list.length-n)));
