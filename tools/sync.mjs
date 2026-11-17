@@ -50,6 +50,7 @@ const APPS = [
   { key: 'wordgarden', copy: [['word-garden/prototype', 'prototypes/word-garden']] }, // mobile.html frames word-garden-sable.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: prototype/shots/web.jpg -> assets/thumbs/web-wordgarden.jpg)
   { key: 'tycoon', copy: [['tycoon-table/prototype', 'prototypes/tycoon-table']] }, // mobile.html frames tycoon-table.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: tools/web-tycoon.jpg -> assets/thumbs)
   { key: 'puzzlequest', copy: [['All pets/puzzle-quest/prototype', 'prototypes/puzzle-quest']] }, // mobile.html frames puzzle-quest-ecru.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: prototype/shots/web.jpg -> assets/thumbs/web-puzzlequest.jpg)
+  { key: 'wonderworld', copy: [['All pets/wonderworld-vr/prototype', 'prototypes/wonderworld-vr']] }, // mobile.html frames wonderworld-vr.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: prototype/shots/web.jpg -> assets/thumbs/web-wonderworld.jpg)
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];
