@@ -44,7 +44,7 @@
   back.addEventListener('click',e=>{ try{ const r=new URL(document.referrer); if(r.origin===location.origin&&/\/(index\.html)?$/.test(r.pathname)&&history.length>1){ e.preventDefault(); history.back() } }catch(_){} });
   page.appendChild(back);
   const crumbs=el('nav','crumbs'); crumbs.setAttribute('aria-label','Breadcrumb');
-  crumbs.innerHTML='<a href="index.html#work">Projects</a><span aria-hidden="true">/</span><a href="index.html#'+(side?'side-projects':'work')+'">'+(side?'Side projects':'Zoho product work')+'</a>';
+  crumbs.innerHTML='<a href="index.html#work">Projects</a><span aria-hidden="true">/</span><a href="index.html#'+(side?'side-projects':'work')+'">'+(side?'PetProjects':'Zoho product work')+'</a>';
   page.appendChild(crumbs);
 
   const head=el('section','pp-head'), text=el('div');
