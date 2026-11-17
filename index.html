@@ -193,6 +193,8 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-s
 .pfilter button i{font-style:normal;font-size:12px;color:var(--faint)}
 .pfilter button[aria-pressed=true]{background:var(--text);border-color:var(--text);color:var(--bg)}.pfilter button[aria-pressed=true] i{color:#0a132299}
 .ptiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:18px}
+.pgroup+.pgroup{margin-top:56px}
+.pgroup-h{margin:0 0 18px;font-size:clamp(20px,2vw,24px);font-weight:600;letter-spacing:-.01em;color:var(--text)}
 #side-projects{container:sp/inline-size}
 /* A lone last tile in the 3-column range becomes one wide tile instead of leaving two empty slots. */
 @container sp (min-width:936px) and (max-width:1253.98px){#side-projects .ptile:last-child:nth-child(3n+1){grid-column:1/-1;flex-direction:row}#side-projects .ptile:last-child:nth-child(3n+1) .pt-img{flex:0 0 calc((100% - 36px)/3*2 + 18px)}#side-projects .ptile:last-child:nth-child(3n+1) .pt-body{justify-content:center;padding:24px 28px}#side-projects .ptile:last-child:nth-child(3n+1) .pt-body p{-webkit-line-clamp:4}}
@@ -391,7 +393,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-s
   </div>
 </section>
 <section class="wrap featured side" id="side-projects">
-  <div class="shead"><h2>PetProjects</h2><p>Apps I designed and built with AI-assisted coding, mostly for farmers, families and kids in Tamil Nadu. Most have a live web app and an Android download.</p></div>
+  <div class="shead"><h2>Pet Projects</h2><p>Apps I designed and built with AI-assisted coding, mostly for farmers, families and kids in Tamil Nadu. Most have a live web app and an Android download.</p></div>
   <div class="apps">
   <article class="card wide" data-project="wakemethere">
     <div class="thumb wmt"><div class="phones">
@@ -480,7 +482,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-s
         <li><b>Status</b>Live web app, installable on phones</li>
       </ul>
       <div class="get-app"><a class="apk-dl" href="https://github.com/tgopinath/animal-pals/releases/latest/download/zoorassic-park.apk" download="Vanam.apk"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.6 9.48l1.84-3.18a.38.38 0 0 0-.66-.38l-1.86 3.22a11.5 11.5 0 0 0-9.84 0L5.22 5.92a.38.38 0 0 0-.66.38L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg><span><b>Download for Android</b><small>APK · 4 MB · Android 7.0 or later</small></span></a><a class="live-dl" href="https://vanam-app.vercel.app" target="_blank" rel="noopener"><span><b>Open the live app ↗</b><small>On a phone: Share → Add to Home Screen</small></span></a><span class="apk-note">The Android app opens the live web app, so it is always up to date and needs an internet connection.</span><span class="apk-note">Material 3 on Android, Apple HIG on iPhone. The iPhone app needs TestFlight to install, so its screens are under iPhone app in the project.</span></div>
-      <div class="tags"><span class="tag">Mobile + Web App</span> <span class="tag">iOS app</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="pals" aria-label="Open Vanam prototype">Open the project</a></div>
+      <div class="tags"><span class="tag">Mobile + Web App</span> <span class="tag">iOS app</span><span class="tag">Kids</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="pals" aria-label="Open Vanam prototype">Open the project</a></div>
     </div>
   </article>
   <article class="card wide" data-project="farmerfriend">
@@ -974,15 +976,26 @@ document.querySelectorAll('.card[data-project]').forEach(c=>c.addEventListener('
     var src=section.querySelector(selector); if(!src) return;
     var cards=[].slice.call(src.querySelectorAll('.card[data-project]'));
     src.classList.add('psource');
-    var grid=document.createElement('div'); grid.className='ptiles';
-    cards.forEach(function(c){ grid.appendChild(tile(c,kind)) });
+    var grid=document.createElement('div'); grid.className='ptiles', boxes=[];
+    if(kind==='side'){
+      /* Apps for kids first, then everything else; the filter applies to both groups. */
+      var kids=function(c){ return [].some.call(c.querySelectorAll('.tags .tag'),function(s){ return s.textContent.trim()==='Kids' }) };
+      grid=document.createDocumentFragment();
+      [['Apps for kids',cards.filter(kids)],['Other apps',cards.filter(function(c){return !kids(c)})]].forEach(function(g){
+        if(!g[1].length) return;
+        var box=document.createElement('div'); box.className='pgroup';
+        var h=document.createElement('h3'); h.className='pgroup-h'; h.textContent=g[0]; box.appendChild(h);
+        var gr=document.createElement('div'); gr.className='ptiles'; g[1].forEach(function(c){ gr.appendChild(tile(c,kind)) }); box.appendChild(gr);
+        boxes.push(box); grid.appendChild(box);
+      });
+    } else cards.forEach(function(c){ grid.appendChild(tile(c,kind)) });
     if(filters){
       var bar=document.createElement('div'); bar.className='pfilter'; bar.setAttribute('role','group'); bar.setAttribute('aria-label','Filter side projects');
-      var tiles=[].slice.call(grid.children);
+      var tiles=boxes.length?[].concat.apply([],boxes.map(function(b){return [].slice.call(b.querySelectorAll('.ptile'))})):[].slice.call(grid.children);
       [['All',''],['Web','Web'],['Android','Android'],['iPhone','iPhone'],['Mac and Windows','Mac']].forEach(function(f,i){
         var n=tiles.filter(function(t){return !f[1]||t.dataset.plat.split(' ').indexOf(f[1])>=0}).length; if(!n) return;
         var btn=document.createElement('button'); btn.type='button'; btn.setAttribute('aria-pressed',i===0); btn.innerHTML=f[0]+' <i>'+n+'</i>';
-        btn.addEventListener('click',function(){ bar.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===btn)}); tiles.forEach(function(t){ t.hidden=!!f[1]&&t.dataset.plat.split(' ').indexOf(f[1])<0 }) });
+        btn.addEventListener('click',function(){ bar.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===btn)}); tiles.forEach(function(t){ t.hidden=!!f[1]&&t.dataset.plat.split(' ').indexOf(f[1])<0 }); boxes.forEach(function(b){ b.hidden=!b.querySelector('.ptile:not([hidden])') }) });
         bar.appendChild(btn);
       });
       src.before(bar);
