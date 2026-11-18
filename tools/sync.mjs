@@ -54,6 +54,7 @@ const APPS = [
   { key: 'kanal', copy: [['All pets/kanal/prototype', 'prototypes/kanal']] }, // mobile.html frames kanal-menu.vercel.app; shots from the app (desktop thumb: shots-desktop/web.jpg -> assets/thumbs/web-kanal.jpg); iphone.html + iphone/ are made in the portfolio from shots-native/ios-hig
   { key: 'keyboard', copy: [['All pets/Practice/kids-keyboard-adventure/prototype/mobile.html', 'prototypes/kids-keyboard/mobile.html']] }, // frames kids-keyboard-adventure.vercel.app; card shots copied by hand from prototype/shots (desktop thumb: tools/web-keyboard.jpg)
   { key: 'petuniverse', copy: [['virtual-pet-universe/prototype', 'prototypes/virtual-pet-universe']] }, // mobile.html frames virtual-pet-universe.vercel.app; shots from the app's tools/shots.mjs (desktop thumb: prototype/shots/web.jpg -> assets/thumbs/web-petuniverse.jpg)
+  { key: 'wordwonders', copy: [['All pets/vocab-builder/prototype/mobile.html', 'prototypes/word-wonders/mobile.html'], ['All pets/vocab-builder/prototype/shots', 'prototypes/word-wonders/shots'], ['All pets/vocab-builder/prototype/web.jpg', 'assets/thumbs/web-wordwonders.jpg']] }, // Word Wonders (vocab-builder, React/Vite, not Kolam). mobile.html frames word-wonders.vercel.app; shots + web.jpg from the app's tools/shots.mjs (live site)
   { key: 'zuis', copy: [['zuis-v2/prototype.html', 'prototypes/zuis/index.html']],
     page: 'prototypes/zuis/index.html', seed: 'zuis-v2/dist-export/zuis-guidelines.html' },
 ];

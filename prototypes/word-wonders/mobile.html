@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Wonders Mobile</title>
+<script>
+  // On a real phone, skip the frame and open the app itself.
+  if (matchMedia("(max-width: 600px)").matches) location.replace("https://word-wonders.vercel.app/" + location.hash);
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Nunito:wght@400;700&display=swap">
+<style>
+:root{--bg:#FFF9F0;--ink:#2A1F4A;--muted:#5E5872;--green:#6A3FD1;--frame:#121412}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#141020;--ink:#F3F0FA;--muted:#B5AECB;--green:#B9A2F5;--frame:#000}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(60% 50% at 80% 10%,#ECE4FF,transparent 70%),radial-gradient(50% 50% at 10% 90%,#FFE4D688,transparent 70%),var(--bg);color:var(--ink);font:16px/1.5 "Nunito",system-ui,sans-serif;display:grid;place-items:center;padding:24px 16px}
+.stage{display:flex;gap:56px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:1000px}
+.copy{max-width:340px;display:grid;gap:14px}
+.copy .k{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+.copy h1{margin:0;font:600 32px/1.12 "Fredoka",system-ui,sans-serif;letter-spacing:-.02em}
+.copy p{margin:0;color:var(--muted)}
+.copy ul{margin:0;padding-left:18px;color:var(--muted);display:grid;gap:6px}
+.copy a{color:var(--green);font-weight:600}
+.phone{width:390px;height:844px;max-height:calc(100vh - 48px);aspect-ratio:390/844;border-radius:54px;padding:12px;background:var(--frame);box-shadow:0 40px 80px -30px rgba(20,30,25,.45),inset 0 0 0 2px #2a2e2a;position:relative;flex:none}
+.phone iframe{width:100%;height:100%;border:0;border-radius:42px;background:#FFF9F0;display:block}
+@media (max-height:900px){.phone{height:calc(100vh - 48px);width:auto}}
+@media (max-width:820px){.copy{display:none}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="copy">
+    <span class="k">Mobile app</span>
+    <h1>Word Wonders on a phone</h1>
+    <p>An animated English vocabulary builder for children aged 3 to 10: 314 words in 25 categories, learned by tapping objects that move and speak.</p>
+    <ul>
+      <li>Tap the apple: it takes a bite, says its name and shows the meaning, an example sentence and a picture story.</li>
+      <li>Slow mode, replay, listen-and-repeat and a quick check after every word.</li>
+      <li>Find the Object turns each 6-word lesson into a game, with friendly hints and stars.</li>
+      <li>Parents get a gated dashboard: child profiles, a daily time limit and stats.</li>
+    </ul>
+    <p><a href="https://word-wonders.vercel.app" target="_blank" rel="noopener">Open the live app ↗</a></p>
+  </div>
+  <div class="phone"><iframe src="https://word-wonders.vercel.app/" title="Word Wonders mobile app" allow="autoplay"></iframe></div>
+</div>
+</body>
+</html>
