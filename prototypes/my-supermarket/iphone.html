@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Supermarket for iPhone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap">
+<style>
+:root{--bg:#F6F4EE;--card:#fff;--ink:#1F2128;--muted:#4A4E5A;--line:#E4E1D8;--accent:#B23F18}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#121316;--card:#1B1C21;--ink:#EDEDF0;--muted:#B5B8C2;--line:#2A2C33;--accent:#FFA07A}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Lato,system-ui,sans-serif;padding:32px 16px 48px}
+main{max-width:1120px;margin:0 auto}
+.k{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{margin:6px 0 10px;font:900 clamp(28px,4vw,40px)/1.1 Lato,sans-serif;letter-spacing:-.02em}
+.intro{max-width:760px;display:grid;gap:10px;margin-bottom:32px}
+.intro p{margin:0;color:var(--muted)}
+.note{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 16px;font-size:14.5px}
+a{color:var(--ink);font-weight:700}
+a:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.shots{display:flex;gap:24px;overflow-x:auto;padding:6px 4px 16px;scroll-snap-type:x mandatory;margin:0;list-style:none}
+.shots li{flex:0 0 220px;scroll-snap-align:start}
+figure{margin:0}
+.phone{border-radius:30px;overflow:hidden;border:6px solid #1F2128;background:#000;box-shadow:0 26px 50px -28px rgba(20,20,30,.55)}
+img{display:block;width:100%;height:auto}
+figcaption{margin-top:10px;font-size:14px;font-weight:700;text-align:center}
+@media (max-width:480px){.shots li{flex-basis:70vw}}
+</style>
+</head>
+<body>
+<main>
+<div class="intro">
+<span class="k">iPhone app</span>
+<h1>My Supermarket for iPhone</h1>
+<p>A native SwiftUI app (iOS 17+) that wraps the My Supermarket web app. The hub screens (Shop, Rewards, Progress and Settings) switch to Apple’s Human Interface Guidelines look with large titles and a floating Liquid Glass tab bar; the 3D store, quizzes and results stay full-screen. WebXR AR isn’t available in an iPhone WebView, so AR mode uses the camera mode here. The Android app uses Material 3 instead, and the website keeps its own playful look.</p>
+<p class="note">Installing an iPhone app on other people’s phones needs TestFlight or the App Store, so it is shown here as Simulator screenshots. Source: <a href="https://github.com/tgopinath/MySupermarket-iOS" target="_blank" rel="noopener">github.com/tgopinath/MySupermarket-iOS ↗</a></p>
+</div>
+<ul class="shots" aria-label="My Supermarket iPhone screens">
+<li><figure><div class="phone"><img src="iphone/welcome.jpg" alt="My Supermarket iPhone app. Welcome: My Supermarket with a trolley, Let’s start! and a link to the grown-ups’ parent dashboard" width="600" height="1304" loading="lazy" decoding="async"></div><figcaption>Welcome</figcaption></figure></li>
+<li><figure><div class="phone"><img src="iphone/shop.jpg" alt="My Supermarket iPhone app. Shop: Hi Asha! Pick a game, with Free Shopping, Shopping Challenge and Budget Challenge above the Liquid Glass tab bar" width="600" height="1304" loading="lazy" decoding="async"></div><figcaption>Shop</figcaption></figure></li>
+<li><figure><div class="phone"><img src="iphone/rewards.jpg" alt="My Supermarket iPhone app. Rewards: badges such as First Shopping Trip, Fruit Explorer, Smart Shopper and Budget Master, still locked" width="600" height="1304" loading="lazy" decoding="async"></div><figcaption>Rewards</figcaption></figure></li>
+<li><figure><div class="phone"><img src="iphone/store.jpg" alt="My Supermarket iPhone app. The 3D store, full-screen: aisle signs, a red trolley and ShopBuddy saying Grab a trolley first!" width="600" height="1304" loading="lazy" decoding="async"></div><figcaption>3D store</figcaption></figure></li>
+</ul>
+</main>
+</body>
+</html>
