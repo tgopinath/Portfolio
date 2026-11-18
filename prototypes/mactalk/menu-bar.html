@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MacTalk · Menu bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section class="intro">
+    <div>
+      <span class="k">Desktop app · macOS</span>
+      <div class="head"><img src="shots/icon-256.png" alt="" width="256" height="256"><h1>MacTalk</h1></div>
+      <p>A walkie-talkie for the Mac menu bar. Add friends by email, and once they accept, call them with one click or with <kbd>⌃1</kbd>–<kbd>⌃9</kbd> from any app. On their Mac a call slides in at the bottom-right corner with Accept and Decline, and the conversation runs over encrypted peer-to-peer audio.</p>
+      <div class="dl">
+        <a href="https://github.com/tgopinath/MacTalk/releases/latest/download/MacTalk.dmg">Download for Mac (.dmg)<small>DMG · 19 MB · macOS 14 Sonoma or later · Apple silicon and Intel</small></a>
+        <a class="alt" href="https://github.com/tgopinath/MacTalk" target="_blank" rel="noopener">Source on GitHub ↗<small>Swift 6, SwiftUI and AppKit, WebRTC, Supabase</small></a>
+        <p>Open the DMG and drag MacTalk to Applications. The first launch needs one extra step; see the release note below.</p>
+      </div>
+    </div>
+    <ul>
+      <li>Lives in the menu bar only, with no Dock icon.</li>
+      <li>Friends list with live presence: online, busy, in a call, or offline with when they were last seen.</li>
+      <li>One-click calls, and <kbd>⌃1</kbd>–<kbd>⌃9</kbd> speed dial for the first nine friends.</li>
+      <li>Friends-only calling, enforced on the server by Row Level Security and SQL functions: nobody can ring you without an accepted invitation.</li>
+      <li>Encrypted peer-to-peer audio (WebRTC, DTLS-SRTP) with echo cancellation and noise suppression.</li>
+      <li>The microphone stays off until a call is answered.</li>
+      <li>Sign in with Google or a one-time email code.</li>
+    </ul>
+  </section>
+  <p class="note"><b>Release note.</b> The build is signed ad hoc and not notarised. The first time, Control-click MacTalk in Applications and choose Open; on macOS 15 or later, if that is not offered, open System Settings › Privacy &amp; Security and choose Open Anyway. The calling service isn't connected in this build yet, so the app opens to a “Configuration needed” screen until it is.</p>
+  <section>
+    <h2>On the desktop</h2>
+    <p class="sub">The friends list opens under the menu bar icon; an incoming call appears in the bottom-right corner.</p>
+    <figure><div class="win"><img src="shots/desktop.jpg" alt="A Mac desktop with the MacTalk friends list open under its menu bar icon and an incoming call from Alex Johnson in the bottom-right corner" width="1440" height="900" loading="lazy"></div></figure>
+  </section>
+
+  <section>
+    <h2>The menu bar panel</h2>
+    <p class="sub">Invitations at the top, then friends with their presence and speed-dial key. The call button is only active for friends who can take a call. Scroll sideways for more.</p>
+    <div class="row">
+      <figure><div class="shot"><img src="shots/popover-light.jpg" alt="The MacTalk panel: a friend invitation from Nora Ito with Decline and Accept, a search field, and five friends with presence dots, ⌃1 to ⌃5 badges and call buttons" width="600" height="854" loading="lazy"></div><figcaption><b>Friends.</b> Online, offline with last seen, in a call, busy.</figcaption></figure>
+      <figure><div class="shot"><img src="shots/popover-dark.jpg" alt="The same panel in dark mode" width="600" height="854" loading="lazy"></div><figcaption><b>Dark mode.</b> Follows the system appearance.</figcaption></figure>
+      <figure><div class="shot"><img src="shots/popover-empty-light.jpg" alt="The panel with no friends yet: a Can't reach the MacTalk server banner with Retry, then No friends yet and an Add Your First Friend button" width="600" height="707" loading="lazy"></div><figcaption><b>Empty and offline.</b> No friends yet, and a Retry banner when the server can't be reached.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Friends</h2>
+    <p class="sub">Invite by email; then drag friends into speed-dial order, and see invitations and blocked people in one place.</p>
+    <div class="row wide">
+      <figure><div class="shot"><img src="shots/add-friend.jpg" alt="Add a friend: an email field, a note that your email stays private, and Send Invitation" width="600" height="450" loading="lazy"></div><figcaption><b>Add a friend.</b> They get an invitation to accept.</figcaption></figure>
+      <figure><div class="shot"><img src="shots/manage-friends.jpg" alt="Manage Friends with Friends, Invitations and Blocked tabs: five friends in speed-dial order ⌃1 to ⌃5, each with a more-actions button" width="600" height="484" loading="lazy"></div><figcaption><b>Manage.</b> Drag to reorder; the first nine get ⌃1–⌃9.</figcaption></figure>
+    </div>
+  </section>
+  <p class="foot">Screens are rendered from the app's own SwiftUI views with sample people and data. Built with Swift 6, SwiftUI and AppKit, WebRTC audio and a Supabase backend (Auth, Postgres with Row Level Security, Realtime). Source on <a href="https://github.com/tgopinath/MacTalk" target="_blank" rel="noopener">GitHub ↗</a>.</p>
+</main>
+</body>
+</html>

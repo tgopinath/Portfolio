@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MacTalk · Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section>
+    <span class="k">MacTalk · Sign in</span>
+    <h1>Welcome, sign in, set up a profile</h1>
+    <p class="sub">Continue with Google, or get a one-time code by email; signing in for the first time creates the account. Then choose a display name, an avatar and your availability: Online, Busy or Do Not Disturb.</p>
+    <div class="row">
+      <figure><div class="shot"><img src="shots/welcome.jpg" alt="Welcome to MacTalk: lives in your menu bar, friends only, speed dial with ⌃1–⌃9, and private by design, with a Get Started button" width="600" height="763" loading="lazy"></div><figcaption><b>Welcome.</b></figcaption></figure>
+      <figure><div class="shot"><img src="shots/sign-in-light.jpg" alt="Sign in to MacTalk: Continue with Google, or an email field and Email Me a Code" width="600" height="763" loading="lazy"></div><figcaption><b>Sign in.</b> Google or an email code.</figcaption></figure>
+      <figure><div class="shot"><img src="shots/sign-in-dark.jpg" alt="The sign-in screen in dark mode" width="600" height="763" loading="lazy"></div><figcaption><b>Sign in, dark.</b></figcaption></figure>
+      <figure><div class="shot"><img src="shots/profile-setup.jpg" alt="Create your profile: display name, a choice of thirteen avatars or your own photo, and Online, Busy or Do Not Disturb" width="600" height="763" loading="lazy"></div><figcaption><b>Profile.</b> Name, avatar and availability.</figcaption></figure>
+    </div>
+  </section>
+  <p class="note"><b>Release note.</b> The build is signed ad hoc and not notarised. The first time, Control-click MacTalk in Applications and choose Open; on macOS 15 or later, if that is not offered, open System Settings › Privacy &amp; Security and choose Open Anyway. The calling service isn't connected in this build yet, so the app opens to a “Configuration needed” screen until it is.</p>
+  <p class="foot">Screens are rendered from the app's own SwiftUI views with sample people and data. Built with Swift 6, SwiftUI and AppKit, WebRTC audio and a Supabase backend (Auth, Postgres with Row Level Security, Realtime). Source on <a href="https://github.com/tgopinath/MacTalk" target="_blank" rel="noopener">GitHub ↗</a>.</p>
+</main>
+</body>
+</html>
