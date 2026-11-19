@@ -41,26 +41,63 @@
   const el=(t,c,txt)=>{const e=document.createElement(t); if(c) e.className=c; if(txt!=null) e.textContent=txt; return e};
 
   page.innerHTML='';
-  // back to the project list: return to where the visitor came from on the home page, or to this project's group
-  const back=el('a','pp-back','← Back to all projects'); back.href='index.html#'+(side?'side-projects':'work');
+  if(!document.getElementById('pp-top-css')){ const st=el('style'); st.id='pp-top-css'; st.textContent=
+    /* top row: back button + title on the left, compact app buttons on the right */
+    '.pp-top{display:flex;align-items:center;gap:16px 24px;flex-wrap:wrap;margin:0 0 clamp(20px,3vw,32px)}'+
+    '.pp-titlewrap{display:flex;align-items:center;gap:16px;flex:1 1 auto;min-width:0}'+
+    '.pp-titlewrap h1{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(34px,5vw,76px);line-height:.95;letter-spacing:.01em;margin:0;min-width:0;overflow-wrap:anywhere}'+
+    '.pp-backbtn{flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line,#e2e6ef);background:var(--surface,#fff);color:var(--text,#141a26)}'+
+    '.pp-backbtn:hover{border-color:#c9cfdb;background:var(--raised,#fff)}.pp-backbtn svg{width:22px;height:22px}'+
+    '.pp-backbtn:focus-visible,.pp-act:focus-visible{outline:2px solid var(--accent,#d92f45);outline-offset:2px}'+
+    '.pp-acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-left:auto}'+
+    '.pp-act{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line,#e2e6ef);background:transparent;color:var(--text,#141a26);font-size:14px;font-weight:600;white-space:nowrap}'+
+    '.pp-act:hover{border-color:#c9cfdb;background:var(--surface,#fff)}'+
+    '.pp-act.fill{background:var(--text,#141a26);border-color:var(--text,#141a26);color:var(--bg,#fff)}.pp-act.fill:hover{background:#2a3242}'+
+    '.pp-act svg{width:18px;height:18px;flex:none}.pp-act.fill svg:not(.os){color:#3ddc84}'+
+    /* hero: thumbnail left, content right */
+    '.pp-head{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}'+
+    '.pp-head .pp-art{order:0}'+
+    '@media(max-width:900px){.pp-head{grid-template-columns:1fr}.pp-head .pp-art{order:-1}}'+
+    '@media(max-width:560px){.pp-top{gap:12px}.pp-acts{order:-1;flex-basis:100%;justify-content:flex-start}.pp-titlewrap{gap:12px}.pp-backbtn{width:44px;height:44px}}';
+    document.head.appendChild(st) }
+  // top row: back button in front of the title, the app's downloads and live link in the top-right corner
+  const top=el('div','pp-top'), tw=el('div','pp-titlewrap');
+  const backTo=side?'Pet Projects':'Zoho product work';
+  const back=el('a','pp-backbtn'); back.href='index.html#'+(side?'side-projects':'work');
+  back.setAttribute('aria-label','Back to '+backTo); back.title='Back to '+backTo;
+  back.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>';
   back.addEventListener('click',e=>{ try{ const r=new URL(document.referrer); if(r.origin===location.origin&&/\/(index\.html)?$/.test(r.pathname)&&history.length>1){ e.preventDefault(); history.back() } }catch(_){} });
-  page.appendChild(back);
-  const crumbs=el('nav','crumbs'); crumbs.setAttribute('aria-label','Breadcrumb');
-  crumbs.innerHTML='<a href="index.html#work">Projects</a><span aria-hidden="true">/</span><a href="index.html#'+(side?'side-projects':'work')+'">'+(side?'Pet Projects':'Zoho product work')+'</a>';
-  page.appendChild(crumbs);
+  tw.append(back, el('h1',null,title)); top.appendChild(tw);
+  const getApp=card.querySelector('.get-app'), acts=el('div','pp-acts'); let liveHint='';
+  if(getApp) getApp.querySelectorAll('a.apk-dl, a.live-dl').forEach(a=>{
+    const full=((a.querySelector('b')||{}).textContent||'').trim(), sub=((a.querySelector('small')||{}).textContent||'').trim();
+    const isLive=a.classList.contains('live-dl')&&!a.classList.contains('src-dl'), isSrc=a.classList.contains('src-dl');
+    const os=(full.match(/Download for (\w+)/)||[])[1];
+    const label=isLive?'Live app ↗':isSrc?'Source ↗':os?os+' app':full;
+    const b=a.cloneNode(false); b.className='pp-act'+(a.classList.contains('apk-dl')?' fill':'');
+    const svg=a.querySelector('svg'); if(svg) b.appendChild(svg.cloneNode(true));
+    b.appendChild(document.createTextNode(label));
+    const detail=sub?label.replace(' ↗','')+' · '+sub:label.replace(' ↗','');
+    b.title=sub||label; b.setAttribute('aria-label',detail+(isLive||isSrc?' (opens in a new tab)':''));
+    if(isLive&&sub) liveHint=sub;
+    acts.appendChild(b);
+  });
+  if(acts.children.length) top.appendChild(acts);
+  page.appendChild(top);
 
   const head=el('section','pp-head'), text=el('div');
   const dept=card.querySelector('.dept'); if(dept) text.appendChild(el('span','dept',dept.textContent));
-  text.appendChild(el('h1',null,title));
   text.appendChild(el('p','lede',desc.trim()));
   const facts=card.querySelector('.wide-facts'); if(facts) text.appendChild(facts.cloneNode(true));
   const meta=card.querySelector('.story .meta'); if(meta) text.appendChild(el('p','kicker',meta.textContent));
-  const getApp=card.querySelector('.get-app'); if(getApp) text.appendChild(getApp.cloneNode(true));
+  // the note under the facts keeps the install hint for touch devices, where tooltips don't show
+  const note=getApp&&getApp.querySelector('.apk-note');
+  if(note||liveHint){ const nt=el('p','apk-note pp-note'); nt.style.margin='0 0 18px'; nt.textContent=[liveHint?liveHint+'.':'', note?note.textContent.trim():''].filter(Boolean).join(' '); text.appendChild(nt) }
   const tags=card.querySelector('.tags'); if(tags){ const t=tags.cloneNode(true); t.querySelectorAll('.round-arrow,.case-open').forEach(n=>n.remove()); text.appendChild(t) }
   const n=i; head.dataset.tone=n%7+1; head.dataset.pat=n%4+1;
   const art=el('div','pp-art'), th=card.querySelector('.thumb'), fig=card.querySelector('figure img');
   if(th) art.appendChild(th.cloneNode(true)); else if(fig) art.appendChild(fig.cloneNode(true));
-  head.append(text,art); page.appendChild(head);
+  head.append(art,text); page.appendChild(head);
 
   // a case study is a long read: it sits closed below the views and loads only when the visitor opens it
   const allViews=pr.views||[], isCase=v=>/^Case study/i.test(v[0]);
