@@ -28,7 +28,9 @@
   let protos={};
   const m=html.match(/const protos=(\{[\s\S]*?\n\});/);
   if(m){ try{ protos=new Function('return '+m[1])() }catch(e){} }
-  const cards=[...doc.querySelectorAll('#work .card[data-project], #side-projects .card[data-project]')];
+  const name=c=>((c.querySelector('h3')||{}).textContent||'').trim();
+  // same order as the home page: Zoho work as listed, then side projects A to Z
+  const cards=[...doc.querySelectorAll('#work .card[data-project]'), ...[...doc.querySelectorAll('#side-projects .card[data-project]')].sort((a,b)=>name(a).localeCompare(name(b),'en',{sensitivity:'base'}))];
   const i=cards.findIndex(c=>c.dataset.project===key);
   if(i<0) return fail('That project isn’t on the portfolio. It may have been renamed.');
   buildSidebar({doc, current:key});

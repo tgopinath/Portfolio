@@ -1161,18 +1161,9 @@ document.querySelectorAll('.card[data-project]').forEach(c=>c.addEventListener('
     var cards=[].slice.call(src.querySelectorAll('.card[data-project]'));
     src.classList.add('psource');
     var grid=document.createElement('div'); grid.className='ptiles', boxes=[];
-    if(kind==='side'){
-      /* Apps for kids first, then everything else; the filter applies to both groups. */
-      var kids=function(c){ return [].some.call(c.querySelectorAll('.tags .tag'),function(s){ return s.textContent.trim()==='Kids' }) };
-      grid=document.createDocumentFragment();
-      [['Apps for kids',cards.filter(kids)],['Other apps',cards.filter(function(c){return !kids(c)})]].forEach(function(g){
-        if(!g[1].length) return;
-        var box=document.createElement('div'); box.className='pgroup';
-        var h=document.createElement('h3'); h.className='pgroup-h'; h.textContent=g[0]; box.appendChild(h);
-        var gr=document.createElement('div'); gr.className='ptiles'; g[1].forEach(function(c){ gr.appendChild(tile(c,kind)) }); box.appendChild(gr);
-        boxes.push(box); grid.appendChild(box);
-      });
-    } else cards.forEach(function(c){ grid.appendChild(tile(c,kind)) });
+    /* side projects: one list, A to Z by name */
+    if(kind==='side') cards.sort(function(a,b){ var t=function(c){ return ((c.querySelector('h3')||{}).textContent||'').trim() }; return t(a).localeCompare(t(b),'en',{sensitivity:'base'}) });
+    cards.forEach(function(c){ grid.appendChild(tile(c,kind)) });
     if(filters){
       var bar=document.createElement('div'); bar.className='pfilter'; bar.setAttribute('role','group'); bar.setAttribute('aria-label','Filter side projects');
       var tiles=boxes.length?[].concat.apply([],boxes.map(function(b){return [].slice.call(b.querySelectorAll('.ptile'))})):[].slice.call(grid.children);
