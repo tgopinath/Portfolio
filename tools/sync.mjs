@@ -33,12 +33,10 @@ const APPS = [
     watch: ['prototypes/ulaa-browser'], page: 'prototypes/ulaa-browser/index.html' },
   { key: 'om', build: { dir: 'om-builder', cmd: ['python3', 'build.py'], inputs: ['app.js', 'styles.css', 'index.html', 'assets', 'build.py'], output: 'om-builder.html' },
     copy: [['om-builder/om-builder.html', 'prototypes/om/index.html']], page: 'prototypes/om/index.html' },
-  { key: 'farm', copy: ['case-study.html', 'screens.html', 'mobile.html', 'web.html', 'shots'].map((f) => [`farm-manager/prototype/${f}`, `prototypes/farm/${f}`]) }, // the app itself loads from farm-manager-lemon.vercel.app
   { key: 'pals', copy: [['animal-pals/prototype', 'prototypes/zoorassic-park']] }, // mobile.html frames zoorassic-park.vercel.app; shots from the app's tools/shots.mjs
-  { key: 'farmerfriend', copy: [['farmer-friend/prototype', 'prototypes/farmer-friend']] }, // mobile.html frames farmerfriend.vercel.app; shots from the app's tools/shots.mjs
+  { key: 'farmerfriend', copy: [['All pets/farmer-friend/prototype', 'prototypes/farmer-friend'], ['All pets/farmer-friend/prototype/web.jpg', 'assets/thumbs/web-farmerfriend.jpg']] }, // FarmerFriend (Crops, Organic, Water, Drying, Livestock & farm books; replaced the Farm Manager, Water Manager and Solar Dry House cards). mobile.html frames farmerfriend.vercel.app; shots from the app's tools/shots.mjs; iphone/ and case-study-farm-books/ live in the app's prototype/
   { key: 'kaadu', copy: [['kaadu/prototype', 'prototypes/kaadu']] }, // mobile.html frames kaadu-plants.vercel.app; shots from the app's tools/shots.mjs
   { key: 'mettu', copy: [['mettu/prototype', 'prototypes/mettu']] }, // mobile.html frames mettu.vercel.app; shots from the app's tools/shots.mjs
-  { key: 'water', copy: [['water-manager/prototype', 'prototypes/water-manager']] }, // mobile.html frames water-manager-beryl.vercel.app; shots from the app's tools/shots.mjs
   { key: 'veyil', copy: [['veyil/prototype', 'prototypes/veyil']] }, // mobile.html frames veyil-xi.vercel.app; shots from the app's tools/shots.mjs
   { key: 'udambu', copy: [['All pets/udambu/prototype', 'prototypes/udambu'], ['All pets/udambu/prototype/web.jpg', 'assets/thumbs/web-udambu.jpg']] }, // Udambu: Explore (plain JS) + Lab (React/R3F, at /lab/). mobile.html frames udambu.vercel.app; shots + web.jpg from the app's tools/shots.mjs; iphone/ from Udambu-iOS/screenshots
   { key: 'kalvi', copy: [['kalvi/prototype', 'prototypes/kalvi']] }, // mobile.html frames kalvi-learn.vercel.app; shots from the app's tools/shots.mjs
