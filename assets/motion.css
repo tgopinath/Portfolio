@@ -1,8 +1,8 @@
-/* Motion layer for the home page: full-screen project panels with parallax depth, a hero that lifts away
+/* Motion layer for the home page: every project in one animated grid, a hero that lifts away
    on scroll, headings that ease in and a thin reading-progress line. Everything is scoped to html.mo,
    which assets/motion.js sets, so the page keeps its plain grid without JavaScript.
-   --p   (-1..1)  where a panel sits relative to the middle of the screen, set per panel on scroll
-   --mx/--my (-1..1) pointer position over a panel, for the small tilt of its screenshots (mouse only)
+   --d             a tile's delay in the cascade as it arrives (row by row)
+   --mx/--my (-1..1) pointer position over a tile: its light and the small tilt of its screenshots (mouse only)
    --hs  (0..1)   how far the hero has scrolled away */
 
 html.mo body{overflow-x:clip}
@@ -25,76 +25,50 @@ html.mo body{overflow-x:clip}
 .mo .pfilter button{border-color:transparent;background:none;padding:7px 14px}
 .mo .pfilter button[aria-pressed=true]{background:var(--text);color:var(--bg)}
 
-/* ---------- full-screen project panels ---------- */
-.mo .ptiles{display:block;width:100vw;margin-left:calc(50% - 50vw);counter-reset:none}
-.mo .ptile{
-  --amp:1;
-  position:relative;isolation:isolate;overflow:hidden;
-  display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);align-items:center;gap:clamp(28px,4vw,72px);
-  min-height:100vh;min-height:100svh;
-  padding:clamp(72px,10vh,120px) max(var(--gut),calc((100vw - 1480px)/2));
-  border:0;border-radius:0;background:var(--pb,var(--surface));box-shadow:none;transform:none
-}
-.mo .ptile:hover{transform:none;box-shadow:none;background:var(--pb,var(--surface))}
-.mo .ptile:nth-child(even){grid-template-columns:minmax(0,8fr) minmax(0,4fr)}
-.mo .ptile .pt-body{order:-1}
-.mo .ptile:nth-child(even) .pt-body{order:2}
-/* the pattern sits on its own layer and moves slowest */
-.mo .ptile:before{content:"";position:absolute;z-index:-1;inset:-18% 0;background:var(--pat,none);opacity:.7;transform:translate3d(0,calc(var(--p,0)*70px*var(--amp)),0);will-change:transform}
-/* a soft pastel pool behind the screenshots */
-.mo .ptile:after{content:"";position:absolute;z-index:-1;width:62vmax;height:62vmax;right:-14vmax;top:50%;border-radius:50%;background:radial-gradient(closest-side,var(--pa,#eef1f6),transparent);transform:translate3d(0,calc(-50% + var(--p,0)*-40px*var(--amp)),0)}
-.mo .ptile:nth-child(even):after{right:auto;left:-14vmax}
-
-.mo .pt-body{padding:0;gap:14px;flex:none;max-width:520px;transform:translate3d(0,calc(var(--p,0)*-26px*var(--amp)),0)}
-.mo .pt-n{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.14em;color:var(--faint)}
-.mo .pt-body h3{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(44px,5.6vw,92px);line-height:.92;letter-spacing:.005em;margin:0}
-.mo .pt-body p{font-size:clamp(17px,1.35vw,20px);line-height:1.55;color:var(--muted);-webkit-line-clamp:4}
-.mo .pt-meta{margin-top:6px;padding-top:0}
-.mo .pt-meta span{font-size:13px;padding:5px 12px;background:#ffffffc7}
-.mo .pt-go{display:inline-flex;align-items:center;gap:10px;margin-top:10px;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.08em;text-transform:uppercase;color:var(--text)}
-.mo .pt-go i{font-style:normal;display:inline-block;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
-.mo .ptile:hover .pt-go i{transform:translateX(6px)}
-
-/* the screenshots: a large stage with a little tilt toward the pointer */
-.mo .pt-img{aspect-ratio:16/10;max-height:78vh;overflow:visible;background:none;container-type:inline-size;perspective:1400px}
-.mo .pt-img .thumb.wmt{overflow:visible;transform:rotateY(calc(var(--mx,0)*5deg)) rotateX(calc(var(--my,0)*-4deg));transition:transform .5s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
-/* the browser window drifts with the page, the phones float faster in front of it */
-.mo .pt-img .thumb.wmt.duo .web-win{transform:translate3d(0,calc(var(--p,0)*36px*var(--amp)),0);box-shadow:0 0 0 1px #141a2614,0 40px 80px -40px #141a2680}
-.mo .pt-img .wmt .phones{transform:translate3d(0,calc(var(--p,0)*-110px*var(--amp)),0);will-change:transform}
-.mo .pt-img .wmt .phones img{box-shadow:0 30px 60px -26px #141a2699}
-/* product-work tiles have a single screenshot */
-.mo .pt-img > img{position:absolute;inset:4% 0 auto;width:100%;height:auto;max-height:100%;border-radius:12px;object-fit:cover;object-position:top left;box-shadow:0 0 0 1px #141a2612,0 40px 80px -40px #141a2680;transform:translate3d(0,calc(var(--p,0)*-50px*var(--amp)),0) rotateY(calc(var(--mx,0)*5deg)) rotateX(calc(var(--my,0)*-4deg));transition:transform .2s linear}
-.mo .ptile:hover .pt-img > img{transform:translate3d(0,calc(var(--p,0)*-50px*var(--amp)),0) rotateY(calc(var(--mx,0)*5deg)) rotateX(calc(var(--my,0)*-4deg))}
-
-/* panels ease in the first time they reach the screen */
-.mo .ptile .pt-body > *,.mo .ptile .pt-img{opacity:0;translate:0 34px;transition:opacity .8s ease,translate .9s cubic-bezier(.2,.7,.2,1)}
-.mo .ptile.in .pt-body > *,.mo .ptile.in .pt-img{opacity:1;translate:0 0}
-.mo .ptile.in .pt-body > :nth-child(2){transition-delay:.06s}.mo .ptile.in .pt-body > :nth-child(3){transition-delay:.12s}
-.mo .ptile.in .pt-body > :nth-child(4){transition-delay:.18s}.mo .ptile.in .pt-body > :nth-child(5){transition-delay:.24s}
-.mo .ptile.in .pt-img{transition-delay:.1s}
-
-/* filtered-out panels and the small-screen layout */
+/* ---------- every project in one grid ---------- */
+/* An even, responsive grid (three columns wide, two on a tablet, one on a phone). Tiles cascade in as they
+   arrive, lift on hover with a soft light following the mouse, and glide to their new places when filtered. */
+.mo{--mo-e:cubic-bezier(.2,.8,.2,1)}
+.mo .ptiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:clamp(16px,2vw,24px)}
+.mo .ptile{position:relative;isolation:isolate;display:flex;flex-direction:column;border-radius:22px;overflow:hidden;
+  opacity:0;translate:0 40px;scale:.97;
+  transition:opacity .7s ease var(--d,0ms),translate .8s var(--mo-e) var(--d,0ms),scale .8s var(--mo-e) var(--d,0ms),transform .5s var(--mo-e),box-shadow .5s var(--mo-e),border-color .3s}
+.mo .ptile.in{opacity:1;translate:0 0;scale:1}
+.mo .ptile:hover{transform:translateY(-6px);box-shadow:0 32px 60px -32px color-mix(in srgb,var(--pi,#99a) 85%,#000)}
+/* a soft light that follows the mouse across the tile */
+.mo .ptile:after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;border-radius:inherit;opacity:0;transition:opacity .4s;
+  background:radial-gradient(440px circle at calc(50% + var(--mx,0)*50%) calc(50% + var(--my,0)*50%),#ffffff5c,transparent 60%)}
+.mo .ptile:hover:after{opacity:1}
+/* the screenshots: a touch of zoom and tilt; the phones rise in front of the browser window */
+.mo .pt-img{perspective:1100px}
+.mo .pt-img .thumb.wmt{transition:transform .6s var(--mo-e);transform:rotateY(calc(var(--mx,0)*3deg)) rotateX(calc(var(--my,0)*-3deg))}
+.mo .ptile:hover .pt-img .thumb.wmt{transform:scale(1.04) rotateY(calc(var(--mx,0)*3deg)) rotateX(calc(var(--my,0)*-3deg))}
+.mo .pt-img .wmt .phones{transition:transform .6s var(--mo-e)}
+.mo .ptile:hover .pt-img .wmt .phones{transform:translateY(-5%)}
+.mo .ptile:hover .pt-img > img{transform:translateY(-3%) scale(1.02)}
+/* the text: a bolder title and an arrow that slides in on hover */
+.mo .pt-body{gap:8px;padding:18px 20px 20px}
+.mo .pt-body h3{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:24px;letter-spacing:.01em;line-height:1.05;display:flex;align-items:center;gap:8px}
+.mo .pt-body h3:after{content:"→";font-size:.8em;opacity:0;translate:-8px 0;transition:opacity .3s,translate .4s var(--mo-e)}
+.mo .ptile:hover .pt-body h3:after,.mo .ptile:focus-visible .pt-body h3:after{opacity:1;translate:0 0}
 .mo .ptile[hidden]{display:none}
 @media(max-width:860px){
-  .mo .ptile,.mo .ptile:nth-child(even){--amp:.55;grid-template-columns:1fr;align-content:center;gap:28px;padding:84px var(--gut) 56px}
-  .mo .ptile .pt-img,.mo .ptile:nth-child(even) .pt-img{order:-1;width:100vw;margin-inline:calc(-1*var(--gut));max-height:none}
-  .mo .ptile .pt-body,.mo .ptile:nth-child(even) .pt-body{order:0}
-  .mo .ptile:after,.mo .ptile:nth-child(even):after{width:120vw;height:120vw;right:-30vw;left:auto;top:30%}
-  .mo .pt-body h3{font-size:clamp(40px,11vw,60px)}
   .mo .pfilter{max-width:calc(100% - 76px);margin-left:auto;margin-right:var(--gut);overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
   .mo .pfilter button{flex:none}
 }
 
-/* reduced motion: full-screen panels stay, movement goes */
+/* reduced motion: the grid stays, movement goes */
 @media(prefers-reduced-motion:reduce){
-  .mo .hero-text,.mo .hero-media,.mo .ptile:before,.mo .ptile:after,.mo .pt-body,.mo .pt-img .thumb.wmt,.mo .pt-img .wmt .phones,.mo .pt-img .thumb.wmt.duo .web-win,.mo .pt-img > img{transform:none!important}
+  .mo .hero-text,.mo .hero-media{transform:none!important}
   .mo .hero-text,.mo .hero-hint{opacity:1}
-  .mo .shead,.mo .ptile .pt-body > *,.mo .ptile .pt-img{opacity:1;transform:none;translate:none}
+  .mo .shead,.mo .ptile{opacity:1;transform:none!important;translate:none;scale:none;transition:none}
+  .mo .pt-img .thumb.wmt,.mo .pt-img .wmt .phones,.mo .pt-img > img{transform:none!important}
+  .mo .ptile:after{display:none}
 }
 
 /* =================== animation techniques, round two ===================
-   Welcome (first visit per tab), word-by-word headings, skeleton shimmer for screenshots, a filter that
-   fades instead of cutting and hides while you scroll down, press feedback, a one-time nudge
+   Welcome (first visit per tab), word-by-word headings, skeleton shimmer for screenshots, a filter bar that
+   hides while you scroll down, press feedback, a one-time nudge
    on the contact link, drifting colour behind the contact block, a staggered menu and soft page transitions.
    Every movement here stops under prefers-reduced-motion (see the end of this block). */
 
@@ -121,9 +95,7 @@ html.mo body{overflow-x:clip}
 .mo .pt-img img{opacity:0;transition:opacity .6s ease}
 .mo .pt-img img.mo-ok{opacity:1}
 
-/* ---------- the filter: panels fade out and back instead of a hard cut; the bar steps aside while you read ---------- */
-.mo .ptiles{transition:opacity .18s ease}
-.mo .ptiles.mo-out{opacity:0}
+/* ---------- the filter bar steps aside while you read ---------- */
 .mo .pfilter{transition:transform .35s cubic-bezier(.2,.7,.2,1),opacity .35s}
 .mo-down .pfilter{transform:translateY(calc(-100% - 20px));opacity:0;pointer-events:none}
 .mo .pfilter button{transition:background .2s,color .2s,transform .15s}
@@ -162,7 +134,6 @@ html.mo body{overflow-x:clip}
   .mo-welcome *,.mo .closing:before,.mo .closing:after,.mo .closing .textlink:after,.mo .pt-img.mo-sk:before,
   .lhs-open .lhs-brand,.lhs-open .lhs-nav a,.lhs-open .lhs-projects{animation:none!important}
   .mo .shead h2 .mo-word,.mo .pt-img img{opacity:1;transform:none;transition:none}
-  .mo .ptiles.mo-out{opacity:1}
   .mo-down .pfilter{transform:none;opacity:1;pointer-events:auto}
   @view-transition{navigation:none}
 }

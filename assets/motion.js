@@ -1,7 +1,7 @@
 /* Motion layer for the home page (styles in assets/motion.css). Runs after the project tiles are built.
-   Sets html.mo, numbers the panels, and on scroll writes a few CSS variables:
-   --sp on <html> (reading progress), --hs on the hero, --p on each panel near the screen,
-   and --mx/--my on the panel under a mouse pointer. Nothing moves when "reduce motion" is on. */
+   Sets html.mo; tiles cascade in row by row (--d) the first time they reach the screen; on scroll it writes
+   --sp on <html> (reading progress) and --hs on the hero; --mx/--my on the tile under a mouse pointer.
+   Nothing moves when "reduce motion" is on. */
 (function(){
   var root=document.documentElement;
   var tiles=[].slice.call(document.querySelectorAll('.ptiles .ptile'));
@@ -9,32 +9,22 @@
   root.classList.add('mo');
   var still=matchMedia('(prefers-reduced-motion: reduce)');
 
-  /* panel extras: a running number per section and an "open" cue */
-  document.querySelectorAll('.ptiles').forEach(function(grid){
-    var list=[].slice.call(grid.querySelectorAll('.ptile')), n=list.length;
-    list.forEach(function(t,i){
-      var body=t.querySelector('.pt-body'); if(!body||body.querySelector('.pt-n')) return;
-      var num=document.createElement('span'); num.className='pt-n'; num.setAttribute('aria-hidden','true');
-      num.textContent=String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
-      body.insertBefore(num,body.firstChild);
-      var go=document.createElement('span'); go.className='pt-go'; go.setAttribute('aria-hidden','true');
-      go.innerHTML='Open the project <i>→</i>';
-      body.appendChild(go);
-    });
-  });
-
   var bar=document.createElement('div'); bar.className='mo-progress'; document.body.appendChild(bar);
   var hero=document.querySelector('.hero');
 
-  /* ease in headings and panels the first time they reach the screen */
-  var seen=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); seen.unobserve(e.target) } }) },{rootMargin:'0px 0px -12% 0px'});
+  /* headings and tiles ease in the first time they reach the screen; tiles that arrive together cascade,
+     left to right and row by row, 70 ms apart */
+  var seen=new IntersectionObserver(function(es){
+    var arriving=es.filter(function(e){ return e.isIntersecting }).map(function(e){ return e.target });
+    arriving.filter(function(el){ return el.classList.contains('ptile') })
+      .sort(function(a,b){ var ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect(); return (ra.top-rb.top)||(ra.left-rb.left) })
+      .forEach(function(t,i){ t.style.setProperty('--d',Math.min(i,8)*70+'ms') });
+    arriving.forEach(function(el){ el.classList.add('in'); seen.unobserve(el) });
+  },{rootMargin:'0px 0px -8% 0px'});
   document.querySelectorAll('.shead').forEach(function(h){ seen.observe(h) });
   tiles.forEach(function(t){ seen.observe(t) });
-
-  /* only panels near the screen are updated on scroll */
-  var live=new Set();
-  var near=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) live.add(e.target); else live.delete(e.target) }) },{rootMargin:'25% 0px'});
-  tiles.forEach(function(t){ near.observe(t) });
+  /* once a tile has arrived, later moves (hover, filter) should not wait for the cascade */
+  tiles.forEach(function(t){ t.addEventListener('transitionend',function(e){ if(e.propertyName==='opacity') t.style.setProperty('--d','0ms') }) });
 
   var queued=false;
   function frame(){
@@ -43,21 +33,14 @@
     root.style.setProperty('--sp',max>0?(scrollY/max).toFixed(4):0);
     if(still.matches) return;
     if(hero){ var hs=Math.min(1,Math.max(0,scrollY/(hero.offsetHeight||vh))); hero.style.setProperty('--hs',hs.toFixed(4)) }
-    live.forEach(function(t){
-      var r=t.getBoundingClientRect(), p=((r.top+r.height/2)-vh/2)/vh;
-      t.style.setProperty('--p',Math.max(-1.2,Math.min(1.2,p)).toFixed(4));
-    });
   }
   function ask(){ if(!queued){ queued=true; requestAnimationFrame(frame) } }
   addEventListener('scroll',ask,{passive:true});
   addEventListener('resize',ask);
-  still.addEventListener&&still.addEventListener('change',function(){
-    if(still.matches){ tiles.forEach(function(t){ t.style.removeProperty('--p') }); if(hero) hero.style.removeProperty('--hs') }
-    ask();
-  });
+  still.addEventListener&&still.addEventListener('change',function(){ if(still.matches&&hero) hero.style.removeProperty('--hs'); ask() });
   frame();
 
-  /* a small tilt toward the mouse (not on touch, not with reduce motion) */
+  /* the light and a small tilt follow the mouse (not on touch, not with reduce motion) */
   if(matchMedia('(hover: hover) and (pointer: fine)').matches){
     tiles.forEach(function(t){
       t.addEventListener('pointermove',function(e){
@@ -72,8 +55,8 @@
 })();
 
 /* Round two (styles at the end of assets/motion.css): welcome animation, word-by-word headings, skeleton
-   screenshots, a filter that fades and steps aside while scrolling down, and a one-time nudge on the
-   contact link. Text that is split into letters or words keeps its words for screen readers (aria-label). */
+   screenshots, a filter whose tiles glide into place and whose bar steps aside while scrolling down, and a
+   one-time nudge on the contact link. Text that is split into letters or words keeps its words for screen readers (aria-label). */
 (function(){
   var root=document.documentElement;
   if(!root.classList.contains('mo')) return;
@@ -106,7 +89,7 @@
   /* headings: words rise in when the heading reaches the screen (motion.js part one adds .in) */
   if(!still) document.querySelectorAll('.shead h2').forEach(function(h){ split(h,'words') });
 
-  /* skeleton: shimmer until every screenshot in a panel has loaded, then fade the pictures in */
+  /* skeleton: shimmer until every screenshot in a tile has loaded, then fade the pictures in */
   document.querySelectorAll('.ptiles .pt-img').forEach(function(box){
     var imgs=[].slice.call(box.querySelectorAll('img')); if(!imgs.length) return;
     var left=imgs.length; box.classList.add('mo-sk');
@@ -116,19 +99,30 @@
     });
   });
 
-  /* the filter: fade the panels out, switch, fade back, and bring the list's start into view */
+  /* the filter: tiles glide to their new places (FLIP) and newly shown ones grow in, instead of a hard cut.
+     This listener runs first (capture); the page's own handler then shows and hides tiles, and the next frame
+     animates every tile from where it was to where it is now. */
   document.querySelectorAll('.pfilter').forEach(function(bar){
     var grid=bar.nextElementSibling&&bar.nextElementSibling.classList.contains('ptiles')?bar.nextElementSibling:document.querySelector('#side-projects .ptiles');
     bar.addEventListener('click',function(e){
-      var btn=e.target.closest('button'); if(!btn||!grid||still) return;
-      if(btn._moPass){ btn._moPass=false; return }
-      e.stopImmediatePropagation(); e.preventDefault();
-      grid.classList.add('mo-out');
-      setTimeout(function(){
-        btn._moPass=true; btn.click();
+      if(!e.target.closest('button')||!grid||still||!Element.prototype.animate) return;
+      var all=[].slice.call(grid.querySelectorAll('.ptile')), first=new Map();
+      all.forEach(function(t){ if(!t.hidden) first.set(t,t.getBoundingClientRect()) });
+      requestAnimationFrame(function(){
         var top=grid.getBoundingClientRect().top; if(top<0) scrollTo({top:scrollY+top-90,behavior:'instant'});
-        requestAnimationFrame(function(){ grid.classList.remove('mo-out') });
-      },180);
+        var fresh=0;
+        all.forEach(function(t){
+          if(t.hidden) return;
+          var last=t.getBoundingClientRect(), f=first.get(t);
+          if(f){
+            var dx=f.left-last.left, dy=f.top-last.top;
+            if(dx||dy) t.animate([{transform:'translate('+dx+'px,'+dy+'px)'},{transform:'none'}],{duration:520,easing:'cubic-bezier(.2,.8,.2,1)'});
+          } else {
+            t.classList.add('in'); t.style.setProperty('--d','0ms');
+            t.animate([{opacity:0,transform:'scale(.88)'},{opacity:1,transform:'none'}],{duration:420,delay:120+Math.min(fresh++,8)*50,easing:'cubic-bezier(.2,.8,.2,1)',fill:'backwards'});
+          }
+        });
+      });
     },true);
   });
 
