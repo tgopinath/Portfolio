@@ -8,6 +8,7 @@
 <!-- One page for every project. It reads index.html (its stylesheet, the project cards and the prototype list),
      so a project added to the home page gets its own page with no extra work. URL: project.html?p=<key>[&v=<view>] -->
 <style>body{margin:0;background:#ffffff;color:#141a26;font-family:system-ui,sans-serif}</style>
+<style>/* soft cross-fade to and from the home page (assets/motion.css has the other half) */@view-transition{navigation:auto}::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}</style>
 </head>
 <body>
 <main id="page" class="wrap pp"><p class="pp-loading">Loading the project…</p></main>

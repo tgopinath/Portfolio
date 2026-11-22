@@ -70,3 +70,83 @@
     });
   }
 })();
+
+/* Round two (styles at the end of assets/motion.css): welcome animation, word-by-word headings, skeleton
+   screenshots, a filter that fades and steps aside while scrolling down, and a one-time nudge on the
+   contact link. Text that is split into letters or words keeps its words for screen readers (aria-label). */
+(function(){
+  var root=document.documentElement;
+  if(!root.classList.contains('mo')) return;
+  var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function split(el, mode){
+    if(!el||el.dataset.moSplit) return 0;
+    var text=el.textContent.trim(), n=0; el.dataset.moSplit='1';
+    el.setAttribute('aria-label',text); el.textContent='';
+    text.split(/\s+/).forEach(function(word,wi){
+      if(wi) el.appendChild(document.createTextNode(' '));
+      var w=document.createElement('span'); w.setAttribute('aria-hidden','true');
+      if(mode==='letters'){ w.className='mo-w'; word.split('').forEach(function(ch){ var l=document.createElement('span'); l.className='mo-l'; l.style.setProperty('--i',n++); l.textContent=ch; w.appendChild(l) }) }
+      else { w.className='mo-word'; w.style.setProperty('--i',wi); w.textContent=word; n++ }
+      el.appendChild(w);
+    });
+    return n;
+  }
+
+  /* welcome: once per browser tab, so coming back from a project page does not replay it */
+  var name=document.querySelector('.hero-name');
+  var seen=false; try{ seen=sessionStorage.getItem('mo-welcomed')==='1' }catch(e){}
+  if(name&&!still&&!seen){
+    var n=split(name,'letters'); var hero=document.querySelector('.hero'); if(hero) hero.style.setProperty('--n',n);
+    root.classList.add('mo-welcome');
+    try{ sessionStorage.setItem('mo-welcomed','1') }catch(e){}
+    setTimeout(function(){ root.classList.remove('mo-welcome') },3200);
+  }
+
+  /* headings: words rise in when the heading reaches the screen (motion.js part one adds .in) */
+  if(!still) document.querySelectorAll('.shead h2').forEach(function(h){ split(h,'words') });
+
+  /* skeleton: shimmer until every screenshot in a panel has loaded, then fade the pictures in */
+  document.querySelectorAll('.ptiles .pt-img').forEach(function(box){
+    var imgs=[].slice.call(box.querySelectorAll('img')); if(!imgs.length) return;
+    var left=imgs.length; box.classList.add('mo-sk');
+    imgs.forEach(function(img){
+      function done(){ img.classList.add('mo-ok'); if(--left<=0) box.classList.remove('mo-sk') }
+      if(img.complete&&img.naturalWidth) done(); else { img.addEventListener('load',done,{once:true}); img.addEventListener('error',done,{once:true}) }
+    });
+  });
+
+  /* the filter: fade the panels out, switch, fade back, and bring the list's start into view */
+  document.querySelectorAll('.pfilter').forEach(function(bar){
+    var grid=bar.nextElementSibling&&bar.nextElementSibling.classList.contains('ptiles')?bar.nextElementSibling:document.querySelector('#side-projects .ptiles');
+    bar.addEventListener('click',function(e){
+      var btn=e.target.closest('button'); if(!btn||!grid||still) return;
+      if(btn._moPass){ btn._moPass=false; return }
+      e.stopImmediatePropagation(); e.preventDefault();
+      grid.classList.add('mo-out');
+      setTimeout(function(){
+        btn._moPass=true; btn.click();
+        var top=grid.getBoundingClientRect().top; if(top<0) scrollTo({top:scrollY+top-90,behavior:'instant'});
+        requestAnimationFrame(function(){ grid.classList.remove('mo-out') });
+      },180);
+    },true);
+  });
+
+  /* dynamic menu: the filter bar steps aside while you scroll down and comes back as soon as you scroll up */
+  var lastY=scrollY, ticking=false;
+  addEventListener('scroll',function(){
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(function(){
+      ticking=false; var y=scrollY, dy=y-lastY;
+      if(Math.abs(dy)>6){ root.classList.toggle('mo-down',dy>0&&y>innerHeight); lastY=y }
+    });
+  },{passive:true});
+  document.querySelectorAll('.pfilter').forEach(function(bar){ bar.addEventListener('focusin',function(){ root.classList.remove('mo-down') }) });
+
+  /* attention: the contact block gets .in once, which plays a short nudge on its link */
+  var closing=document.querySelector('.closing');
+  if(closing&&'IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting){ closing.classList.add('in'); io.disconnect() } }) },{threshold:.4});
+    io.observe(closing);
+  }
+})();
