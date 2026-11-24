@@ -13,6 +13,7 @@
 <body>
 <main id="page" class="wrap pp"><p class="pp-loading">Loading the project…</p></main>
 <footer class="wrap"><span>© <span id="year"></span> Gopinath Thandapani</span><a href="index.html#work">All projects</a></footer>
+<script src="assets/stage.js"></script>
 <script src="assets/sidebar.js"></script>
 <script>
 (async function(){
@@ -99,6 +100,7 @@
   const art=el('div','pp-art'), th=card.querySelector('.thumb'), fig=card.querySelector('figure img');
   if(th) art.appendChild(th.cloneNode(true)); else if(fig) art.appendChild(fig.cloneNode(true));
   head.append(art,text); page.appendChild(head);
+  if(window.kStage) kStage.dress(art, card, kStage.platforms(card), side?'side':'work');
 
   // a case study is a long read: it sits closed below the views and loads only when the visitor opens it
   const allViews=pr.views||[], isCase=v=>/^Case study/i.test(v[0]);

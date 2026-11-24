@@ -351,6 +351,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-s
 @media(max-width:860px){.hero{background:var(--bg)}.hero-media:after{background:linear-gradient(0deg,var(--bg) 0%,#ffffffe6 36%,transparent 64%)}}
 </style>
 <link rel="stylesheet" href="assets/motion.css">
+<link rel="stylesheet" href="assets/stage.css">
 </head>
 <body>
 <main>
@@ -824,6 +825,7 @@ document.querySelectorAll('.card[data-project]').forEach(c=>c.addEventListener('
   render();
 })();
 </script>
+<script src="assets/stage.js"></script>
 <script src="assets/sidebar.js"></script>
 <script>buildSidebar({onHome:true})</script>
 <script>/* Projects index: tiles built from the project cards below (the cards stay the single source; project.html reads them too). */
@@ -847,6 +849,7 @@ document.querySelectorAll('.card[data-project]').forEach(c=>c.addEventListener('
     a.dataset.plat=plats.join(' ');
     a.innerHTML='';
     a.appendChild(img);
+    if(window.kStage) kStage.dress(img, card, plats, kind);
     var b=document.createElement('div'); b.className='pt-body';
     b.innerHTML='<h3></h3><p></p><div class="pt-meta"></div>';
     b.querySelector('h3').textContent=h?h.textContent:key;
