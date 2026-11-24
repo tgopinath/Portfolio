@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NutriDry Naturals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap">
+<style>
+:root{--bg:#ffffff;--card:#fff;--ink:#1F2433;--muted:#474E60;--line:#E3E6EC;--accent:#1B6B3A;--frame:#121318}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#10131B;--card:#171B25;--ink:#ECEEF4;--muted:#B4BACB;--line:#262C3A;--accent:#7FCB98;--frame:#000}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Lato,system-ui,sans-serif;padding:32px 16px 48px}
+
+main{max-width:1120px;margin:0 auto;display:grid;gap:40px}
+.k{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{margin:6px 0 10px;font:900 clamp(28px,4vw,40px)/1.1 Lato,sans-serif;letter-spacing:-.02em}
+h2{margin:0 0 14px;font:900 22px/1.2 Lato,sans-serif}
+.intro{display:grid;gap:18px;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:start}
+@media (max-width:820px){.intro{grid-template-columns:1fr}}
+.intro p{margin:0;color:var(--muted)}
+ul{margin:0;padding-left:18px;color:var(--muted);display:grid;gap:6px}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.links a{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--ink);background:var(--card)}
+.links a.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){.links a.primary{color:#0B1020}}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+.desk{display:grid;gap:22px;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+@media (max-width:820px){.desk{grid-template-columns:1fr}}
+figure{margin:0}
+.win{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card);box-shadow:0 24px 50px -30px rgba(20,50,30,.45)}
+.bar{display:flex;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.bar i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.win img,.phone img{display:block;width:100%;height:auto}
+figcaption{margin-top:8px;font-size:14px;color:var(--muted)}
+figcaption b{color:var(--ink)}
+.phones{display:flex;gap:22px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+.phones figure{flex:0 0 220px;scroll-snap-align:start}
+.phone{border-radius:34px;padding:8px;background:var(--frame);box-shadow:0 30px 60px -30px rgba(20,50,30,.5)}
+.phone img{border-radius:27px}
+</style>
+</head>
+<body>
+<main>
+  <section class="intro">
+<body>
+<main>
+  <section class="intro">
+    <div>
+      <span class="k">Web store · demo</span>
+      <h1>NutriDry Naturals</h1>
+      <p>Naturally Dried. Naturally Better. A storefront for an Indian dried-foods brand: dried fruits, vegetables, mushrooms, herbs and tea, spices, South Indian foods, seeds, and pet and décor botanicals. 30 of the 77 products show real NutriDry pack photos, covering every dried fruit, vegetable and mushroom and five herbs; the rest still use illustrated placeholders. Content is honest by default: no invented claims, and ratings only from real reviews.</p>
+      <div class="links">
+        <a class="primary" href="https://dryharvest.vercel.app" target="_blank" rel="noopener">Open the live demo ↗</a>
+      </div>
+      <p class="note">The live demo is a read-only showcase: browse the catalogue, search and filter, but nothing is for sale and there is no checkout, sign-in or admin.</p>
+    </div>
+    <ul>
+      <li>A home page with categories, best sellers and collections.</li>
+      <li>A shop with all 77 products in one continuous grid, with filters, sort and search.</li>
+      <li>Category pages with pack photos, pack sizes, price and MRP.</li>
+      <li>Product pages with benefits, how to use it, who should avoid it, storage, and label and compliance details.</li>
+      <li>White pages and Lato throughout.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>On a computer</h2>
+    <div class="desk">
+      <figure><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="shots/web-home.jpg" alt="NutriDry Naturals home page: a hero with dried fruits in bowls, a trust strip, category tiles and best sellers with NutriDry pack photos" width="1200" height="3200" loading="lazy"></div><figcaption><b>Home.</b> Hero, shop by category, best sellers and the South Indian collection.</figcaption></figure>
+      <figure><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="shots/web-category.jpg" alt="Dried Fruits category page with filters, sort and a grid of ten products, each with its NutriDry pack photo, pack size, price and MRP" width="1200" height="2800" loading="lazy"></div><figcaption><b>Category.</b> Every dried fruit now shows its real NutriDry pack.</figcaption></figure>
+      <figure><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="shots/web-product.jpg" alt="Dried Mango Slices product page: pack photo, benefits, pack sizes with MRP, How to use, Who should avoid it, storage and label and compliance details" width="1200" height="2737" loading="lazy"></div><figcaption><b>Product.</b> Benefits, how to use it and who should avoid it, next to the label details.</figcaption></figure>
+      <figure><div class="win"><div class="bar"><i></i><i></i><i></i></div><img src="shots/web-shop.jpg" alt="Shop all products page: category, price, pack size and availability filters beside one grid of 77 products, with pack photos and illustrated placeholders" width="1200" height="2800" loading="lazy"></div><figcaption><b>Shop.</b> All 77 products in one continuous grid, no pages to click through.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>On a phone</h2>
+    <div class="phones">
+      <figure><div class="phone"><img src="shots/phone-home.jpg" alt="NutriDry Naturals home on a phone with the demo banner and hero" width="600" height="1306" loading="lazy"></div><figcaption><b>Home.</b> The demo banner says nothing is for sale.</figcaption></figure>
+      <figure><div class="phone"><img src="shots/phone-category.jpg" alt="Dried Fruits category on a phone with filters, sort and two product cards with pack photos" width="600" height="1306" loading="lazy"></div><figcaption><b>Category.</b> Filters and sort in one row.</figcaption></figure>
+      <figure><div class="phone"><img src="shots/phone-product.jpg" alt="Dried Mango Slices product page on a phone with the pack photo and three benefits" width="600" height="1306" loading="lazy"></div><figcaption><b>Product.</b> The pack photo and its benefits first.</figcaption></figure>
+      <figure><div class="phone"><img src="shots/phone-benefits.jpg" alt="How to use and Who should avoid it sections on a phone, followed by storage and label and compliance" width="600" height="1306" loading="lazy"></div><figcaption><b>How to use.</b> And who should avoid it, in a highlighted box.</figcaption></figure>
+      <figure><div class="phone"><img src="shots/phone-shop.jpg" alt="Shop all products on a phone: 77 products, Filters and sort, and a two-column grid" width="600" height="1306" loading="lazy"></div><figcaption><b>Shop.</b> One grid of all 77 products.</figcaption></figure>
+    </div>
+  </section>
+</main>
+</body>
+</html>
