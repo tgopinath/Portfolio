@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Daybook Mobile</title>
+<title>MyDiary Mobile</title>
 <script>
   // On a real phone, skip the frame and open the app itself.
-  if (matchMedia("(max-width: 600px)").matches) location.replace("https://daybook-livid-one.vercel.app/" + location.search + location.hash);
+  if (matchMedia("(max-width: 600px)").matches) location.replace("https://daybook-livid-one.vercel.app/api/demo/start" + location.search + location.hash);
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +34,7 @@ body{margin:0;background:radial-gradient(60% 50% at 80% 10%,#635BFF22,transparen
 <div class="stage">
   <div class="copy">
     <span class="k">Mobile app</span>
-    <h1>Daybook on a phone</h1>
+    <h1>MyDiary on a phone</h1>
     <p>One workspace for tasks, goals, reminders, calendar, habits, notes and personal information, with an AI assistant that understands all of it and asks before it changes anything.</p>
     <ul>
       <li>Sign up and start with fictional sample data, or start empty.</li>
@@ -42,9 +42,9 @@ body{margin:0;background:radial-gradient(60% 50% at 80% 10%,#635BFF22,transparen
       <li>Quick capture turns plain sentences into tasks and reminders.</li>
       <li>The assistant proposes changes as cards you confirm or edit.</li>
     </ul>
-    <p><a href="https://daybook-livid-one.vercel.app" target="_blank" rel="noopener">Open the live app ↗</a></p>
+    <p><a href="https://daybook-livid-one.vercel.app/api/demo/start" target="_blank" rel="noopener">Open the live app ↗</a></p>
   </div>
-  <div class="phone"><iframe src="https://daybook-livid-one.vercel.app/" title="Daybook mobile app"></iframe></div>
+  <div class="phone"><iframe src="https://daybook-livid-one.vercel.app/api/demo/start" title="MyDiary mobile app"></iframe></div>
 </div>
 </body>
 </html>
