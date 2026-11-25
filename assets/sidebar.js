@@ -8,7 +8,7 @@ window.buildSidebar = function ({ doc = document, current = null, onHome = false
   const side = el('aside', 'lhs'); side.id = 'lhs'; side.setAttribute('aria-label', 'Site navigation');
 
   const brand = el('a', 'lhs-brand'); brand.href = home + '#home';
-  const av = el('span', 'lhs-av'); const img = el('img'); img.src = 'assets/photo/gopinath.png'; img.alt = ''; av.appendChild(img);
+  const av = el('span', 'lhs-av'); const img = el('img'); img.src = 'assets/photo/gopinath-168.webp'; img.width = 42; img.height = 42; img.decoding = 'async'; img.alt = ''; av.appendChild(img);
   const nm = el('span'); nm.append(el('b', null, 'Gopinath Thandapani'), el('small', null, 'Product designer and vibe coder'));
   brand.append(av, nm); side.appendChild(brand);
 

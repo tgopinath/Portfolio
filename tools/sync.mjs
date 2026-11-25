@@ -120,6 +120,10 @@ if (stale.length) {
   log('everything already up to date');
 }
 
+// the WebP copies the home page's srcsets point at (assets/r/) follow their originals
+try { const out = String(execFileSync('python3', [path.join(TOOLS, 'resp.py')], { cwd: ROOT, stdio: 'pipe' })).trim(); if (!/^0 /.test(out)) log(out); }
+catch (e) { log(`webp copies failed — ${String(e.stderr || e.message).trim().split('\n').pop()}`); }
+
 async function captureThumbs(apps) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'portfolio-thumbs-'));
   const toJpg = (src, key) => execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '82', '--resampleWidth', '760', src, '--out', path.join(ROOT, 'assets/thumbs', `${key}.jpg`)], { stdio: 'pipe' });

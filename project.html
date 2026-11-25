@@ -99,6 +99,8 @@
   const n=i; head.dataset.tone=n%7+1; head.dataset.pat=n%4+1;
   const art=el('div','pp-art'), th=card.querySelector('.thumb'), fig=card.querySelector('figure img');
   if(th) art.appendChild(th.cloneNode(true)); else if(fig) art.appendChild(fig.cloneNode(true));
+  // the art here is larger than on the home page: pick bigger copies from the images' srcsets
+  art.querySelectorAll('img[srcset]').forEach(im=>{ im.sizes=(+im.getAttribute('height')>+im.getAttribute('width'))?'160px':'(max-width: 900px) 90vw, 560px' });
   head.append(art,text); page.appendChild(head);
   if(window.kStage) kStage.dress(art, card, kStage.platforms(card), side?'side':'work');
 
@@ -134,7 +136,7 @@
     bar.appendChild(el('h2',null,views.length>1?'Try it':'Try it: '+views[0][0]));
     const tabs=el('div','pp-tabs'); tabs.setAttribute('role','tablist'); tabs.setAttribute('aria-label','Views');
     const open=el('a','vbtn','Open in a new tab ↗'); open.target='_blank'; open.rel='noopener';
-    const frame=el('div','pp-frame'), ifr=el('iframe'); ifr.title=title; ifr.setAttribute('allow','geolocation'); frame.appendChild(ifr);
+    const frame=el('div','pp-frame'), ifr=el('iframe'); ifr.loading='lazy'; ifr.title=title; ifr.setAttribute('allow','geolocation'); frame.appendChild(ifr);
     let cur=Math.max(0,Math.min(views.length-1,parseInt(q.get('v')||'0',10)||0));
     const show=(n,push)=>{ cur=n; ifr.src=views[n][1]; open.href=views[n][1];
       tabs.querySelectorAll('button').forEach((b,j)=>b.setAttribute('aria-selected',j===n));
